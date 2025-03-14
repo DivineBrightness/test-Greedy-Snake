@@ -29,7 +29,7 @@
    ```
 2. 进入项目目录：
    ```bash
-   cd <你的仓库名>
+   cd test-Greedy-Snake
    ```
 3. 直接在浏览器中打开 `index.html` 文件：
    - 在文件资源管理器中双击 `index.html`，或
@@ -87,7 +87,7 @@
   - 重构 HTML `.mobile-controls` 结构，新增 `.control-row` 分行布局。
   - 更新 CSS 样式，支持新按键布局。
 
-### 版本 1.0.0 - 2025年3月1日
+### 版本 1.0.0 - 2025年3月13日
 - **新增**：
   - 初始版本，包含四季像素艺术展示（春、夏、秋、冬）。
   - 集成贪吃蛇游戏，支持键盘和移动端控制。
@@ -102,5 +102,5 @@
 ## 联系方式
 
 - **开发者**：divine
-- **GitHub**：[@你的用户名](https://github.com/DivineBrightness)
+- **GitHub**：[@DivineBrightness](https://github.com/DivineBrightness)
 
