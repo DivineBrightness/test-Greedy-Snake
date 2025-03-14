@@ -201,20 +201,40 @@
     .mobile-controls {
   display: none;
   justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.control-row {
+  display: flex;
+  justify-content: center;
   gap: 10px;
-  margin-top: 10px;
 }
 
 .direction-btn {
-  width: 50px;
-  height: 50px;
-  font-size: 20px;
+  width: 60px;
+  height: 60px;
+  font-size: 24px;
   padding: 0;
+  border-radius: 15px; /* 稍微圆润一点 */
 }
 
+/* 调整手机端显示 */
 @media (max-width: 768px) {
   .mobile-controls {
-    display: flex;
+    display: block; /* 改为 block 以适应垂直排列 */
+  }
+  .control-row:nth-child(1) {
+    margin-bottom: 10px; /* 上按钮与下排的间距 */
+  }
+  .control-row:nth-child(2) {
+    justify-content: space-between; /* 左右按钮分开 */
+    max-width: 200px; /* 控制下排宽度 */
+    margin: 0 auto;
+  }
+  .control-row:nth-child(2) .direction-btn:nth-child(2) {
+    margin: 0 20px; /* 下按钮与左右按钮的间距 */
   }
   .game-instructions p:first-child::after {
     content: "，或使用下方按钮控制";
@@ -263,10 +283,14 @@
     <button class="control-btn" id="back-btn">返回风景</button>
   </div>
   <div class="mobile-controls">
-    <button class="control-btn direction-btn" id="up-btn">↑</button>
-    <button class="control-btn direction-btn" id="left-btn">←</button>
-    <button class="control-btn direction-btn" id="right-btn">→</button>
-    <button class="control-btn direction-btn" id="down-btn">↓</button>
+    <div class="control-row">
+      <button class="control-btn direction-btn" id="up-btn">↑</button>
+    </div>
+    <div class="control-row">
+      <button class="control-btn direction-btn" id="left-btn">←</button>
+      <button class="control-btn direction-btn" id="down-btn">↓</button>
+      <button class="control-btn direction-btn" id="right-btn">→</button>
+    </div>
   </div>
   <div class="game-instructions">
     <p>使用键盘方向键或WASD控制蛇移动，吃到食物可增加分数。</p>
