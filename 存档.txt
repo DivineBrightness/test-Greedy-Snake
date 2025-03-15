@@ -1,3 +1,4 @@
+index.html:
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -814,75 +815,69 @@
       }
 
       initMobileControls() {
-          const rotateBtn = document.getElementById('rotate-btn');
-          const leftBtn = document.getElementById('tetris-left-btn');
-          const rightBtn = document.getElementById('tetris-right-btn');
-          const downBtn = document.getElementById('tetris-down-btn');
-          const canControl = () => this.isPlaying && !this.gameOver && !this.paused;
-          let lastTap = 0;
-          const debounceTime = 150; // 防抖时间150ms
+        const rotateBtn = document.getElementById('rotate-btn');
+        const leftBtn = document.getElementById('tetris-left-btn');
+        const rightBtn = document.getElementById('tetris-right-btn');
+        const downBtn = document.getElementById('tetris-down-btn');
+        const canControl = () => this.isPlaying && !this.gameOver && !this.paused;
+        let lastTap = 0;
+        const debounceTime = 150; // 防抖时间150ms
 
-          const handleTap = (action) => {
-              return (e) => {
-                  e.preventDefault();
-                  const now = Date.now();
-                  if (now - lastTap < debounceTime || !canControl()) return;
-                  lastTap = now;
+        const handleTap = (action) => {
+          return (e) => {
+            e.preventDefault();
+            const now = Date.now();
+            if (now - lastTap < debounceTime || !canControl()) return;
+            lastTap = now;
+            action();
+            this.draw();
+          };
+        };
+        const handleHold = (action) => {
+          let intervalId = null;
+          return {
+            start: (e) => {
+              e.preventDefault();
+              if (!canControl()) return;
+              action();
+              this.draw();
+              intervalId = setInterval(() => {
+                if (canControl()) {
                   action();
                   this.draw();
-              };
-          };
-
-          const handleHold = (action) => {
-              let intervalId = null;
-              return {
-                  start: (e) => {
-                      e.preventDefault();
-                      if (!canControl()) return;
-                      action();
-                      this.draw();
-                      intervalId = setInterval(() => {
-                          if (!canControl()) {
-                              clearInterval(intervalId);
-                              intervalId = null;
-                              return;
-                          }
-                          action();
-                          this.draw();
-                      }, 100);
-                  },
-                  stop: () => {
-                      if (intervalId) {
-                          clearInterval(intervalId);
-                          intervalId = null;
-                      }
-                  }
-              };
-          };
-
-          if (rotateBtn) {
-              rotateBtn.addEventListener('touchstart', handleTap(() => this.rotateShape()));
-          }
-          if (leftBtn) {
-              leftBtn.addEventListener('touchstart', handleTap(() => this.moveLeft()));
-          }
-          if (rightBtn) {
-              rightBtn.addEventListener('touchstart', handleTap(() => this.moveRight()));
-          }
-          if (downBtn) {
-              const downHandler = handleHold(() => this.moveDown());
-              downBtn.addEventListener('touchstart', downHandler.start);
-              downBtn.addEventListener('touchend', downHandler.stop);
-              downBtn.addEventListener('touchcancel', downHandler.stop);
-          }
-          [rotateBtn, leftBtn, rightBtn, downBtn].forEach(btn => {
-              if (btn) {
-                  btn.addEventListener('touchmove', (e) => e.preventDefault());
+                }
+              }, 100);
+            },
+            stop: () => {
+              if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
               }
-          });
+            }
+          };
+        };
+        if (rotateBtn) {
+          rotateBtn.addEventListener('touchstart', handleTap(() => this.rotateShape()));
+        }
+        if (leftBtn) {
+          leftBtn.addEventListener('touchstart', handleTap(() => this.moveLeft()));
+        }
+        if (rightBtn) {
+          rightBtn.addEventListener('touchstart', handleTap(() => this.moveRight()));
+        }
+        if (downBtn) {
+          const downHandler = handleHold(() => this.moveDown());
+          downBtn.addEventListener('touchstart', downHandler.start);
+          downBtn.addEventListener('touchend', downHandler.stop);
+          downBtn.addEventListener('touchcancel', downHandler.stop);
+        }
+        [rotateBtn, leftBtn, rightBtn, downBtn].forEach(btn => {
+          if (btn) {
+            btn.addEventListener('touchmove', (e) => e.preventDefault());
+          }
+        });
       }
-
-
+  
       initShapes() {
         return [
           { shape: [[0, 0, 0, 0], [1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0]], color: '#00FFFF' },
@@ -950,25 +945,16 @@
       }
   
       moveDown() {
-          if (!this.isPlaying || this.gameOver || this.paused) return;
-          this.currentY++;
-          if (this.checkCollision()) {
-              this.currentY--;
-              this.freezeShape();
-              if (this.gameOver) {
-                  this.drawGameOver();
-                  return; // 立即退出，避免后续操作
-              }
-              this.removeCompleteRows();
-              this.newShape();
-              if (this.gameOver) {
-                  this.drawGameOver();
-                  return; // 立即退出
-              }
-          }
-          if (!this.gameOver) {
-              this.draw(); // 仅在游戏未结束时更新画面
-          }
+        if (!this.isPlaying || this.gameOver || this.paused) return;
+        this.currentY++;
+        if (this.checkCollision()) {
+          this.currentY--;
+          this.freezeShape();
+          this.removeCompleteRows();
+          this.newShape();
+        } else {
+          this.draw();
+        }
       }
   
       moveBottom() {
@@ -1005,32 +991,26 @@
       }
   
       freezeShape() {
-          const shape = this.currentShape.shape;
-          for (let y = 0; y < shape.length; y++) {
-              for (let x = 0; x < shape[y].length; x++) {
-                  if (shape[y][x]) {
-                      const newY = this.currentY + y;
-                      if (newY < 0) {
-                          this.gameOver = true;
-                          this.isPlaying = false;
-                          if (this.intervalId) {
-                              clearInterval(this.intervalId);
-                              this.intervalId = null;
-                          }
-                          const directionalBtns = document.querySelectorAll('.direction-btn');
-                          directionalBtns.forEach(btn => {
-                              const stopEvent = new Event('touchend');
-                              btn.dispatchEvent(stopEvent); // 触发 touchend 停止触摸操作
-                          });
-                          this.drawGameOver();
-                          return;
-                      }
-                      if (newY >= 0) {
-                          this.grid[newY][this.currentX + x] = this.currentShape.color;
-                      }
-                  }
+        const shape = this.currentShape.shape;
+        for (let y = 0; y < shape.length; y++) {
+          for (let x = 0; x < shape[y].length; x++) {
+            if (shape[y][x]) {
+              const newY = this.currentY + y;
+              if (newY < 0) {
+                this.gameOver = true;
+                if (this.intervalId) {
+                  clearInterval(this.intervalId); // 确保停止游戏循环
+                  this.intervalId = null;
+                }
+                this.drawGameOver();
+                return;
               }
+              if (newY >= 0) {
+                this.grid[newY][this.currentX + x] = this.currentShape.color;
+              }
+            }
           }
+        }
       }
   
       removeCompleteRows() {
@@ -1090,7 +1070,7 @@
             clearInterval(this.intervalId);
             this.intervalId = null;
           }
-          this.drawGameOver(); // 确保游戏结束时绘制界面
+          this.drawGameOver();
         } else {
           this.draw();
         }
@@ -1144,20 +1124,18 @@
       }
   
       drawGameOver() {
-        // 使用canvas的实际像素尺寸
-        const canvasWidth = this.canvas.width;
-        const canvasHeight = this.canvas.height;
-        this.ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-        this.ctx.font = `${Math.floor(canvasWidth / 8)}px Arial`;
-        this.ctx.fillStyle = '#333';
-        this.ctx.textAlign = 'center';
-        this.ctx.fillText('游戏结束!', canvasWidth / 2, canvasHeight / 2 - Math.floor(canvasHeight / 20));
-        this.ctx.font = `${Math.floor(canvasWidth / 12)}px Arial`;
-        this.ctx.fillText(`最终得分: ${this.score}`, canvasWidth / 2, canvasHeight / 2 + Math.floor(canvasHeight / 20));
-        this.ctx.fillText('按开始游戏重新开始', canvasWidth / 2, canvasHeight / 2 + Math.floor(canvasHeight / 10));
-        this.isPlaying = false;
-        this.gameOver = true; // 确保状态正确设置
-      }
+  const canvasWidth = this.canvas.clientWidth; // 使用实际显示宽度
+  const canvasHeight = this.canvas.clientHeight; // 使用实际显示高度
+  this.ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+  this.ctx.font = `${Math.floor(canvasWidth / 8)}px Arial`; // 动态调整文字大小
+  this.ctx.fillStyle = '#333';
+  this.ctx.textAlign = 'center';
+  this.ctx.fillText('游戏结束!', canvasWidth / 2, canvasHeight / 2 - Math.floor(canvasHeight / 20));
+  this.ctx.font = `${Math.floor(canvasWidth / 12)}px Arial`; // 动态调整较小文字
+  this.ctx.fillText(`最终得分: ${this.score}`, canvasWidth / 2, canvasHeight / 2 + Math.floor(canvasHeight / 20));
+  this.ctx.fillText('按开始游戏重新开始', canvasWidth / 2, canvasHeight / 2 + Math.floor(canvasHeight / 10));
+  this.isPlaying = false;
+}
   
       initEventListeners() {
         document.addEventListener('keydown', this.handleKeyDown.bind(this));
