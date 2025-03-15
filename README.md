@@ -1,6 +1,6 @@
 
 # 四季风景 & 贪吃蛇
-![项目横幅](https://github.com/DivineBrightness/test-Greedy-Snake/blob/main/image/project_banner.png)  
+![项目横幅](image/project_banner.png)  
 *一个展示像素艺术四季风景并集成贪吃蛇小游戏的 Web 项目*
 
 ---
@@ -53,9 +53,9 @@
 ## 屏幕截图
 
 - 四季风景展示：  
-  ![春季截图](https://github.com/DivineBrightness/test-Greedy-Snake/blob/main/image/spring.png)  
+  ![春季截图](image/spring.png)  
 - 贪吃蛇游戏：  
-  ![游戏截图](https://github.com/DivineBrightness/test-Greedy-Snake/blob/main/image/snake.png)
+  ![游戏截图](image/snake.png)
 
 ## 贡献指南
 
