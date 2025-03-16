@@ -1132,6 +1132,15 @@
   
       draw() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        // 绘制背景方格
+        this.ctx.strokeStyle = '#e0e0e0';
+          this.ctx.lineWidth = 0.5;
+          for (let x = 0; x < this.cols; x++) {
+            for (let y = 0; y < this.rows; y++) {
+              this.ctx.strokeRect(x * this.blockSize, y * this.blockSize, this.blockSize, this.blockSize);
+            }
+          }
+
         for (let y = 0; y < this.rows; y++) {
           for (let x = 0; x < this.cols; x++) {
             if (this.grid[y][x]) {
