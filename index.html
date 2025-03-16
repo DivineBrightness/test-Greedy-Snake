@@ -244,7 +244,7 @@
         margin: 0 20px; /* 下按钮与左右按钮的间距 */
       }
       .game-instructions p:first-child::after {
-        content: "，或使用下方按钮控制";
+        content: "或使用下方按钮控制";
       }
     }
   </style>
@@ -880,6 +880,15 @@
                   btn.addEventListener('touchmove', (e) => e.preventDefault());
               }
           });
+          const dropBtn = document.getElementById('drop-btn');
+          if (dropBtn) {
+            dropBtn.addEventListener('touchstart', (e) => {
+              e.preventDefault();
+              if (this.isPlaying && !this.gameOver && !this.paused) {
+                this.moveBottom();
+              }
+            });
+          }
       }
 
 
@@ -1278,6 +1287,9 @@
               <button class="control-btn direction-btn" id="tetris-left-btn">←</button>
               <button class="control-btn direction-btn" id="tetris-down-btn">↓</button>
               <button class="control-btn direction-btn" id="tetris-right-btn">→</button>
+            </div>
+            <div class="control-row">
+              <button class="control-btn direction-btn" id="drop-btn">↯</button>
             </div>
           </div>
           <div class="game-instructions">
