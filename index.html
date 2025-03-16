@@ -393,7 +393,7 @@
   </div>
   
   <script>
-    const API_URL = "https://331600.xyz/"; // 替换为你的 Workers URL
+    const API_URL = "https://331600.xyz"; // 替换为你的 Workers URL
 
     async function submitScore(game, playerName, score) {
       const leaderboardElement = document.getElementById(game + "-leaderboard-content");
@@ -421,18 +421,32 @@
       const leaderboardElement = document.getElementById(elementId);
       leaderboardElement.innerHTML = "<p>加载中...</p>";
       try {
-        const response = await fetch(`${API_URL}/leaderboard?game=${game}`);
+        const url = `${API_URL}/leaderboard?game=${game}`;
+        console.log("请求 URL:", url); // 检查 URL
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' }
+        });
+        console.log("响应状态:", response.status); // 检查状态码
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
         const leaderboard = await response.json();
-        if (!response.ok) throw new Error(leaderboard.error || "获取失败");
-        if (leaderboard.length > 0) {
-          leaderboardElement.innerHTML = leaderboard
-            .map((entry, index) => `<p>${index + 1}. ${entry.player_name} - ${entry.score}</p>`)
-            .join("");
+        console.log("响应数据:", leaderboard); // 检查返回数据
+        if (Array.isArray(leaderboard)) {
+          if (leaderboard.length > 0) {
+            leaderboardElement.innerHTML = leaderboard
+              .map((entry, index) => `<p>${index + 1}. ${entry.player_name} - ${entry.score}</p>`)
+              .join("");
+          } else {
+            leaderboardElement.innerHTML = "<p>暂无排行榜数据</p>";
+          }
         } else {
-          leaderboardElement.innerHTML = "<p>暂无排行榜数据</p>";
+          throw new Error("返回数据不是数组");
         }
       } catch (e) {
         leaderboardElement.innerHTML = `<p>加载失败：${e.message}</p>`;
+        console.error("加载失败详情:", e);
       }
     }
 
