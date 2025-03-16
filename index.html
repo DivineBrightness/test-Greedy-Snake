@@ -5,6 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>四季风景 & 贪吃蛇</title>
   <style>
+    #snake-leaderboard-content,
+    #tetris-leaderboard-content {
+      background-color: #f9f9f9;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    #snake-leaderboard-content h3,
+    #tetris-leaderboard-content h3 {
+      margin-bottom: 10px;
+    }
+    #snake-leaderboard-content p,
+    #tetris-leaderboard-content p {
+      margin: 5px 0;
+    }
     * {
       margin: 0;
       padding: 0;
@@ -284,6 +299,24 @@
         <div class="game-high-score">最高分: <span id="high-score">0</span></div>
       </div>
       <canvas id="game-canvas" width="400" height="400"></canvas>
+
+      <!-- 添加排行榜容器 -->
+      <div id="snake-leaderboard-content" style="margin-top: 20px; text-align: left;">
+        <h3>排行榜（前三名）</h3>
+        <p>加载中...</p>
+      </div>
+
+      <div id="snake-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center;">
+        <div style="background: #fff; padding: 20px; border-radius: 10px; text-align: center;">
+          <h3>选择你的名字</h3>
+          <select id="snake-player-select">
+            <option value="">请选择</option>
+            <!-- 选项将由 JavaScript 动态生成 -->
+          </select>
+          <button id="snake-submit-btn" style="margin-top: 10px;">提交分数</button>
+        </div>
+      </div>
+
       <div class="game-controls">
         <button class="control-btn" id="start-btn">开始游戏</button>
         <button class="control-btn" id="pause-btn">暂停</button>
@@ -312,12 +345,26 @@
         <div class="game-high-score">最高分: <span id="tetris-high-score">0</span></div>
         <div class="level">等级: <span id="tetris-level">1</span></div>
       </div>
+      <div id="tetris-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center;">
+        <div style="background: #fff; padding: 20px; border-radius: 10px; text-align: center;">
+          <h3>选择你的名字</h3>
+          <select id="tetris-player-select">
+            <option value="">请选择</option>
+          </select>
+          <button id="tetris-submit-btn" style="margin-top: 10px;">提交分数</button>
+        </div>
+      </div>
       <div class="tetris-container">
         <canvas id="tetris-canvas" width="240" height="400"></canvas>
         <div class="next-piece">
           <h3>下一个方块</h3>
           <canvas id="next-piece-canvas" width="100" height="100"></canvas>
         </div>
+      </div>
+      <!-- 添加排行榜容器 -->
+      <div id="tetris-leaderboard-content" style="margin-top: 20px; text-align: left;">
+        <h3>排行榜（前三名）</h3>
+        <p>加载中...</p>
       </div>
       <div class="game-controls">
         <button class="control-btn" id="tetris-start-btn">开始游戏</button>
@@ -346,6 +393,67 @@
   </div>
   
   <script>
+    const API_URL = "https://331600.xyz/"; // 替换为你的 Workers URL
+
+    async function submitScore(game, playerName, score) {
+      const leaderboardElement = document.getElementById(game + "-leaderboard-content");
+      const submitBtn = document.getElementById(game + "-submit-btn");
+      submitBtn.disabled = true; // 禁用按钮
+      leaderboardElement.innerHTML = "<p>提交中...</p>";
+      try {
+        const response = await fetch(`${API_URL}/submit-score`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ game, player_name: playerName, score })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "提交失败");
+        leaderboardElement.innerHTML = "<p>提交成功！</p>";
+        await loadLeaderboard(game, game + "-leaderboard-content"); // 刷新排行榜
+      } catch (e) {
+        leaderboardElement.innerHTML = `<p>提交失败：${e.message}</p>`;
+      } finally {
+        submitBtn.disabled = false; // 启用按钮
+      }
+    }
+
+    async function loadLeaderboard(game, elementId) {
+      const leaderboardElement = document.getElementById(elementId);
+      leaderboardElement.innerHTML = "<p>加载中...</p>";
+      try {
+        const response = await fetch(`${API_URL}/leaderboard?game=${game}`);
+        const leaderboard = await response.json();
+        if (!response.ok) throw new Error(leaderboard.error || "获取失败");
+        if (leaderboard.length > 0) {
+          leaderboardElement.innerHTML = leaderboard
+            .map((entry, index) => `<p>${index + 1}. ${entry.player_name} - ${entry.score}</p>`)
+            .join("");
+        } else {
+          leaderboardElement.innerHTML = "<p>暂无排行榜数据</p>";
+        }
+      } catch (e) {
+        leaderboardElement.innerHTML = `<p>加载失败：${e.message}</p>`;
+      }
+    }
+
+
+    const tianGangCharacters = [
+      "宋江", "卢俊义", "吴用", "公孙胜", "关胜", "林冲", "秦明", "呼延灼", "花荣", "柴进",
+      "李应", "朱仝", "鲁智深", "武松", "董平", "张清", "杨志", "徐宁", "索超", "戴宗",
+      "刘唐", "李逵", "史进", "穆弘", "雷横", "李俊", "阮小二", "张横", "阮小五", "张顺",
+      "阮小七", "杨雄", "石秀", "解珍", "解宝", "燕青"
+    ];
+
+    function populateSelect(selectId) {
+      const select = document.getElementById(selectId);
+      tianGangCharacters.forEach(character => {
+        const option = document.createElement('option');
+        option.value = character;
+        option.textContent = character;
+        select.appendChild(option);
+      });
+    }
+
     function createPixel(x, y, color) {
       const pixel = document.createElement('div');
       pixel.className = 'pixel';
@@ -600,6 +708,7 @@
         this.highScoreElement = document.getElementById('high-score');
         this.highScoreElement.textContent = this.highScore;
         this.initEventListeners();
+        loadLeaderboard("snake", "snake-leaderboard-content");
       }
       
       initEventListeners() {
@@ -699,9 +808,20 @@
         this.ctx.fillStyle = '#333';
         this.ctx.textAlign = 'center';
         this.ctx.fillText('游戏结束!', this.width / 2, this.height / 2 - 15);
-        this.ctx.font = '20px Arial';
         this.ctx.fillText(`最终得分: ${this.score}`, this.width / 2, this.height / 2 + 15);
         this.ctx.fillText('按开始游戏重新开始', this.width / 2, this.height / 2 + 45);
+        const modal = document.getElementById('snake-modal');
+        modal.style.display = 'flex';
+        document.getElementById('snake-submit-btn').onclick = async () => {
+          const playerName = document.getElementById('snake-player-select').value;
+          if (playerName) {
+            await submitScore("snake", playerName, this.score); // 提交分数
+            await loadLeaderboard("snake", "snake-leaderboard-content"); // 刷新排行榜
+            modal.style.display = 'none'; // 关闭模态框
+          } else {
+            alert("请选择一个名字");
+          }
+        };
       }
       
       move() {
@@ -811,6 +931,8 @@
         if (this.speed < 100) this.speed = 100;
         this.initEventListeners();
         this.draw();
+        // 添加加载排行榜
+        loadLeaderboard("tetris", "tetris-leaderboard-content");
       }
 
       initMobileControls() {
@@ -1162,7 +1284,6 @@
       }
   
       drawGameOver() {
-        // 使用canvas的实际像素尺寸
         const canvasWidth = this.canvas.width;
         const canvasHeight = this.canvas.height;
         this.ctx.clearRect(0, 0, canvasWidth, canvasHeight);
@@ -1174,7 +1295,19 @@
         this.ctx.fillText(`最终得分: ${this.score}`, canvasWidth / 2, canvasHeight / 2 + Math.floor(canvasHeight / 20));
         this.ctx.fillText('按开始游戏重新开始', canvasWidth / 2, canvasHeight / 2 + Math.floor(canvasHeight / 10));
         this.isPlaying = false;
-        this.gameOver = true; // 确保状态正确设置
+        this.gameOver = true;
+        const modal = document.getElementById('tetris-modal');
+        modal.style.display = 'flex';
+        document.getElementById('tetris-submit-btn').onclick = async () => {
+          const playerName = document.getElementById('tetris-player-select').value;
+          if (playerName) {
+            await submitScore("tetris", playerName, this.score); // 提交分数
+            await loadLeaderboard("tetris", "tetris-leaderboard-content"); // 刷新排行榜
+            modal.style.display = 'none'; // 关闭模态框
+          } else {
+            alert("请选择一个名字");
+          }
+        };
       }
   
       initEventListeners() {
@@ -1283,6 +1416,13 @@
               <canvas id="next-piece-canvas" width="100" height="100" style="border: 1px solid #ccc; border-radius: 5px; background-color: #f8f8f8;"></canvas>
             </div>
           </div>
+
+          <!-- 添加排行榜容器 -->
+          <div id="tetris-leaderboard-content" style="margin-top: 20px; text-align: left;">
+            <h3>排行榜（前三名）</h3>
+            <p>加载中...</p>
+          </div>
+
           <div class="game-controls">
             <button class="control-btn" id="tetris-start-btn">开始游戏</button>
             <button class="control-btn" id="tetris-pause-btn">暂停</button>
@@ -1333,6 +1473,8 @@
     });
 
     document.addEventListener('DOMContentLoaded', function() {
+      populateSelect('snake-player-select');
+      populateSelect('tetris-player-select');
       console.log('DOM 已加载');
       initializeScenes();
       changeSeason('spring');
