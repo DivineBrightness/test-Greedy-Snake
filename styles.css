@@ -1,19 +1,46 @@
 /* styles.css */
-#snake-leaderboard-content,
-#tetris-leaderboard-content {
+#snake-leaderboard-content {
+  position: absolute;
+  top: 100%; /* 位于 game-info 下方 */
+  left: 50%;
+  transform: translateX(-50%);
   background-color: #f9f9f9;
   padding: 10px;
   border-radius: 5px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 10; /* 确保在其他元素之上 */
+  width: 200px; /* 固定宽度，避免过宽 */
+  text-align: center;
 }
-#snake-leaderboard-content h3,
+
+#snake-leaderboard-content h3 {
+  margin-bottom: 8px;
+  font-size: 16px;
+}
+
+#snake-leaderboard-content p {
+  margin: 4px 0;
+  font-size: 14px;
+}
+
+#tetris-leaderboard-content {
+  background-color: #f9f9f9;
+  padding: 8px; /* 稍微减小内边距以适应空间 */
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  width: 100%; /* 占满 next-piece 的宽度 */
+  font-size: 14px; /* 缩小字体以适应空间 */
+}
+
 #tetris-leaderboard-content h3 {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+  font-size: 16px; /* 调整标题大小 */
 }
-#snake-leaderboard-content p,
+
 #tetris-leaderboard-content p {
-  margin: 5px 0;
+  margin: 4px 0;
 }
+
 * {
   margin: 0;
   padding: 0;
@@ -41,44 +68,8 @@ h1 {
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
-.season-container {
-  height: 500px;
-  margin: 40px 0;
-  position: relative;
-  overflow: hidden;
-  border-radius: 20px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-}
-.pixel-art {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  transition: transform 1s ease, opacity 1s ease;
-  opacity: 0;
-  transform: translateX(100%);
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-.pixel-art.active {
-  opacity: 1;
-  transform: translateX(0);
-}
-.pixel-grid {
-  display: grid;
-  grid-template-columns: repeat(32, 1fr);
-  grid-template-rows: repeat(32, 1fr);
-  width: 400px;
-  height: 400px;
-  margin: 0 auto;
-}
-.pixel {
-  width: 100%;
-  height: 100%;
-}
+
+
 .season-controls {
   display: flex;
   justify-content: center;
@@ -126,7 +117,7 @@ body.autumn { background-color: #fff5eb; }
 body.winter { background-color: #f0f8ff; }
 #snake-game, #tetris-game {
   display: none;
-  margin: 0 auto;
+  margin: 10px auto 0; /* 顶部外边距设为 20px，靠上一点 */
   max-width: 500px;
 }
 #game-canvas, #tetris-canvas {
@@ -139,9 +130,11 @@ body.winter { background-color: #f0f8ff; }
 .game-info {
   display: flex;
   justify-content: space-between;
+  align-items: center; /* 垂直居中对齐 */
   margin-bottom: 20px;
+  position: relative; /* 为排行榜定位提供参考 */
 }
-.game-score {
+.game-score, .game-high-score {
   font-size: 24px;
   font-weight: bold;
   color: #333;
@@ -178,8 +171,6 @@ body.winter { background-color: #f0f8ff; }
 @media (max-width: 768px) {
   h1 { font-size: 36px; }
   .season-controls { flex-wrap: wrap; }
-  .pixel-grid { width: 300px; height: 300px; }
-  .season-container { height: 400px; }
   #game-canvas { width: 100%; height: auto; }
 }
 .mobile-controls {
@@ -255,9 +246,54 @@ body.winter { background-color: #f0f8ff; }
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 120px; /* 稍微加宽以容纳排行榜 */
 }
 #next-piece-canvas {
   border: 1px solid #ccc;
   border-radius: 5px;
   background-color: #f8f8f8;
+  margin-bottom: 10px; /* 与排行榜之间增加间距 */
+}
+
+.game-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px; /* 按钮之间的间距 */
+  margin-top: 20px;
+}
+
+.game-btn {
+  padding: 15px 30px;
+  border: none;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: linear-gradient(45deg, #43c6ac, #f8ffae);
+  color: #1d1d1f;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.game-btn:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.leaderboard-toggle-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+  color: white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.leaderboard-toggle-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
