@@ -142,7 +142,7 @@ const toggleGameView = (showGameId, hideElements) => {
         }, { once: true });
     });
   
-    // 同样修改俄罗斯方块游戏代码
+    // 修复俄罗斯方块游戏实例重复创建问题
     document.getElementById('tetris-select-btn').addEventListener('click', () => {
         console.log('进入俄罗斯方块游戏');
         toggleGameView('tetris-game', true);
@@ -157,8 +157,6 @@ const toggleGameView = (showGameId, hideElements) => {
         
         // 只创建一个实例
         currentTetrisGame = new TetrisGame();
-        
-        const game = new TetrisGame();
         
         // 为俄罗斯方块添加排行榜切换功能
         const tetrisLeaderboardBtn = document.getElementById('tetris-leaderboard-btn');
@@ -186,7 +184,8 @@ const toggleGameView = (showGameId, hideElements) => {
         loadLeaderboard("tetris", "tetris-leaderboard-content");
         
         document.getElementById('tetris-back-btn').addEventListener('click', () => {
-            if (game.intervalId) clearInterval(game.intervalId);
+            // 使用currentTetrisGame而不是局部变量game
+            if (currentTetrisGame && currentTetrisGame.intervalId) clearInterval(currentTetrisGame.intervalId);
             console.log('返回游戏选择页面');
             toggleGameView('games-selection', true);
         }, { once: true });
