@@ -102,7 +102,7 @@ drawGameOver() {
   
   // 更新模态框内容
   modalContent.innerHTML = `
-    <h2 style="color: #CC0000; margin-bottom: 15px; font-size: 24px;">游戏结束!</h2>
+    <h2 style="color:rgb(3, 93, 61); margin-bottom: 15px; font-size: 24px;">游戏结束!</h2>
     <p style="font-size: 20px; margin-bottom: 20px;">最终得分: <strong>${this.score}</strong></p>
     <p style="margin-bottom: 15px;">选择你的名字提交成绩:</p>
     <select id="snake-player-select"></select>
