@@ -22,6 +22,14 @@ function changeSeason(season) {
   if (seasonBtn) {
     seasonBtn.classList.add('active');
     document.body.className = season;
+    
+    // 添加动画效果，让图标淡出后淡入
+    const decoration = document.querySelector('.seasonal-decoration');
+    decoration.style.opacity = 0;
+    
+    setTimeout(() => {
+      decoration.style.opacity = 0.8;
+    }, 300);
   } else {
     console.error('未找到季节按钮：', season);
   }

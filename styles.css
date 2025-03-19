@@ -631,3 +631,60 @@ button:focus {
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
   }
 }
+
+/* 修改季节性装饰图标位置 */
+.seasonal-decoration {
+  position: fixed;
+  top: 20px; /* 改为 top 而不是 bottom */
+  right: 20px; /* 改为 right 而不是 left */
+  width: 80px;
+  height: 80px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.8;
+  pointer-events: none; /* 确保不会干扰用户交互 */
+  transition: all 0.5s ease;
+  z-index: 10;
+}
+
+body.spring .seasonal-decoration {
+  background-image: url('./image/flower\ \(1\).svg');
+  animation: float 3s ease-in-out infinite;
+}
+
+body.summer .seasonal-decoration {
+  background-image: url('./image/summer-beach.svg');
+  animation: sway 4s ease-in-out infinite;
+}
+
+body.autumn .seasonal-decoration {
+  background-image: url('./image/leaves.svg');
+  animation: fall 7s ease-in-out infinite;
+}
+
+body.winter .seasonal-decoration {
+  background-image: url('./image/winter.svg');
+  animation: snow 5s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes sway {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+}
+
+@keyframes fall {
+  0% { transform: translateY(-10px) rotate(0deg); }
+  50% { transform: translateY(0) rotate(5deg); }
+  100% { transform: translateY(-10px) rotate(0deg); }
+}
+
+@keyframes snow {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.8; }
+  50% { transform: translateY(-8px) scale(1.05); opacity: 1; }
+}

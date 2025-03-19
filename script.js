@@ -15,7 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
   
-    // 修改切换视图函数，添加游戏选择页面的支持
     const toggleGameView = (showGameId, hideElements) => {
         document.querySelector('.season-controls').style.display = hideElements ? 'none' : 'flex';
         document.getElementById('games-btn').style.display = hideElements ? 'none' : 'inline-block';
@@ -24,6 +23,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('tetris-game').style.display = (showGameId === 'tetris-game') ? 'block' : 'none';
         const pageTitle = document.getElementById('page-title') || document.querySelector('.container h1');
         pageTitle.style.display = hideElements ? 'none' : 'block';
+        
+        // 根据是否显示游戏来决定是否显示季节装饰
+        const decoration = document.querySelector('.seasonal-decoration');
+        if (decoration) {
+            decoration.style.display = hideElements ? (showGameId === 'games-selection' ? 'block' : 'none') : 'block';
+        }
     };
   
     // 保存事件处理函数的引用，以便后续移除
