@@ -91,26 +91,40 @@ class SnakeGame {
       this.drawBlock(this.food.x, this.food.y, '#FF5722');
     }
   
-    drawGameOver() {
-      this.ctx.font = '30px Arial';
-      this.ctx.fillStyle = '#333';
-      this.ctx.textAlign = 'center';
-      this.ctx.fillText('游戏结束!', this.width / 2, this.height / 2 - 15);
-      this.ctx.fillText(`最终得分: ${this.score}`, this.width / 2, this.height / 2 + 15);
-      this.ctx.fillText('按开始游戏重新开始', this.width / 2, this.height / 2 + 45);
-      const modal = document.getElementById('snake-modal');
-      modal.style.display = 'flex';
-      document.getElementById('snake-submit-btn').onclick = async () => {
-        const playerName = document.getElementById('snake-player-select').value;
-        if (playerName) {
-          await submitScore("snake", playerName, this.score);
-          await loadLeaderboard("snake", "snake-leaderboard-content");
-          modal.style.display = 'none';
-        } else {
-          alert("请选择一个名字");
-        }
-      };
+    // 修改 drawGameOver 方法
+drawGameOver() {
+  // 清除Canvas
+  this.ctx.clearRect(0, 0, this.width, this.height);
+  
+  // 显示模态框并更新其内容
+  const modal = document.getElementById('snake-modal');
+  const modalContent = modal.querySelector('div');
+  
+  // 更新模态框内容
+  modalContent.innerHTML = `
+    <h2 style="color: #CC0000; margin-bottom: 15px; font-size: 24px;">游戏结束!</h2>
+    <p style="font-size: 20px; margin-bottom: 20px;">最终得分: <strong>${this.score}</strong></p>
+    <p style="margin-bottom: 15px;">选择你的名字提交成绩:</p>
+    <select id="snake-player-select"></select>
+    <button id="snake-submit-btn" class="control-btn">提交成绩</button>
+  `;
+  
+  // 重新填充玩家选择器
+  populateSelect('snake-player-select');
+  
+  modal.style.display = 'flex';
+  
+  document.getElementById('snake-submit-btn').onclick = async () => {
+    const playerName = document.getElementById('snake-player-select').value;
+    if (playerName) {
+      await submitScore("snake", playerName, this.score);
+      await loadLeaderboard("snake", "snake-leaderboard-content");
+      modal.style.display = 'none';
+    } else {
+      alert("请选择一个名字");
     }
+  };
+}
   
     move() {
       if (this.paused || this.gameOver) return;

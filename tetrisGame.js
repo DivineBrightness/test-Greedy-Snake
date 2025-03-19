@@ -313,40 +313,55 @@ class TetrisGame {
       this.drawNextShape();
     }
   
-    drawGameOver() {
-      if (this.hasDrawnGameOver) return;
-      this.hasDrawnGameOver = true;
-      const canvasWidth = this.canvas.width;
-      const canvasHeight = this.canvas.height;
-      this.ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-      this.ctx.font = `${Math.floor(canvasWidth / 8)}px Arial`;
-      this.ctx.fillStyle = '#333';
-      this.ctx.textAlign = 'center';
-      this.ctx.fillText('游戏结束!', canvasWidth / 2, canvasHeight / 2 - Math.floor(canvasHeight / 20));
-      this.ctx.font = `${Math.floor(canvasWidth / 12)}px Arial`;
-      this.ctx.fillText(`最终得分: ${this.score}`, canvasWidth / 2, canvasHeight / 2 + Math.floor(canvasHeight / 20));
-      this.ctx.fillText('按开始游戏重新开始', canvasWidth / 2, canvasHeight / 2 + Math.floor(canvasHeight / 10));
-      this.isPlaying = false;
-      this.gameOver = true;
-      const modal = document.getElementById('tetris-modal');
-      if (!modal) return console.error("未找到 tetris-modal 元素");
-      console.log("显示 tetris-modal");
-      modal.style.display = 'flex';
-      const submitBtn = document.getElementById('tetris-submit-btn');
-      if (!submitBtn) return console.error("未找到 tetris-submit-btn 元素");
-      submitBtn.onclick = async () => {
-        const playerName = document.getElementById('tetris-player-select').value;
-        if (playerName) {
-          console.log(`提交分数: game=tetris, player=${playerName}, score=${this.score}`);
-          await submitScore("tetris", playerName, this.score);
-          await loadLeaderboard("tetris", "tetris-leaderboard-content");
-          console.log("关闭 tetris-modal");
-          modal.style.display = 'none';
-        } else {
-          alert("请选择一个名字");
-        }
-      };
+    // 在 drawGameOver 方法中进行修改
+drawGameOver() {
+  if (this.hasDrawnGameOver) return;
+  this.hasDrawnGameOver = true;
+  
+  // 不再在Canvas上绘制文字
+  // 这里只清除Canvas即可
+  this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  
+  this.isPlaying = false;
+  this.gameOver = true;
+  
+  // 显示模态框并更新其内容
+  const modal = document.getElementById('tetris-modal');
+  if (!modal) return console.error("未找到 tetris-modal 元素");
+  
+  // 更新模态框内容
+  const modalContent = modal.querySelector('div');
+  modalContent.innerHTML = `
+    <h2 style="color: #CC0000; margin-bottom: 15px; font-size: 24px;">游戏结束!</h2>
+    <p style="font-size: 20px; margin-bottom: 20px;">最终得分: <strong>${this.score}</strong></p>
+    <p style="margin-bottom: 15px;">选择你的名字提交成绩:</p>
+    <select id="tetris-player-select"></select>
+    <button id="tetris-submit-btn" class="control-btn">提交成绩</button>
+  `;
+  
+  // 重新填充玩家选择器
+  populateSelect('tetris-player-select');
+  
+  console.log("显示 tetris-modal");
+  modal.style.display = 'flex';
+  
+  // 设置提交按钮事件
+  const submitBtn = document.getElementById('tetris-submit-btn');
+  if (!submitBtn) return console.error("未找到 tetris-submit-btn 元素");
+  
+  submitBtn.onclick = async () => {
+    const playerName = document.getElementById('tetris-player-select').value;
+    if (playerName) {
+      console.log(`提交分数: game=tetris, player=${playerName}, score=${this.score}`);
+      await submitScore("tetris", playerName, this.score);
+      await loadLeaderboard("tetris", "tetris-leaderboard-content");
+      console.log("关闭 tetris-modal");
+      modal.style.display = 'none';
+    } else {
+      alert("请选择一个名字");
     }
+  };
+}
   
     initEventListeners() {
       document.addEventListener('keydown', this.handleKeyDown.bind(this));
