@@ -727,9 +727,10 @@ body.winter .seasonal-decoration {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* 调整排行榜面板的 z-index，确保它在游戏界面之上 */
+/* 修改 leaderboard-panel 样式确保显示正确 */
 .leaderboard-panel {
-  position: fixed; /* 修改为固定定位，确保在整个视口中显示 */
+  display: none; /* 默认隐藏 */
+  position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -741,7 +742,7 @@ body.winter .seasonal-decoration {
   -webkit-backdrop-filter: blur(10px);
   border-radius: 15px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-  z-index: 2000; /* 增加 z-index 值，确保显示在所有游戏元素上方 */
+  z-index: 2000;
   overflow: hidden;
   animation: slideIn 0.3s ease-out;
 }
@@ -795,9 +796,10 @@ body.winter .seasonal-decoration {
 }
 
 
+/* 确保表格主体可以滚动但不影响整体布局 */
 .leaderboard-table {
+  max-height: calc(80vh - 60px);
   overflow-y: auto;
-  max-height: calc(80vh - 50px);
 }
 
 .leaderboard-row {
@@ -894,5 +896,22 @@ body.winter .seasonal-decoration {
   .date {
     display: none; /* 在小屏幕上隐藏日期 */
   }
+}
+
+/* 添加提交状态信息的样式 */
+.submit-status {
+  margin-top: 15px;
+  padding: 10px;
+  text-align: center;
+  font-weight: 500;
+  color: #2980b9;
+  background-color: rgba(41, 128, 185, 0.1);
+  border-radius: 5px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 

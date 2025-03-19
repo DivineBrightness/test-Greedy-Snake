@@ -446,13 +446,13 @@ drawGameOver() {
     if (playerName) {
       console.log(`提交分数: game=tetris, player=${playerName}, score=${this.score}`);
       await submitScore("tetris", playerName, this.score);
-      await loadLeaderboard("tetris", "tetris-leaderboard-content");
       
-      // 关闭模态框
+      // 这里不需要再额外调用loadLeaderboard，因为submitScore函数会处理
+      // loadLeaderboard 函数已经被修改为确保HTML结构一致
+      
+      // 关闭模态框并重置游戏
       console.log("关闭 tetris-modal");
       modal.style.display = 'none';
-      
-      // 完全重置游戏
       this.fullReset();
       
       // 启用所有控制按钮

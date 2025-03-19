@@ -1,29 +1,62 @@
 // leaderboard.js
 const API_URL = "https://331600.xyz";
 
+// 更新 submitScore 函数，保持HTML结构不变
 async function submitScore(game, playerName, score) {
   const leaderboardElement = document.getElementById(game + "-leaderboard-content");
   const submitBtn = document.getElementById(game + "-submit-btn");
   submitBtn.disabled = true;
-  leaderboardElement.innerHTML = "<p>提交中...</p>";
+  
+  // 显示提交状态，但不修改HTML结构
+  const statusElement = document.createElement('div');
+  statusElement.className = 'submit-status';
+  statusElement.textContent = "提交中...";
+  
+  // 找到模态框内容区域
+  const modalContent = submitBtn.closest('div');
+  if (modalContent) {
+    // 添加状态元素到模态框
+    modalContent.appendChild(statusElement);
+  }
+  
   try {
     const response = await fetch(`${API_URL}/submit-score`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ game, player_name: playerName, score })
     });
+    
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || "提交失败");
-    leaderboardElement.innerHTML = "<p>提交成功！</p>";
+    
+    // 更新状态信息
+    statusElement.textContent = "提交成功！";
+    statusElement.style.color = "green";
+    
+    // 重新加载排行榜数据
     await loadLeaderboard(game, game + "-leaderboard-content");
+    
+    // 3秒后关闭模态框
+    setTimeout(() => {
+      const modal = document.getElementById(game + "-modal");
+      if (modal) modal.style.display = 'none';
+      
+      // 移除状态信息
+      if (statusElement.parentNode) {
+        statusElement.parentNode.removeChild(statusElement);
+      }
+    }, 3000);
+    
   } catch (e) {
-    leaderboardElement.innerHTML = `<p>提交失败：${e.message}</p>`;
+    // 显示错误但不改变HTML结构
+    statusElement.textContent = `提交失败：${e.message}`;
+    statusElement.style.color = "red";
   } finally {
     submitBtn.disabled = false;
   }
 }
 
-// 修正 loadLeaderboard 函数中的API调用路径，使其与后端API路径匹配
+// 更新 loadLeaderboard 函数确保HTML结构一致
 async function loadLeaderboard(game, elementId) {
   const leaderboardElement = document.getElementById(elementId);
   if (!leaderboardElement) {
@@ -32,16 +65,41 @@ async function loadLeaderboard(game, elementId) {
   }
   
   try {
-    // 显示加载提示
-    const leaderboardBody = leaderboardElement.querySelector('.leaderboard-body');
-    if (leaderboardBody) {
-      leaderboardBody.innerHTML = '<div class="loading">加载中...</div>';
+    // 首先确保排行榜元素具有正确的HTML结构
+    if (!leaderboardElement.querySelector('.leaderboard-body')) {
+      // 创建美化的HTML结构
+      leaderboardElement.innerHTML = `
+        <div class="leaderboard-header">
+          <h3>${game === 'snake' ? '贪吃蛇' : '俄罗斯方块'} - 排行榜</h3>
+          <button class="leaderboard-close-btn">&times;</button>
+        </div>
+        <div class="leaderboard-table">
+          <div class="leaderboard-row header">
+            <div class="rank">排名</div>
+            <div class="player">玩家</div>
+            <div class="score">分数</div>
+            <div class="date">日期</div>
+          </div>
+          <div class="leaderboard-body">
+            <div class="loading">加载中...</div>
+          </div>
+        </div>
+      `;
+      
+      // 重新添加关闭按钮事件
+      const closeBtn = leaderboardElement.querySelector('.leaderboard-close-btn');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          leaderboardElement.style.display = 'none';
+        });
+      }
     } else {
-      // 如果没有找到.leaderboard-body元素，则直接在整个容器中显示加载信息
-      leaderboardElement.innerHTML = '<div class="loading">加载中...</div>';
+      // 如果已经有正确结构，只更新加载中提示
+      const leaderboardBody = leaderboardElement.querySelector('.leaderboard-body');
+      leaderboardBody.innerHTML = '<div class="loading">加载中...</div>';
     }
     
-    // 修改API路径，使用正确的路径 - /leaderboard?game=${game}
+    // 获取数据
     const response = await fetch(`${API_URL}/leaderboard?game=${game}`);
     
     if (!response.ok) {
@@ -49,99 +107,62 @@ async function loadLeaderboard(game, elementId) {
     }
     
     const scores = await response.json();
-    return processScores(scores, game, leaderboardElement, leaderboardBody);
+    const leaderboardBody = leaderboardElement.querySelector('.leaderboard-body');
+    
+    // 使用统一的处理函数
+    renderScores(scores, game, leaderboardBody);
     
   } catch (error) {
     console.error('获取排行榜数据失败:', error);
     
-    // 适应两种可能的DOM结构
     const leaderboardBody = leaderboardElement.querySelector('.leaderboard-body');
     if (leaderboardBody) {
       leaderboardBody.innerHTML = `<div class="error">获取排行榜数据失败: ${error.message}</div>`;
-    } else {
-      leaderboardElement.innerHTML = `<div class="error">获取排行榜数据失败: ${error.message}<br>请检查API是否可用</div>`;
-    }
-    
-    // 模拟数据，确保界面依然可用
-    const mockScores = [
-      { player_name: "玩家1", score: 100 },
-      { player_name: "玩家2", score: 80 },
-      { player_name: "玩家3", score: 60 }
-    ];
-    
-    // 如果API失败则使用模拟数据
-    setTimeout(() => {
-      processScores(mockScores, game, leaderboardElement, leaderboardBody);
       
-      // 添加提示说明这是模拟数据
-      if (leaderboardBody) {
+      // 模拟数据，确保界面依然可用
+      const mockScores = [
+        { player_name: "玩家1", score: 100 },
+        { player_name: "玩家2", score: 80 },
+        { player_name: "玩家3", score: 60 }
+      ];
+      
+      // 如果API失败则使用模拟数据
+      setTimeout(() => {
+        renderScores(mockScores, game, leaderboardBody);
         leaderboardBody.insertAdjacentHTML('afterbegin', '<div class="mock-data-notice">使用模拟数据 (API连接失败)</div>');
-      } else {
-        leaderboardElement.insertAdjacentHTML('afterbegin', '<div class="mock-data-notice">使用模拟数据 (API连接失败)</div>');
-      }
-    }, 1000);
+      }, 1000);
+    }
   }
 }
 
-// 更新 processScores 函数以处理没有日期字段的数据
-function processScores(scores, game, leaderboardElement, leaderboardBody) {
+// 创建新的统一渲染函数
+function renderScores(scores, game, leaderboardBody) {
   // 检查是否返回了有效数据
   if (!scores || !Array.isArray(scores) || scores.length === 0) {
-    if (leaderboardBody) {
-      leaderboardBody.innerHTML = '<div class="no-data">暂无排行数据</div>';
-    } else {
-      leaderboardElement.innerHTML = '<div class="no-data">暂无排行数据</div>';
-    }
+    leaderboardBody.innerHTML = '<div class="no-data">暂无排行数据</div>';
     return;
   }
   
-  // 如果返回了旧格式的数据，进行转换处理
-  if (leaderboardBody) {
-    // 使用新的美化HTML结构
-    let html = '';
-    scores.forEach((score, index) => {
-      // 添加排名样式
-      let rankClass = '';
-      if (index === 0) rankClass = 'rank-1';
-      else if (index === 1) rankClass = 'rank-2';
-      else if (index === 2) rankClass = 'rank-3';
-      
-      html += `
-        <div class="leaderboard-row">
-          <div class="rank ${rankClass}">${index + 1}</div>
-          <div class="player">${score.player_name || score.player || '未知玩家'}</div>
-          <div class="score">${score.score}</div>
-          <div class="date">${new Date().toLocaleDateString('zh-CN')}</div>
-        </div>
-      `;
-    });
+  // 渲染排行榜内容
+  let html = '';
+  scores.forEach((score, index) => {
+    // 添加排名样式
+    let rankClass = '';
+    if (index === 0) rankClass = 'rank-1';
+    else if (index === 1) rankClass = 'rank-2';
+    else if (index === 2) rankClass = 'rank-3';
     
-    leaderboardBody.innerHTML = html;
-  } else {
-    // 兼容旧格式 - 直接在容器中生成内容
-    let html = '<h3>' + (game === 'snake' ? '贪吃蛇' : '俄罗斯方块') + ' - 排行榜</h3>';
-    html += '<table class="leaderboard-table-legacy">';
-    html += '<tr><th>排名</th><th>玩家</th><th>分数</th></tr>';
-    
-    scores.forEach((score, index) => {
-      html += `<tr>
-        <td>${index + 1}</td>
-        <td>${score.player_name || score.player || '未知玩家'}</td>
-        <td>${score.score}</td>
-      </tr>`;
-    });
-    
-    html += '</table>';
-    leaderboardElement.innerHTML = html;
-  }
+    html += `
+      <div class="leaderboard-row">
+        <div class="rank ${rankClass}">${index + 1}</div>
+        <div class="player">${score.player_name || score.player || '未知玩家'}</div>
+        <div class="score">${score.score}</div>
+        <div class="date">${new Date().toLocaleDateString('zh-CN')}</div>
+      </div>
+    `;
+  });
   
-  // 添加关闭按钮功能
-  const closeBtn = leaderboardElement.querySelector('.leaderboard-close-btn');
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      leaderboardElement.style.display = 'none';
-    });
-  }
+  leaderboardBody.innerHTML = html;
 }
 
 // 移除 DOMContentLoaded 中的重复事件绑定，避免冲突
