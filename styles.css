@@ -297,3 +297,35 @@ body.winter { background-color: #f0f8ff; }
   transform: translateY(-2px);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
+
+/* 添加以下样式来修复按钮边框问题 */
+button {
+  outline: none; /* 移除默认的轮廓线 */
+  -webkit-tap-highlight-color: transparent; /* 移除移动设备上的点击高亮 */
+}
+
+button:focus {
+  box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.4); /* 自定义焦点样式，更符合按钮形状 */
+}
+
+.season-btn:focus, .game-btn:focus {
+  outline: none;
+  transform: translateY(-2px);
+}
+
+.control-btn:focus {
+  outline: none;
+}
+
+.direction-btn:focus {
+  outline: none;
+  box-shadow: 0 0 8px rgba(78, 205, 196, 0.7);
+}
+
+/* 针对移动设备的触摸优化 */
+@media (max-width: 768px) {
+  .direction-btn, .control-btn {
+    touch-action: manipulation; /* 优化触摸体验 */
+    user-select: none; /* 防止文本选择 */
+  }
+}
