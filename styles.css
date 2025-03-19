@@ -241,8 +241,12 @@ body.winter { background-color: #f0f8ff; }
 .tetris-container {
   display: flex;
   justify-content: center;
-  gap: 20px;
+  gap: 10px; /* 将间距从20px减少到10px */
   margin-bottom: 20px;
+  position: relative; /* 添加相对定位以便子元素可以使用绝对定位 */
+}
+#tetris-canvas {
+  margin-left: -10px; /* 向右移动一点画布 */
 }
 .next-piece {
   display: flex;
@@ -350,5 +354,16 @@ button:focus {
   .direction-btn, .control-btn {
     touch-action: manipulation; /* 优化触摸体验 */
     user-select: none; /* 防止文本选择 */
+  }
+  .tetris-container {
+    gap: 5px; /* 在移动设备上进一步减少间距 */
+    justify-content: flex-end; /* 靠右对齐，让左边的空间更多 */
+    padding-right: 5px; /* 右侧添加少量内边距 */
+  }
+  #tetris-canvas {
+    margin-left: -15px; /* 在移动设备上更多地向右移动画布 */
+  }
+  .next-piece {
+    width: 100px; /* 在移动设备上稍微减小宽度 */
   }
 }
