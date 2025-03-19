@@ -30,6 +30,8 @@
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   width: 100%; /* 占满 next-piece 的宽度 */
   font-size: 14px; /* 缩小字体以适应空间 */
+  display: none; /* 默认隐藏 */
+  margin-top: 10px; /* 与按钮之间增加间距 */
 }
 
 #tetris-leaderboard-content h3 {
@@ -294,6 +296,27 @@ body.winter { background-color: #f0f8ff; }
 }
 
 .leaderboard-toggle-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* 俄罗斯方块排行榜按钮样式 */
+.tetris-leaderboard-toggle-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+  color: white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  margin-top: 10px;
+  width: 80%;
+}
+
+.tetris-leaderboard-toggle-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
