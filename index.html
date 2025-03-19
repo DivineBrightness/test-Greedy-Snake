@@ -17,10 +17,21 @@
       <button class="season-btn winter-btn" data-season="winter">冬</button>
     </div>
     <div class="game-buttons">
-      <button class="game-btn" id="snake-game-btn">贪吃蛇</button>
-      <button class="game-btn" id="tetris-game-btn">俄罗斯方块</button>
+      <button class="game-btn" id="games-btn">小游戏</button>
     </div>
+    
+    <!-- 添加游戏选择页面 -->
+    <div id="games-selection" style="display: none;">
+      <button class="back-btn" id="games-back-btn"></button>
+      <h2>选择游戏</h2>
+      <div class="games-grid">
+        <button class="game-select-btn" id="snake-select-btn"><span>贪吃蛇</span></button>
+        <button class="game-select-btn" id="tetris-select-btn"><span>俄罗斯方块</span></button>
+      </div>
+    </div>
+    
     <div id="snake-game" style="display: none;">
+      <button class="back-btn" id="back-btn"></button>
       <h2>贪吃蛇</h2>
       <div class="game-info">
         <div class="game-score">分数: <span id="score">0</span></div>
@@ -64,6 +75,7 @@
       </div>
     </div>
     <div id="tetris-game" style="display: none;">
+      <button class="back-btn" id="tetris-back-btn"></button>
       <h2>俄罗斯方块</h2>
       <div class="game-info">
         <div class="game-score">分数: <span id="tetris-score">0</span></div>

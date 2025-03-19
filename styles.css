@@ -437,3 +437,197 @@ button:focus {
   /* 加粗 */
   font-weight: bold;
 }
+
+/* 游戏选择页面样式 */
+#games-selection {
+  text-align: center;
+  padding: 20px;
+  position: relative;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* 确保游戏选择页面的标题不被返回按钮遮挡 */
+#games-selection h2 {
+  font-size: 32px;
+  margin: 40px 0 30px; /* 增加上边距，为返回按钮留出空间 */
+  color: #333;
+}
+/* 同理，确保游戏页面的标题也不被遮挡 */
+#snake-game h2, #tetris-game h2 {
+  margin-top: 40px;
+}
+
+.games-grid {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-top: 40px;
+}
+
+.game-select-btn {
+  width: 200px;
+  height: 200px;
+  border: none;
+  border-radius: 20px;
+  font-size: 24px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-size: cover;
+  background-position: center;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding-bottom: 20px;
+}
+
+#snake-select-btn {
+  background: url('./image/snake.svg');
+  background-color: #81f381;
+  background-size: 60%;
+  background-repeat: no-repeat;
+  background-position: center 30%;
+  position: relative;
+}
+
+#snake-select-btn::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.3));
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+  z-index: 1;
+}
+
+#snake-select-btn span {
+  position: relative;
+  z-index: 2;
+}
+
+#tetris-select-btn {
+  background: url('./image/tetris.svg'); /* 注意：需要是有效的图像文件，不能是.json */
+  background-color: #87CEFA;
+  background-size: 60%;
+  background-repeat: no-repeat;
+  background-position: center 30%;
+  position: relative;
+}
+
+#tetris-select-btn::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.3));
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+  z-index: 1;
+}
+
+#tetris-select-btn span {
+  position: relative;
+  z-index: 2;
+}
+
+.game-select-btn:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+}
+
+.back-btn {
+  position: fixed; /* 固定定位，相对于视口 */
+  left: 15px;
+  top: 15px;
+  width: 45px;
+  height: 45px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.5); /* 更透明的背景 */
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06); /* 更淡的阴影 */
+  z-index: 1000;
+}
+
+.back-btn::before {
+  content: "";
+  width: 24px;
+  height: 24px;
+  background-image: url('./image/back.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.back-btn:hover {
+  transform: translateX(-5px);
+  background: rgba(255, 255, 255, 0.7); /* 悬停时稍微不透明 */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* 修改现有的移动设备媒体查询 */
+@media (max-width: 768px) {
+  .games-grid {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+  
+  .game-select-btn {
+    width: 180px;
+    height: 180px;
+    -webkit-tap-highlight-color: transparent; /* 移除默认的点击高亮 */
+  }
+  
+  /* 为触摸设备优化交互反馈 */
+  .game-select-btn:active::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255,255,255,0.1);
+    border-radius: 20px;
+    z-index: 3;
+  }
+}
+
+/* 添加触摸设备的悬停效果 */
+@media (hover: none) and (pointer: coarse) {
+  .game-select-btn:active {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+    transition: all 0.1s ease;
+  }
+  
+  #snake-select-btn:active, #tetris-select-btn:active {
+    background-color: #a2f5a2; /* 按下时轻微改变背景色 */
+  }
+  
+  #tetris-select-btn:active {
+    background-color: #a2d8f5; /* 俄罗斯方块按钮按下时的背景色 */
+  }
+  
+  .back-btn:active {
+    transform: translateX(-5px) scale(0.95);
+    background: rgba(255, 255, 255, 0.7);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  }
+}
