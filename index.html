@@ -37,11 +37,26 @@
       <div class="game-info">
         <div class="game-score">分数: <span id="score">0</span></div>
         <div class="game-high-score">最高分: <span id="high-score">0</span></div>
-        <button id="snake-leaderboard-btn" class="leaderboard-toggle-btn">排行榜</button>
-       
-        <div id="snake-leaderboard-content">
-          <h3>排行榜（前三名）</h3>
-          <p>加载中...</p>
+        <div class="snake-leaderboard">
+          <button class="leaderboard-btn" id="snake-leaderboard-btn">排行榜</button>
+          <div class="leaderboard-panel" id="snake-leaderboard-content" style="display: none;">
+            <div class="leaderboard-header">
+              <h3>贪吃蛇 - 排行榜</h3>
+              <button class="leaderboard-close-btn">&times;</button>
+            </div>
+            <div class="leaderboard-table">
+              <div class="leaderboard-row header">
+                <div class="rank">排名</div>
+                <div class="player">玩家</div>
+                <div class="score">分数</div>
+                <div class="date">日期</div>
+              </div>
+              <div class="leaderboard-body">
+                <!-- 排行榜数据将通过JavaScript动态插入 -->
+                <div class="loading">加载中...</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <canvas id="game-canvas" width="400" height="400"></canvas>
@@ -97,10 +112,26 @@
         <div class="next-piece">
           <h3>下一个方块</h3>
           <canvas id="next-piece-canvas" width="100" height="100"></canvas>
-          <button id="tetris-leaderboard-btn" class="tetris-leaderboard-toggle-btn">排行榜</button>
-          <div id="tetris-leaderboard-content">
-            <h3>排行榜（前三名）</h3>
-            <p>加载中...</p>
+          <div class="tetris-leaderboard">
+            <button class="leaderboard-btn" id="tetris-leaderboard-btn">排行榜</button>
+            <div class="leaderboard-panel" id="tetris-leaderboard-content" style="display: none;">
+              <div class="leaderboard-header">
+                <h3>俄罗斯方块 - 排行榜</h3>
+                <button class="leaderboard-close-btn">&times;</button>
+              </div>
+              <div class="leaderboard-table">
+                <div class="leaderboard-row header">
+                  <div class="rank">排名</div>
+                  <div class="player">玩家</div>
+                  <div class="score">分数</div>
+                  <div class="date">日期</div>
+                </div>
+                <div class="leaderboard-body">
+                  <!-- 排行榜数据将通过JavaScript动态插入 -->
+                  <div class="loading">加载中...</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -703,3 +703,196 @@ body.winter .seasonal-decoration {
 .fade-in.active {
   opacity: 1;
 }
+
+/* 美化排行榜样式 */
+.leaderboard-btn {
+  position: relative;
+  z-index: 10;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(240, 240, 240, 0.8));
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  margin-top: 15px;
+  font-weight: 500;
+}
+
+.leaderboard-btn:hover {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 1), rgba(240, 240, 240, 0.9));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 调整排行榜面板的 z-index，确保它在游戏界面之上 */
+.leaderboard-panel {
+  position: fixed; /* 修改为固定定位，确保在整个视口中显示 */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 400px;
+  max-height: 80vh;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  z-index: 2000; /* 增加 z-index 值，确保显示在所有游戏元素上方 */
+  overflow: hidden;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translate(-50%, -40%);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, -50%);
+    opacity: 1;
+  }
+}
+
+.leaderboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background: linear-gradient(to right, #3498db, #2ecc71);
+}
+
+.leaderboard-header h3 {
+  margin: 0;
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.leaderboard-close-btn {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.leaderboard-close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+
+.leaderboard-table {
+  overflow-y: auto;
+  max-height: calc(80vh - 50px);
+}
+
+.leaderboard-row {
+  display: grid;
+  grid-template-columns: 0.5fr 1.5fr 1fr 1fr;
+  padding: 10px 20px;
+  align-items: center;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.leaderboard-row.header {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #555;
+  font-size: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.leaderboard-body .leaderboard-row:nth-child(even) {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.leaderboard-body .leaderboard-row:hover {
+  background-color: rgba(46, 204, 113, 0.05);
+}
+
+.rank {
+  font-weight: bold;
+  text-align: center;
+}
+
+.rank-1, .rank-2, .rank-3 {
+  position: relative;
+  font-size: 16px;
+}
+
+.rank-1 {
+  color: #f1c40f; /* Gold */
+}
+
+.rank-2 {
+  color: #bdc3c7; /* Silver */
+}
+
+.rank-3 {
+  color: #cd7f32; /* Bronze */
+}
+
+.player {
+  font-weight: 500;
+}
+
+.score {
+  font-weight: 600;
+  color: #3498db;
+  text-align: right;
+}
+
+.date {
+  font-size: 12px;
+  color: #777;
+  text-align: right;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #777;
+  font-style: italic;
+}
+
+/* 针对snake和tetris的特定样式 */
+.snake-leaderboard .leaderboard-header {
+  background: linear-gradient(to right, #27ae60, #2ecc71);
+}
+
+.tetris-leaderboard .leaderboard-header {
+  background: linear-gradient(to right, #2980b9, #3498db);
+}
+
+/* 响应式调整 */
+@media (max-width: 500px) {
+  .leaderboard-panel {
+    width: 95%;
+  }
+  
+  .leaderboard-row {
+    grid-template-columns: 0.5fr 1.5fr 1fr;
+    font-size: 14px;
+  }
+  
+  .date {
+    display: none; /* 在小屏幕上隐藏日期 */
+  }
+}
+

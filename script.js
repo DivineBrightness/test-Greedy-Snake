@@ -167,11 +167,17 @@ const toggleGameView = (showGameId, hideElements) => {
             tetrisLeaderboardBtn.removeEventListener('click', tetrisLeaderboardClickHandler);
         }
         
-        // 定义新的事件处理函数并保存引用
-        tetrisLeaderboardClickHandler = () => {
+        // 定义新的事件处理函数并保存引用 - 修复这里，添加事件参数e并阻止冒泡
+        tetrisLeaderboardClickHandler = (e) => {
+            e.stopPropagation(); // 阻止事件冒泡，防止文档点击事件关闭排行榜
             console.log("点击了俄罗斯方块排行榜按钮");
             tetrisLeaderboardContent.style.display = 
                 tetrisLeaderboardContent.style.display === 'block' ? 'none' : 'block';
+            
+            // 如果打开了排行榜，加载最新数据
+            if (tetrisLeaderboardContent.style.display === 'block') {
+                loadLeaderboard("tetris", "tetris-leaderboard-content");
+            }
         };
         
         // 添加新的事件监听器
@@ -180,12 +186,25 @@ const toggleGameView = (showGameId, hideElements) => {
         // 确保排行榜初始状态为隐藏
         tetrisLeaderboardContent.style.display = 'none';
         
-        // 确保加载最新的排行榜数据
-        loadLeaderboard("tetris", "tetris-leaderboard-content");
+        // 添加文档点击事件处理，点击排行榜外部时关闭排行榜
+        const tetrisDocumentClickHandler = (e) => {
+            if (tetrisLeaderboardContent.style.display === 'block' && 
+                !tetrisLeaderboardContent.contains(e.target) && 
+                e.target !== tetrisLeaderboardBtn) {
+                tetrisLeaderboardContent.style.display = 'none';
+            }
+        };
+        
+        // 绑定文档点击事件
+        document.addEventListener('click', tetrisDocumentClickHandler);
         
         document.getElementById('tetris-back-btn').addEventListener('click', () => {
             // 使用currentTetrisGame而不是局部变量game
             if (currentTetrisGame && currentTetrisGame.intervalId) clearInterval(currentTetrisGame.intervalId);
+            
+            // 移除文档点击事件监听器，避免内存泄漏
+            document.removeEventListener('click', tetrisDocumentClickHandler);
+            
             console.log('返回游戏选择页面');
             toggleGameView('games-selection', true);
         }, { once: true });
