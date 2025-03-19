@@ -137,7 +137,7 @@ body.winter { background-color: #f0f8ff; }
   position: relative; /* 为排行榜定位提供参考 */
 }
 .game-score, .game-high-score {
-  font-size: 24px;
+  /* font-size: 24px; */
   font-weight: bold;
   color: #333;
 }
@@ -225,35 +225,62 @@ body.winter { background-color: #f0f8ff; }
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.7); /* 增加背景不透明度 */
   justify-content: center;
   align-items: center;
+  z-index: 1000; /* 添加较高的z-index确保在所有元素之上 */
 }
+
 #snake-modal > div, #tetris-modal > div {
   background: #fff;
   padding: 20px;
   border-radius: 10px;
   text-align: center;
+  width: 300px; /* 设置固定宽度 */
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3); /* 添加阴影增强视觉效果 */
+  position: relative; /* 确保位置正确 */
+  z-index: 1001; /* 比模态框背景更高的z-index */
 }
+
 #snake-modal button, #tetris-modal button {
   margin-top: 10px;
+  width: 120px; /* 固定按钮宽度 */
+  padding: 8px 0; /* 调整内边距 */
 }
+#snake-player-select, #tetris-player-select {
+  margin-top: 15px;
+  margin-bottom: 5px;
+  width: 200px; /* 设置固定宽度 */
+  padding: 8px; /* 增加内边距 */
+  border-radius: 5px; /* 圆角边框 */
+  border: 1px solid #ccc;
+}
+
 .tetris-container {
   display: flex;
-  justify-content: center;
-  gap: 10px; /* 将间距从20px减少到10px */
+  justify-content: center; /* 保持居中对齐 */
+  gap: 15px; /* 稍微增加间距 */
   margin-bottom: 20px;
-  position: relative; /* 添加相对定位以便子元素可以使用绝对定位 */
+  position: relative; /* 保留相对定位 */
+  width: 100%; /* 确保容器使用全部可用宽度 */
+  max-width: 500px; /* 与snake-game一致的最大宽度 */
+  margin-left: auto; /* 水平居中 */
+  margin-right: auto; /* 水平居中 */
 }
+
 #tetris-canvas {
-  margin-left: -10px; /* 向右移动一点画布 */
+  margin-left: 0; /* 移除负边距 */
+  flex: 3; /* 画布占据更多空间 */
 }
+
 .next-piece {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 120px; /* 稍微加宽以容纳排行榜 */
+  width: 140px; /* 增加宽度以容纳排行榜 */
+  flex: 1; /* 预览和排行榜区域占据较少空间 */
 }
+
 #next-piece-canvas {
   border: 1px solid #ccc;
   border-radius: 5px;
@@ -356,14 +383,22 @@ button:focus {
     user-select: none; /* 防止文本选择 */
   }
   .tetris-container {
-    gap: 5px; /* 在移动设备上进一步减少间距 */
-    justify-content: flex-end; /* 靠右对齐，让左边的空间更多 */
-    padding-right: 5px; /* 右侧添加少量内边距 */
+    gap: 10px; /* 保持合适的间距 */
+    justify-content: center; /* 恢复居中对齐 */
+    padding-right: 0; /* 移除右侧内边距 */
   }
   #tetris-canvas {
-    margin-left: -15px; /* 在移动设备上更多地向右移动画布 */
+    margin-left: 0; /* 移除负边距 */
+    flex: 2; /* 在移动设备上保持合适的比例 */
   }
   .next-piece {
-    width: 100px; /* 在移动设备上稍微减小宽度 */
+    width: 120px; /* 在移动设备上的宽度 */
+    flex: 1;
   }
+}
+
+.level{
+  color:darkred;
+  /* 加粗 */
+  font-weight: bold;
 }
