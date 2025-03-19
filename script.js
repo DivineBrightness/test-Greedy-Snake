@@ -15,21 +15,29 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
   
-    const toggleGameView = (showGameId, hideElements) => {
-        document.querySelector('.season-controls').style.display = hideElements ? 'none' : 'flex';
-        document.getElementById('games-btn').style.display = hideElements ? 'none' : 'inline-block';
-        document.getElementById('games-selection').style.display = (showGameId === 'games-selection') ? 'block' : 'none';
-        document.getElementById('snake-game').style.display = (showGameId === 'snake-game') ? 'block' : 'none';
-        document.getElementById('tetris-game').style.display = (showGameId === 'tetris-game') ? 'block' : 'none';
-        const pageTitle = document.getElementById('page-title') || document.querySelector('.container h1');
-        pageTitle.style.display = hideElements ? 'none' : 'block';
-        
-        // 根据是否显示游戏来决定是否显示季节装饰
-        const decoration = document.querySelector('.seasonal-decoration');
-        if (decoration) {
-            decoration.style.display = hideElements ? (showGameId === 'games-selection' ? 'block' : 'none') : 'block';
+// 修改切换视图函数，调整季节装饰在游戏界面中的透明度
+const toggleGameView = (showGameId, hideElements) => {
+    document.querySelector('.season-controls').style.display = hideElements ? 'none' : 'flex';
+    document.getElementById('games-btn').style.display = hideElements ? 'none' : 'inline-block';
+    document.getElementById('games-selection').style.display = (showGameId === 'games-selection') ? 'block' : 'none';
+    document.getElementById('snake-game').style.display = (showGameId === 'snake-game') ? 'block' : 'none';
+    document.getElementById('tetris-game').style.display = (showGameId === 'tetris-game') ? 'block' : 'none';
+    const pageTitle = document.getElementById('page-title') || document.querySelector('.container h1');
+    pageTitle.style.display = hideElements ? 'none' : 'block';
+    
+    // 调整季节装饰的透明度
+    const decoration = document.querySelector('.seasonal-decoration');
+    if (decoration) {
+        // 如果是在游戏界面，降低透明度；如果在选择界面或主页，保持原有透明度
+        if (showGameId === 'snake-game' || showGameId === 'tetris-game') {
+            decoration.style.opacity = '0.4'; // 在游戏界面中透明度降低为40%
+        } else if (showGameId === 'games-selection') {
+            decoration.style.opacity = '0.6'; // 在游戏选择界面中透明度为60%
+        } else {
+            decoration.style.opacity = '0.8'; // 在主页中保持原有透明度80%
         }
-    };
+    }
+};
   
     // 保存事件处理函数的引用，以便后续移除
     let snakeLeaderboardClickHandler;

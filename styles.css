@@ -632,11 +632,11 @@ button:focus {
   }
 }
 
-/* 修改季节性装饰图标位置 */
+/* 确保季节装饰在所有页面中可见 */
 .seasonal-decoration {
   position: fixed;
-  top: 20px; /* 改为 top 而不是 bottom */
-  right: 20px; /* 改为 right 而不是 left */
+  top: 20px;
+  right: 20px;
   width: 80px;
   height: 80px;
   background-size: contain;
@@ -645,7 +645,7 @@ button:focus {
   opacity: 0.8;
   pointer-events: none; /* 确保不会干扰用户交互 */
   transition: all 0.5s ease;
-  z-index: 10;
+  z-index: 1000; /* 增加 z-index 确保装饰显示在游戏界面之上 */
 }
 
 body.spring .seasonal-decoration {
