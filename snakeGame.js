@@ -21,25 +21,40 @@ class SnakeGame {
       this.scoreElement = document.getElementById('score');
       this.highScoreElement = document.getElementById('high-score');
       this.highScoreElement.textContent = this.highScore;
+      this.keyDownHandler = this.handleKeyDown.bind(this); // 保存引用以便后续移除
       this.initEventListeners();
       loadLeaderboard("snake", "snake-leaderboard-content");
     }
   
     initEventListeners() {
-      document.addEventListener('keydown', this.handleKeyDown.bind(this));
-      document.getElementById('start-btn').addEventListener('click', () => {
+      // 添加键盘事件监听器
+      document.addEventListener('keydown', this.keyDownHandler);
+      
+      // 保存事件处理器引用
+      this.startBtnHandler = () => {
         if (this.gameOver) this.reset();
         this.start();
-      });
-      document.getElementById('pause-btn').addEventListener('click', () => this.togglePause());
+      };
+      this.pauseBtnHandler = () => this.togglePause();
+      
+      document.getElementById('start-btn').addEventListener('click', this.startBtnHandler);
+      document.getElementById('pause-btn').addEventListener('click', this.pauseBtnHandler);
+      
+      // 方向按钮处理
       const upBtn = document.getElementById('up-btn');
       const leftBtn = document.getElementById('left-btn');
       const rightBtn = document.getElementById('right-btn');
       const downBtn = document.getElementById('down-btn');
-      if (upBtn) upBtn.addEventListener('click', () => { if (this.direction !== 'down') this.nextDirection = 'up'; });
-      if (leftBtn) leftBtn.addEventListener('click', () => { if (this.direction !== 'right') this.nextDirection = 'left'; });
-      if (rightBtn) rightBtn.addEventListener('click', () => { if (this.direction !== 'left') this.nextDirection = 'right'; });
-      if (downBtn) downBtn.addEventListener('click', () => { if (this.direction !== 'up') this.nextDirection = 'down'; });
+      
+      this.upBtnHandler = () => { if (this.direction !== 'down') this.nextDirection = 'up'; };
+      this.leftBtnHandler = () => { if (this.direction !== 'right') this.nextDirection = 'left'; };
+      this.rightBtnHandler = () => { if (this.direction !== 'left') this.nextDirection = 'right'; };
+      this.downBtnHandler = () => { if (this.direction !== 'up') this.nextDirection = 'down'; };
+      
+      if (upBtn) upBtn.addEventListener('click', this.upBtnHandler);
+      if (leftBtn) leftBtn.addEventListener('click', this.leftBtnHandler);
+      if (rightBtn) rightBtn.addEventListener('click', this.rightBtnHandler);
+      if (downBtn) downBtn.addEventListener('click', this.downBtnHandler);
     }
   
     handleKeyDown(e) {
@@ -162,30 +177,50 @@ drawGameOver() {
     }
   
     start() {
-      if (this.intervalId) return;
+      if (this.animationFrameId) return; // 防止多次调用
       this.paused = false;
       document.getElementById('pause-btn').textContent = '暂停';
-      this.intervalId = setInterval(() => this.move(), 150);
-    }
+      
+      // 添加时间追踪
+      this.lastUpdateTime = Date.now();
+      this.updateInterval = 150; // 保持原游戏速度
+      
+      const gameLoop = () => {
+          if (this.gameOver || this.paused) {
+              return; // 游戏结束或暂停时不再继续动画循环
+          }
+          
+          const now = Date.now();
+          if (now - this.lastUpdateTime >= this.updateInterval) {
+              this.move();
+              this.lastUpdateTime = now;
+          }
+          
+          this.animationFrameId = requestAnimationFrame(gameLoop);
+      };
+      
+      this.animationFrameId = requestAnimationFrame(gameLoop);
+  }
   
-    togglePause() {
+  togglePause() {
       if (this.gameOver) return;
       this.paused = !this.paused;
       if (this.paused) {
-        document.getElementById('pause-btn').textContent = '继续';
-        if (this.intervalId) {
-          clearInterval(this.intervalId);
-          this.intervalId = null;
-        }
-        this.ctx.font = '30px Arial';
-        this.ctx.fillStyle = '#333';
-        this.ctx.textAlign = 'center';
-        this.ctx.fillText('游戏暂停', this.width / 2, this.height / 2);
+          document.getElementById('pause-btn').textContent = '继续';
+          // 取消动画帧
+          if (this.animationFrameId) {
+              cancelAnimationFrame(this.animationFrameId);
+              this.animationFrameId = null;
+          }
+          this.ctx.font = '30px Arial';
+          this.ctx.fillStyle = '#333';
+          this.ctx.textAlign = 'center';
+          this.ctx.fillText('游戏暂停', this.width / 2, this.height / 2);
       } else {
-        document.getElementById('pause-btn').textContent = '暂停';
-        this.start();
+          document.getElementById('pause-btn').textContent = '暂停';
+          this.start();
       }
-    }
+  }
   
     reset() {
       this.snake = [{x: 6, y: 10}, {x: 5, y: 10}, {x: 4, y: 10}];
@@ -197,5 +232,38 @@ drawGameOver() {
       this.paused = false;
       this.drawScore();
       this.draw();
+    }
+
+    destroy() {
+      // 清除游戏循环
+      if (this.intervalId) {
+        clearInterval(this.intervalId);
+        this.intervalId = null;
+      }
+      
+      // 取消动画帧
+      if (this.animationFrameId) {
+        cancelAnimationFrame(this.animationFrameId);
+        this.animationFrameId = null;
+      }
+      
+      // 移除事件监听器
+      document.removeEventListener('keydown', this.keyDownHandler);
+      
+      // 移除控制按钮的事件处理器
+      document.getElementById('start-btn')?.removeEventListener('click', this.startBtnHandler);
+      document.getElementById('pause-btn')?.removeEventListener('click', this.pauseBtnHandler);
+      
+      // 移除方向按钮的事件处理器
+      document.getElementById('up-btn')?.removeEventListener('click', this.upBtnHandler);
+      document.getElementById('left-btn')?.removeEventListener('click', this.leftBtnHandler);
+      document.getElementById('right-btn')?.removeEventListener('click', this.rightBtnHandler);
+      document.getElementById('down-btn')?.removeEventListener('click', this.downBtnHandler);
+      
+      // 重置游戏状态
+      this.gameOver = true;
+      this.paused = true;
+      
+      console.log('贪吃蛇游戏资源已清理');
     }
   }

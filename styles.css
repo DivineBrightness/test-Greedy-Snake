@@ -688,3 +688,18 @@ body.winter .seasonal-decoration {
   0%, 100% { transform: translateY(0) scale(1); opacity: 0.8; }
   50% { transform: translateY(-8px) scale(1.05); opacity: 1; }
 }
+
+/* 添加页面过渡效果 */
+#games-selection, #snake-game, #tetris-game {
+  transition: opacity 0.2s ease-in-out;
+}
+
+/* 当元素即将显示时应用的样式 */
+.fade-in {
+  opacity: 0;
+}
+
+/* 当元素完全显示时应用的样式 */
+.fade-in.active {
+  opacity: 1;
+}

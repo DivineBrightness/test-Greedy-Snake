@@ -15,8 +15,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
   
+    // 保存游戏实例的全局引用
+    let currentSnakeGame = null;
+    let currentTetrisGame = null;
+  
 // 修改切换视图函数，调整季节装饰在游戏界面中的透明度
 const toggleGameView = (showGameId, hideElements) => {
+    // 如果正在离开游戏视图，清理游戏资源
+    if (document.getElementById('snake-game').style.display === 'block' && showGameId !== 'snake-game') {
+        if (currentSnakeGame) {
+            currentSnakeGame.destroy();
+            currentSnakeGame = null;
+        }
+    }
+    
+    if (document.getElementById('tetris-game').style.display === 'block' && showGameId !== 'tetris-game') {
+        if (currentTetrisGame) {
+            // 假设TetrisGame也有类似的destroy方法
+            if (currentTetrisGame.intervalId) {
+                clearInterval(currentTetrisGame.intervalId);
+            }
+            currentTetrisGame = null;
+        }
+    }
+
     document.querySelector('.season-controls').style.display = hideElements ? 'none' : 'flex';
     document.getElementById('games-btn').style.display = hideElements ? 'none' : 'inline-block';
     document.getElementById('games-selection').style.display = (showGameId === 'games-selection') ? 'block' : 'none';
@@ -39,6 +61,18 @@ const toggleGameView = (showGameId, hideElements) => {
     }
 };
   
+    // 添加防抖功能
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+
+    // 使用防抖函数包装视图切换
+    const debouncedToggleGameView = debounce(toggleGameView, 100);
+
     // 保存事件处理函数的引用，以便后续移除
     let snakeLeaderboardClickHandler;
     let snakeDocumentClickHandler;
@@ -57,11 +91,20 @@ const toggleGameView = (showGameId, hideElements) => {
         toggleGameView(null, false);
     });
   
-    // 从游戏选择页面进入贪吃蛇游戏
+    // 修改进入贪吃蛇游戏的代码
     document.getElementById('snake-select-btn').addEventListener('click', () => {
         console.log('进入贪吃蛇游戏');
         toggleGameView('snake-game', true);
-        const game = new SnakeGame();
+        
+        // 确保销毁任何之前的游戏实例
+        if (currentSnakeGame) {
+            currentSnakeGame.destroy();
+            currentSnakeGame = null;
+        }
+        
+        // 创建新的游戏实例并保存引用 - 只创建一个实例
+        currentSnakeGame = new SnakeGame();
+        
         const leaderboardBtn = document.getElementById('snake-leaderboard-btn');
         const leaderboardContent = document.getElementById('snake-leaderboard-content');
   
@@ -90,16 +133,31 @@ const toggleGameView = (showGameId, hideElements) => {
         document.addEventListener('click', snakeDocumentClickHandler);
   
         document.getElementById('back-btn').addEventListener('click', () => {
-            if (game.intervalId) clearInterval(game.intervalId);
+            if (currentSnakeGame) {
+                currentSnakeGame.destroy();
+                currentSnakeGame = null;
+            }
             console.log('返回游戏选择页面');
-            toggleGameView('games-selection', true);
+            debouncedToggleGameView('games-selection', true);
         }, { once: true });
     });
   
-    // 从游戏选择页面进入俄罗斯方块游戏
+    // 同样修改俄罗斯方块游戏代码
     document.getElementById('tetris-select-btn').addEventListener('click', () => {
         console.log('进入俄罗斯方块游戏');
         toggleGameView('tetris-game', true);
+        
+        // 确保销毁任何之前的游戏实例
+        if (currentTetrisGame) {
+            if (currentTetrisGame.intervalId) {
+                clearInterval(currentTetrisGame.intervalId);
+            }
+            currentTetrisGame = null;
+        }
+        
+        // 只创建一个实例
+        currentTetrisGame = new TetrisGame();
+        
         const game = new TetrisGame();
         
         // 为俄罗斯方块添加排行榜切换功能

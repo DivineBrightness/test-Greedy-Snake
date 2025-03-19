@@ -40,7 +40,10 @@ class TetrisGame {
       const rightBtn = document.getElementById('tetris-right-btn');
       const downBtn = document.getElementById('tetris-down-btn');
       const dropBtn = document.getElementById('drop-btn');
-      const canControl = () => this.isPlaying && !this.gameOver && !this.paused;
+      // 更严格的控制条件判断
+      const canControl = () => {
+        return this.isPlaying && !this.gameOver && !this.paused && !this.hasDrawnGameOver;
+      };
       let lastTap = 0;
       const debounceTime = 150;
   
@@ -162,19 +165,27 @@ class TetrisGame {
       if (!this.gameOver) this.draw();
     }
   
-    moveBottom() {
-      if (this.gameOver || this.paused) return;
-      let maxSteps = this.rows;
-      while (!this.checkCollision() && maxSteps > 0) {
-        this.currentY++;
-        maxSteps--;
-      }
-      this.currentY--;
-      this.freezeShape();
-      this.removeCompleteRows();
-      this.newShape();
-      this.draw();
-    }
+   // 修改 moveBottom 方法，确保正确处理游戏结束状态
+  moveBottom() {
+  if (this.gameOver || this.paused) return;
+  
+  let maxSteps = this.rows;
+  while (!this.checkCollision() && maxSteps > 0) {
+    this.currentY++;
+    maxSteps--;
+  }
+  this.currentY--;
+  this.freezeShape();
+  
+  // 如果游戏已经结束，直接返回，不执行后续操作
+  if (this.gameOver) {
+    return;
+  }
+  
+  this.removeCompleteRows();
+  this.newShape();
+  this.draw();
+}
   
     checkCollision() {
       const shape = this.currentShape.shape;
@@ -191,27 +202,38 @@ class TetrisGame {
       return false;
     }
   
-    freezeShape() {
-      const shape = this.currentShape.shape;
-      for (let y = 0; y < shape.length; y++) {
-        for (let x = 0; x < shape[y].length; x++) {
-          if (shape[y][x]) {
-            const newY = this.currentY + y;
-            if (newY < 0) {
-              this.gameOver = true;
-              this.isPlaying = false;
-              if (this.intervalId) clearInterval(this.intervalId);
-              this.intervalId = null;
-              document.querySelectorAll('.direction-btn').forEach(btn => btn.dispatchEvent(new Event('touchend')));
-              console.log("游戏结束 - freezeShape 调用 drawGameOver");
-              this.drawGameOver();
-              return;
-            }
-            if (newY >= 0) this.grid[newY][this.currentX + x] = this.currentShape.color;
+    // 修改 freezeShape 方法，确保游戏结束时彻底清理所有状态
+freezeShape() {
+  const shape = this.currentShape.shape;
+  for (let y = 0; y < shape.length; y++) {
+    for (let x = 0; x < shape[y].length; x++) {
+      if (shape[y][x]) {
+        const newY = this.currentY + y;
+        if (newY < 0) {
+          // 游戏结束处理
+          this.gameOver = true;
+          this.isPlaying = false;
+          
+          // 清除所有定时器
+          if (this.intervalId) {
+            clearInterval(this.intervalId);
+            this.intervalId = null;
           }
+          
+          // 移除移动设备上所有活动的触摸事件状态
+          document.querySelectorAll('.direction-btn').forEach(btn => {
+            btn.dispatchEvent(new Event('touchend'));
+          });
+          
+          // 立即绘制游戏结束界面
+          this.drawGameOver();
+          return;
         }
+        if (newY >= 0) this.grid[newY][this.currentX + x] = this.currentShape.color;
       }
     }
+  }
+}
   
     removeCompleteRows() {
       let rowsCleared = 0;
@@ -313,17 +335,36 @@ class TetrisGame {
       this.drawNextShape();
     }
   
-    // 在 drawGameOver 方法中进行修改
+// 修改 drawGameOver 方法，确保只执行一次并彻底停止游戏
 drawGameOver() {
   if (this.hasDrawnGameOver) return;
   this.hasDrawnGameOver = true;
   
-  // 不再在Canvas上绘制文字
-  // 这里只清除Canvas即可
-  this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  // 确保所有游戏循环停止
+  if (this.intervalId) {
+    clearInterval(this.intervalId);
+    this.intervalId = null;
+  }
   
   this.isPlaying = false;
   this.gameOver = true;
+  
+  // 不再在Canvas上绘制文字
+  this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  
+  // 重新绘制网格和已冻结的方块，但不绘制活动方块
+  this.ctx.strokeStyle = '#e0e0e0';
+  this.ctx.lineWidth = 0.5;
+  for (let x = 0; x < this.cols; x++) {
+    for (let y = 0; y < this.rows; y++) {
+      this.ctx.strokeRect(x * this.blockSize, y * this.blockSize, this.blockSize, this.blockSize);
+    }
+  }
+  for (let y = 0; y < this.rows; y++) {
+    for (let x = 0; x < this.cols; x++) {
+      if (this.grid[y][x]) this.drawBlock(x, y, this.grid[y][x]);
+    }
+  }
   
   // 显示模态框并更新其内容
   const modal = document.getElementById('tetris-modal');
@@ -361,6 +402,11 @@ drawGameOver() {
       alert("请选择一个名字");
     }
   };
+  
+  // 禁用所有控制按钮，确保游戏彻底停止
+  document.querySelectorAll('.direction-btn').forEach(btn => {
+    btn.disabled = true;
+  });
 }
   
     initEventListeners() {
