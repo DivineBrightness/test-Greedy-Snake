@@ -275,11 +275,11 @@ const toggleGameView = (showGameId, hideElements) => {
     if (decoration) {
         // 如果是在游戏界面，降低透明度；如果在选择界面或主页，保持原有透明度
         if (showGameId === 'snake-game' || showGameId === 'tetris-game') {
-            decoration.style.opacity = '0.4'; // 在游戏界面中透明度降低为40%
+            decoration.style.opacity = '0.3'; // 在游戏界面中透明度降低为40%
         } else if (showGameId === 'games-selection') {
             decoration.style.opacity = '0.6'; // 在游戏选择界面中透明度为60%
         } else {
-            decoration.style.opacity = '0.8'; // 在主页中保持原有透明度80%
+            decoration.style.opacity = '0.9'; // 在主页中保持原有透明度80%
         }
     }
 };

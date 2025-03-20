@@ -20,17 +20,25 @@ function changeSeason(season) {
   document.querySelectorAll('.season-btn').forEach(btn => btn.classList.remove('active'));
   const seasonBtn = document.querySelector('.' + season + '-btn');
   if (seasonBtn) {
-    seasonBtn.classList.add('active');
-    document.body.className = season;
-    
-    // 添加动画效果，让图标淡出后淡入
-    const decoration = document.querySelector('.seasonal-decoration');
-    decoration.style.opacity = 0;
-    
-    setTimeout(() => {
-      decoration.style.opacity = 0.8;
-    }, 300);
+      seasonBtn.classList.add('active');
+      document.body.className = season;
+      
+      // 添加动画效果，让图标淡出后淡入
+      const decoration = document.querySelector('.seasonal-decoration');
+      decoration.style.opacity = 0;
+      
+      setTimeout(() => {
+          // 根据当前页面状态设置适当的透明度
+          if (document.getElementById('snake-game').style.display === 'block' ||
+              document.getElementById('tetris-game').style.display === 'block') {
+              decoration.style.opacity = 0.3; // 游戏页面使用70%透明度
+          } else if (document.getElementById('games-selection').style.display === 'block') {
+              decoration.style.opacity = 0.6; // 游戏选择页面使用80%透明度
+          } else {
+              decoration.style.opacity = 0.9; // 主页使用90%透明度
+          }
+      }, 300);
   } else {
-    console.error('未找到季节按钮：', season);
+      console.error('未找到季节按钮：', season);
   }
 }
