@@ -507,7 +507,7 @@ drawGameOver() {
   };
 }
   
-// 修改 initEventListeners 方法，添加键盘长按加速功能
+// 修改键盘处理事件，确保空格键不导致页面滚动
 initEventListeners() {
   // 先移除旧的事件监听器
   if (this.keyDownHandler) {
@@ -541,15 +541,24 @@ initEventListeners() {
   
   // 处理按键按下事件
   this.keyDownHandler = (e) => {
-    if (!this.isPlaying || this.gameOver || this.paused || this.hasDrawnGameOver) return;
-    
-    const key = e.key;
-    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', ' '].includes(key)) {
-      e.preventDefault();
+    // 对所有游戏控制键始终阻止默认行为，即使游戏暂停或结束
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', ' ', 'p', 'P'].includes(e.key)) {
+      e.preventDefault(); // 阻止默认行为，防止空格键滚动页面
     }
     
+    // 允许P键在任何状态下都能触发暂停/继续，只要游戏没有结束
+    if (e.key === 'p' || e.key === 'P') {
+      if (!this.gameOver && !this.hasDrawnGameOver) {
+        this.togglePause();
+      }
+      return;
+    }
+    
+    // 如果游戏未开始或已暂停或已结束，不响应其他控制键
+    if (!this.isPlaying || this.gameOver || this.paused || this.hasDrawnGameOver) return;
+    
     // 长按空格键（一键下落）使用防抖控制
-    if (key === ' ') {
+    if (e.key === ' ') {
       if (canDropAgain && !this.isDropping) {
         canDropAgain = false;
         this.moveBottom();
@@ -558,8 +567,8 @@ initEventListeners() {
       return;
     }
     
-    // 响应其他按键
-    switch (key) {
+    // 响应其他按键 - 保持不变
+    switch (e.key) {
       case 'ArrowUp': case 'w': case 'W': 
         this.rotateShape(); 
         break;
@@ -608,14 +617,10 @@ initEventListeners() {
           }, initialDelay);
         }
         break;
-        
-      case 'p': case 'P': 
-        this.togglePause(); 
-        break;
     }
   };
   
-  // 处理按键释放事件
+  // 处理按键释放事件 - 保持不变
   this.keyUpHandler = (e) => {
     const key = e.key;
     
@@ -653,33 +658,44 @@ initEventListeners() {
   document.addEventListener('keydown', this.keyDownHandler);
   document.addEventListener('keyup', this.keyUpHandler);
   
-  // 游戏控制按钮 - 使用箭头函数以正确绑定this
-  const startBtn = document.getElementById('tetris-start-btn');
-  const pauseBtn = document.getElementById('tetris-pause-btn');
+  // 替换合并后的开始/暂停按钮
+  const playPauseBtn = document.getElementById('tetris-play-pause-btn');
+  const playPauseIcon = document.getElementById('tetris-play-pause-icon');
   
-  if (startBtn) {
-    startBtn.replaceWith(startBtn.cloneNode(true));
-    const newStartBtn = document.getElementById('tetris-start-btn');
-    newStartBtn.addEventListener('click', () => {
-      console.log("点击开始按钮");
-      if (this.gameOver || !this.isPlaying) {
-        if (this.gameOver) {
-          console.log("游戏已结束，重置游戏");
-          this.fullReset();
-        }
-        console.log("开始游戏");
+  if (playPauseBtn) {
+    // 移除可能已存在的旧事件处理器
+    if (this.playPauseBtnHandler) {
+      playPauseBtn.removeEventListener('click', this.playPauseBtnHandler);
+    }
+    
+    this.playPauseBtnHandler = () => {
+      console.log("点击开始/暂停按钮，当前状态:", 
+                  this.gameOver ? "游戏结束" : 
+                  this.paused ? "已暂停" : 
+                  this.isPlaying ? "游戏中" : "未开始");
+                  
+      if (this.gameOver) {
+        // 重置游戏
+        this.fullReset();
         this.start();
+        playPauseIcon.src = './image/pause.svg';
+      } else if (this.paused) {
+        // 继续游戏
+        this.togglePause();
+        playPauseIcon.src = './image/pause.svg';
+      } else if (!this.isPlaying) {
+        // 开始新游戏
+        this.start();
+        playPauseIcon.src = './image/pause.svg';
+      } else {
+        // 暂停游戏
+        this.togglePause();
+        playPauseIcon.src = './image/start.svg';
       }
-    });
-  }
-  
-  if (pauseBtn) {
-    pauseBtn.replaceWith(pauseBtn.cloneNode(true));
-    const newPauseBtn = document.getElementById('tetris-pause-btn');
-    newPauseBtn.addEventListener('click', () => {
-      console.log("点击暂停按钮");
-      this.togglePause();
-    });
+    };
+    
+    // 添加新的事件处理器
+    playPauseBtn.addEventListener('click', this.playPauseBtnHandler);
   }
 }
   
@@ -697,37 +713,47 @@ initEventListeners() {
       }
     }
   
-    start() {
-      if (this.intervalId) return;
-      this.paused = false;
-      this.isPlaying = true;
-      document.getElementById('tetris-pause-btn').textContent = '暂停';
-      this.intervalId = setInterval(() => this.moveDown(), this.speed);
-    }
+// 修改 start 方法，更新按钮图标
+start() {
+  if (this.intervalId) return;
+  this.paused = false;
+  this.isPlaying = true;
   
-    togglePause() {
-      if (this.gameOver) return;
-      this.paused = !this.paused;
-      if (this.paused) {
-        document.getElementById('tetris-pause-btn').textContent = '继续';
-        if (this.intervalId) {
-          clearInterval(this.intervalId);
-          this.intervalId = null;
-        }
-        this.ctx.font = '30px Arial';
-        this.ctx.fillStyle = '#333';
-        this.ctx.textAlign = 'center';
-        this.ctx.fillText('游戏暂停', this.canvas.width / 2, this.canvas.height / 2);
-      } else {
-        document.getElementById('tetris-pause-btn').textContent = '暂停';
-        this.start();
-      }
-    }
+  // 更新按钮图标为暂停图标
+  const playPauseIcon = document.getElementById('tetris-play-pause-icon');
+  if (playPauseIcon) playPauseIcon.src = './image/pause.svg';
   
-    reset() {
-      this.fullReset();
+  this.intervalId = setInterval(() => this.moveDown(), this.speed);
+}
+  
+// 修改 togglePause 方法，更新按钮图标
+togglePause() {
+  if (this.gameOver) return;
+  this.paused = !this.paused;
+  
+  const playPauseIcon = document.getElementById('tetris-play-pause-icon');
+  
+  if (this.paused) {
+    // 更新按钮图标为开始图标
+    if (playPauseIcon) playPauseIcon.src = './image/start.svg';
+    
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
     }
-// 修改 fullReset 方法，确保清理所有按键状态
+    this.ctx.font = '30px Arial';
+    this.ctx.fillStyle = '#333';
+    this.ctx.textAlign = 'center';
+    this.ctx.fillText('游戏暂停', this.canvas.width / 2, this.canvas.height / 2);
+  } else {
+    // 更新按钮图标为暂停图标
+    if (playPauseIcon) playPauseIcon.src = './image/pause.svg';
+    
+    this.start();
+  }
+}
+  
+// 修复 fullReset 方法，确保事件监听器正确初始化
 fullReset() {
   console.log("执行完全重置");
   
@@ -763,6 +789,7 @@ fullReset() {
     this.keyState.down = false;
   }
   
+  // 防止重复删除同一个事件监听器
   if (this.keyDownHandler) {
     document.removeEventListener('keydown', this.keyDownHandler);
     this.keyDownHandler = null;
@@ -771,6 +798,13 @@ fullReset() {
   if (this.keyUpHandler) {
     document.removeEventListener('keyup', this.keyUpHandler);
     this.keyUpHandler = null;
+  }
+  
+  // 移除暂停按钮事件监听器
+  const playPauseBtn = document.getElementById('tetris-play-pause-btn');
+  if (playPauseBtn && this.playPauseBtnHandler) {
+    playPauseBtn.removeEventListener('click', this.playPauseBtnHandler);
+    this.playPauseBtnHandler = null;
   }
   
   // 重置游戏状态
@@ -791,6 +825,10 @@ fullReset() {
   // 更新UI
   if (this.scoreElement) this.scoreElement.textContent = '0';
   if (this.levelElement) this.levelElement.textContent = '1';
+  
+  // 更新按钮图标为开始图标
+  const playPauseIcon = document.getElementById('tetris-play-pause-icon');
+  if (playPauseIcon) playPauseIcon.src = './image/start.svg';
   
   // 启用所有控制按钮
   document.querySelectorAll('.direction-btn').forEach(btn => {
@@ -833,6 +871,9 @@ fullReset() {
       // 移除事件监听器
       document.removeEventListener('keydown', this.keyDownHandler);
       document.removeEventListener('keyup', this.keyUpHandler);
+      
+      // 移除合并按钮的事件监听器
+      document.getElementById('tetris-play-pause-btn')?.removeEventListener('click', this.playPauseBtnHandler);
       
       // 重置游戏状态
       this.gameOver = true;
