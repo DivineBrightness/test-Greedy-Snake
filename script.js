@@ -9,6 +9,153 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 应用随机季节
     changeSeason(randomSeason);
+
+    // 初始化飞心动画
+    let flyingHeartAnimation = null;
+    const initFlyingHeartAnimation = () => {
+        const container = document.getElementById('flying-heart-container');
+        
+        if (container) {
+            // 初始化 Lottie 动画
+            flyingHeartAnimation = lottie.loadAnimation({
+                container: container,
+                renderer: 'svg',
+                loop: false, // 不循环播放
+                autoplay: false, // 不自动播放
+                path: './image/flying-heart.json'
+            });
+            
+            // 添加点击事件监听器
+            container.addEventListener('click', () => {
+                console.log('点击了飞心动画');
+                // 重新播放动画
+                flyingHeartAnimation.goToAndPlay(0, true);
+            });
+            
+            // 添加完成事件监听器
+            flyingHeartAnimation.addEventListener('complete', () => {
+                console.log('动画播放完成');
+                // 可以在这里添加动画完成后的逻辑
+            });
+            
+            // 初始播放一次动画（页面加载时）
+            flyingHeartAnimation.goToAndPlay(0, true);
+            
+            // 添加拖拽功能
+            makeDraggable(container);
+        }
+    };
+
+    // 添加拖拽功能
+    function makeDraggable(element) {
+        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+        let isDragging = false;
+        let movedDistance = 0; // 跟踪移动距离
+        let startTime = 0; // 开始时间
+        
+        element.addEventListener('mousedown', dragStart);
+        element.addEventListener('touchstart', dragStart, { passive: false });
+        
+        function dragStart(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            startTime = Date.now();
+            movedDistance = 0; // 重置移动距离
+            
+            // 如果是触摸事件，获取第一个触摸点
+            if (e.type === 'touchstart') {
+                pos3 = e.touches[0].clientX;
+                pos4 = e.touches[0].clientY;
+                
+                document.addEventListener('touchmove', dragMove, { passive: false });
+                document.addEventListener('touchend', dragEnd, { passive: false });
+            } else {
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                
+                document.addEventListener('mousemove', dragMove);
+                document.addEventListener('mouseup', dragEnd);
+            }
+            
+            isDragging = true;
+            console.log('开始拖动飞心');
+        }
+        
+        function dragMove(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            
+            // 计算新位置
+            let newX, newY;
+            if (e.type === 'touchmove') {
+                newX = e.touches[0].clientX;
+                newY = e.touches[0].clientY;
+                pos1 = pos3 - newX;
+                pos2 = pos4 - newY;
+                pos3 = newX;
+                pos4 = newY;
+            } else {
+                newX = e.clientX;
+                newY = e.clientY;
+                pos1 = pos3 - newX;
+                pos2 = pos4 - newY;
+                pos3 = newX;
+                pos4 = newY;
+            }
+            
+            // 计算移动距离
+            movedDistance += Math.sqrt(pos1 * pos1 + pos2 * pos2);
+            
+            // 设置元素的新位置
+            element.style.top = (element.offsetTop - pos2) + "px";
+            element.style.left = (element.offsetLeft - pos1) + "px";
+        }
+        
+        function dragEnd(e) {
+            // 停止拖动
+            isDragging = false;
+            
+            // 移除事件监听器
+            document.removeEventListener('mousemove', dragMove);
+            document.removeEventListener('mouseup', dragEnd);
+            document.removeEventListener('touchmove', dragMove);
+            document.removeEventListener('touchend', dragEnd);
+            
+            // 防止拖出视口
+            const rect = element.getBoundingClientRect();
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            
+            if (rect.left < 0) element.style.left = "0px";
+            if (rect.top < 0) element.style.top = "0px";
+            if (rect.right > windowWidth) element.style.left = (windowWidth - rect.width) + "px";
+            if (rect.bottom > windowHeight) element.style.top = (windowHeight - rect.height) + "px";
+            
+            // 判断是点击还是拖动
+            const endTime = Date.now();
+            const elapsedTime = endTime - startTime;
+            
+            // 如果移动距离小于5px，且时间小于200ms，则视为点击
+            if (movedDistance < 5 && elapsedTime < 200) {
+                console.log('检测到点击飞心');
+                
+                // 模拟点击事件
+                setTimeout(() => {
+                    // 重新播放动画
+                    if (flyingHeartAnimation) {
+                        flyingHeartAnimation.goToAndPlay(0, true);
+                        console.log('触发飞心动画');
+                    }
+                }, 10);
+            }
+            
+            console.log('结束拖动飞心');
+        }
+    }
+
+    // 调用初始化函数
+    initFlyingHeartAnimation();
     
     populateSelect('snake-player-select');
     populateSelect('tetris-player-select');

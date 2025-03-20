@@ -1452,3 +1452,75 @@ body.winter .seasonal-decoration {
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
   }
 }
+
+/* 飞心动画容器样式 */
+.flying-heart-animation {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  width: 150px; /* 调整大小为适中的100px */
+  height: 150px;
+  z-index: 1000;
+  cursor: move; /* 使用move光标提示用户可拖动 */
+  pointer-events: auto; /* 确保可以点击 */
+  touch-action: none; /* 防止触摸设备上的滚动和缩放干扰拖动 */
+  user-select: none; /* 防止文本选择 */
+  -webkit-user-drag: none; /* 防止元素被拖出 */
+}
+
+/* 在游戏页面中隐藏动画 */
+#snake-game:not([style*="display: none"]) ~ .flying-heart-animation,
+#tetris-game:not([style*="display: none"]) ~ .flying-heart-animation,
+#games-selection:not([style*="display: none"]) ~ .flying-heart-animation {
+  display: none;
+}
+
+/* 移除移动设备上点击元素时出现的边框和高亮 */
+* {
+  -webkit-tap-highlight-color: transparent; /* 移除iOS上的点击高亮 */
+  outline: none; /* 移除默认轮廓 */
+}
+
+/* 专门针对按钮的点击状态处理 */
+button,
+.control-btn,
+.direction-btn,
+.game-btn,
+.season-btn,
+.instruction-btn,
+.back-btn,
+.game-select-btn,
+.leaderboard-btn,
+.play-pause-btn {
+  -webkit-appearance: none; /* 移除iOS默认按钮样式 */
+  -webkit-touch-callout: none; /* 禁止长按弹出菜单 */
+  user-select: none; /* 防止文本被选中 */
+  touch-action: manipulation; /* 优化触摸操作 */
+  -webkit-user-select: none; /* Safari特定属性 */
+  -moz-user-select: none; /* Firefox特定属性 */
+  -ms-user-select: none; /* IE/Edge特定属性 */
+}
+
+/* 确保按钮在点击后没有边框或外观变化 */
+button:focus,
+.control-btn:focus,
+.direction-btn:focus,
+.game-btn:focus,
+.season-btn:focus,
+.instruction-btn:focus,
+.back-btn:focus,
+.game-select-btn:focus,
+.leaderboard-btn:focus,
+.play-pause-btn:focus {
+  outline: none;
+  box-shadow: none;
+  border-color: transparent;
+}
+
+/* 为飞心动画容器添加无边框点击样式 */
+.flying-heart-animation {
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  user-select: none;
+  touch-action: manipulation;
+}
