@@ -33,6 +33,9 @@
     
     <div id="snake-game" style="display: none;">
       <button class="back-btn" id="back-btn"></button>
+      <button class="play-pause-btn fixed-btn" id="snake-play-pause-btn">
+        <img src="./image/start.svg" alt="开始/暂停" id="snake-play-pause-icon">
+      </button>
       <h2>贪吃蛇</h2>
       <div class="game-info">
         <div class="game-score">分数: <span id="score">0</span></div>
@@ -70,11 +73,9 @@
           <button id="snake-submit-btn">提交分数</button>
         </div>
       </div>
-      <!-- 替换贪吃蛇的开始和暂停按钮 -->
+      <!-- 移除原始游戏控制区域的开始/暂停按钮 -->
       <div class="game-controls">
-        <button class="play-pause-btn" id="snake-play-pause-btn">
-          <img src="./image/start.svg" alt="开始/暂停" id="snake-play-pause-icon">
-        </button>
+        <!-- 按钮已移到顶部固定位置 -->
       </div>
       <div class="mobile-controls">
         <div class="control-row">
@@ -93,6 +94,9 @@
     </div>
     <div id="tetris-game" style="display: none;">
       <button class="back-btn" id="tetris-back-btn"></button>
+      <button class="play-pause-btn fixed-btn" id="tetris-play-pause-btn">
+        <img src="./image/start.svg" alt="开始/暂停" id="tetris-play-pause-icon">
+      </button>
       <h2>俄罗斯方块</h2>
       <div class="game-info">
         <div class="game-score">分数: <span id="tetris-score">0</span></div>
@@ -138,11 +142,9 @@
         </div>
       </div>
       
-      <!-- 替换俄罗斯方块的开始和暂停按钮 -->
+      <!-- 移除原始游戏控制区域的开始/暂停按钮 -->
       <div class="game-controls">
-        <button class="play-pause-btn" id="tetris-play-pause-btn">
-          <img src="./image/start.svg" alt="开始/暂停" id="tetris-play-pause-icon">
-        </button>
+        <!-- 按钮已移到顶部固定位置 -->
       </div>
       <div class="mobile-controls">
         <div class="control-row">
