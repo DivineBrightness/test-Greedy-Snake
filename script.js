@@ -16,30 +16,52 @@ document.addEventListener('DOMContentLoaded', () => {
     const initFlyingHeartAnimation = () => {
         const container = document.getElementById('flying-heart-container');
         
-        if (container) {
-            // 确保容器尺寸正确
-            container.style.width = '150px';
-            container.style.height = '150px';
-            container.style.overflow = 'hidden';
-            
-            // 初始化 Lottie 动画，增加明确的尺寸设置
+        if (!container) {
+            console.error('找不到飞心容器元素!');
+            return;
+        }
+        
+        console.log('初始化飞心动画');
+        
+        // 明确设置容器样式
+        container.style.width = '150px';
+        container.style.height = '150px';
+        container.style.overflow = 'hidden';
+        container.style.display = 'block';
+        container.style.visibility = 'visible';
+        
+        // 确保Lottie库可用
+        if (typeof lottie === 'undefined') {
+            console.error('Lottie库未加载，尝试动态加载');
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.6/lottie.min.js';
+            script.onload = () => {
+                console.log('Lottie库已动态加载');
+                initLottieAnimation(container);
+            };
+            document.head.appendChild(script);
+        } else {
+            initLottieAnimation(container);
+        }
+    };
+
+    // 分离Lottie初始化逻辑
+    function initLottieAnimation(container) {
+        try {
             flyingHeartAnimation = lottie.loadAnimation({
                 container: container,
                 renderer: 'svg',
                 loop: false,
-                autoplay: false,
+                autoplay: true, // 自动播放一次
                 path: './image/flying-heart.json',
                 rendererSettings: {
-                    // 限制SVG尺寸
-                    preserveAspectRatio: 'xMidYMid meet',
-                    // 确保SVG在容器内居中
-                    viewBoxSize: '0 0 150 150'
+                    preserveAspectRatio: 'xMidYMid meet'
                 }
             });
             
-            // 添加加载完成后强制设置尺寸的处理
+            // 监听DOM加载完成事件
             flyingHeartAnimation.addEventListener('DOMLoaded', () => {
-                // 强制设置SVG尺寸
+                console.log('Lottie DOM已加载');
                 const svg = container.querySelector('svg');
                 if (svg) {
                     svg.setAttribute('width', '150px');
@@ -49,26 +71,42 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
             
-            // 添加点击事件监听器
-            container.addEventListener('click', () => {
-                console.log('点击了飞心动画');
-                // 重新播放动画
-                flyingHeartAnimation.goToAndPlay(0, true);
+            // 监听错误
+            flyingHeartAnimation.addEventListener('error', (error) => {
+                console.error('Lottie动画加载错误，创建CSS后备方案');
+                createFallbackHeart(container);
             });
             
-            // 添加完成事件监听器
-            flyingHeartAnimation.addEventListener('complete', () => {
-                console.log('动画播放完成');
-                // 可以在这里添加动画完成后的逻辑
-            });
-            
-            // 初始播放一次动画（页面加载时）
-            flyingHeartAnimation.goToAndPlay(0, true);
-            
-            // 添加拖拽功能
-            makeDraggable(container);
+        } catch (error) {
+            console.error('初始化Lottie动画失败:', error);
+            createFallbackHeart(container);
         }
-    };
+    }
+
+    // 创建CSS后备方案
+    function createFallbackHeart(container) {
+        container.innerHTML = '<div class="heart-fallback"></div>';
+        
+        // 添加内联样式
+        const style = document.createElement('style');
+        style.textContent = `
+            .heart-fallback {
+                width: 100%;
+                height: 100%;
+                background-color: #ff6b6b;
+                clip-path: path('M25,39.7l-4.5-4.5C14.1,29,9,24.5,9,19.1c0-4.4,3.4-7.8,7.8-7.8c2.4,0,4.8,1.1,6.2,2.9c1.4-1.8,3.8-2.9,6.2-2.9c4.4,0,7.8,3.4,7.8,7.8c0,5.4-5.1,9.9-11.5,16.2L25,39.7z');
+                animation: heartbeat 1.5s infinite;
+            }
+            @keyframes heartbeat {
+                0% { transform: scale(1); }
+                25% { transform: scale(1.1); }
+                50% { transform: scale(1); }
+                75% { transform: scale(1.1); }
+                100% { transform: scale(1); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
 
     // 添加拖拽功能
     function makeDraggable(element) {
