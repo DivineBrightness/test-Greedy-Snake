@@ -74,19 +74,28 @@
         </div>
       </div>
       
+      <!-- 修改贪吃蛇游戏的方向按钮 -->
       <div class="mobile-controls">
         <div class="control-row">
-          <button class="control-btn direction-btn" id="up-btn">↑</button>
+          <button class="control-btn direction-btn" id="up-btn">
+            <img src="./image/up.svg" alt="上" class="control-icon">
+          </button>
         </div>
         <div class="control-row">
-          <button class="control-btn direction-btn" id="left-btn">←</button>
-          <button class="control-btn direction-btn" id="down-btn">↓</button>
-          <button class="control-btn direction-btn" id="right-btn">→</button>
+          <button class="control-btn direction-btn" id="left-btn">
+            <img src="./image/left.svg" alt="左" class="control-icon">
+          </button>
+          <button class="control-btn direction-btn" id="down-btn">
+            <img src="./image/down.svg" alt="下" class="control-icon">
+          </button>
+          <button class="control-btn direction-btn" id="right-btn">
+            <img src="./image/right.svg" alt="右" class="control-icon">
+          </button>
         </div>
       </div>
       <div class="game-instructions">
-        <p>使用键盘方向键或WASD控制蛇移动，吃到食物可增加分数</p>
-        <p>碰到墙壁或自己的身体游戏结束。</p>
+        <p>使用键盘方向键或WASD键或下方按钮控制蛇的移动方向</p>
+        <p>吃到食物可增加分数，碰到墙壁或自己的身体游戏结束</p>
       </div>
     </div>
     <div id="tetris-game" style="display: none;">
@@ -145,25 +154,35 @@
           
           <!-- 旋转按钮移到最底部，排行榜下方 -->
           <div class="rotate-btn-container">
-            <button class="control-btn direction-btn rotate-btn-preview" id="rotate-btn">↻</button>
+            <button class="control-btn direction-btn rotate-btn-preview" id="rotate-btn">
+              <img src="./image/loop.svg" alt="旋转" class="control-icon">
+            </button>
           </div>
         </div>
       </div>
       
+      <!-- 修改俄罗斯方块游戏的控制按钮 -->
       <div class="mobile-controls">
-        <!-- 移除旋转按钮的原始位置 -->
         <div class="control-row">
-          <button class="control-btn direction-btn" id="tetris-left-btn">←</button>
-          <button class="control-btn direction-btn" id="tetris-down-btn">↓</button>
-          <button class="control-btn direction-btn" id="tetris-right-btn">→</button>
+          <button class="control-btn direction-btn" id="tetris-left-btn">
+            <img src="./image/left.svg" alt="左" class="control-icon">
+          </button>
+          <button class="control-btn direction-btn" id="tetris-down-btn">
+            <img src="./image/down.svg" alt="下" class="control-icon">
+          </button>
+          <button class="control-btn direction-btn" id="tetris-right-btn">
+            <img src="./image/right.svg" alt="右" class="control-icon">
+          </button>
         </div>
         <div class="control-row">
-          <button class="control-btn direction-btn" id="drop-btn">↯</button>
+          <button class="control-btn direction-btn" id="drop-btn">
+            <img src="./image/down (1).svg" alt="一键下落" class="control-icon">
+          </button>
         </div>
       </div>
       <div class="game-instructions">
-        <p>使用键盘方向键控制方块，左右移动，上键旋转，下键加速下落。</p>
-        <p>空格键可以直接落到底部。随着等级提高，方块下落速度会增加。</p>
+        <p>使用方向键控制：左右移动，上键旋转，下键加速，空格键直接落地</p>
+        <p>消除完整的行可得分，随着等级提高，方块下落速度会增加</p>
       </div>
     </div>
     <footer>© 2025 四季 | 俄罗斯方块 & 贪吃蛇</footer>
