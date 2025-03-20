@@ -1,7 +1,15 @@
 // script.js
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM 已加载');
-    changeSeason('spring');
+    
+    // 随机选择一个季节
+    const seasons = ['spring', 'summer', 'autumn', 'winter'];
+    const randomSeason = seasons[Math.floor(Math.random() * seasons.length)];
+    console.log('随机初始化季节：', randomSeason);
+    
+    // 应用随机季节
+    changeSeason(randomSeason);
+    
     populateSelect('snake-player-select');
     populateSelect('tetris-player-select');
   
