@@ -21,10 +21,13 @@
       <button class="game-btn" id="games-btn">小游戏</button>
     </div>
     
-    <!-- 添加游戏选择页面 -->
+    <!-- 修改游戏选择页面，添加游戏说明按钮 -->
     <div id="games-selection" style="display: none;">
       <button class="back-btn" id="games-back-btn"></button>
-      <h2>选择游戏</h2>
+      <div class="games-header">
+        <h2>选择游戏</h2>
+        <button class="instruction-btn" id="games-instruction-btn">游戏说明</button>
+      </div>
       <div class="games-grid">
         <button class="game-select-btn" id="snake-select-btn"><span>贪吃蛇</span></button>
         <button class="game-select-btn" id="tetris-select-btn"><span>俄罗斯方块</span></button>
@@ -92,10 +95,6 @@
             <img src="./image/right.svg" alt="右" class="control-icon">
           </button>
         </div>
-      </div>
-      <div class="game-instructions">
-        <p>使用键盘方向键或WASD键或下方按钮控制蛇的移动方向</p>
-        <p>吃到食物可增加分数，碰到墙壁或自己的身体游戏结束</p>
       </div>
     </div>
     <div id="tetris-game" style="display: none;">
@@ -180,10 +179,6 @@
           </button>
         </div>
       </div>
-      <div class="game-instructions">
-        <p>使用方向键控制：左右移动，上键旋转，下键加速，空格键直接落地</p>
-        <p>消除完整的行可得分，随着等级提高，方块下落速度会增加</p>
-      </div>
     </div>
     <footer>© 2025 四季 | 俄罗斯方块 & 贪吃蛇</footer>
   </div>
@@ -192,5 +187,31 @@
   <script src="./snakeGame.js"></script>
   <script src="./tetrisGame.js"></script>
   <script src="./script.js"></script>
+
+  <!-- 添加游戏说明弹窗 -->
+  <div id="instruction-modal" style="display: none;">
+    <div>
+      <button class="modal-close-btn"><img src="./image/x-circle.svg" alt="关闭" class="close-icon"></button>
+      <div class="modal-header">
+        <h2 style="color: rgb(3, 93, 61); margin-bottom: 15px; font-size: 24px;">游戏说明</h2>
+      </div>
+      
+      <div class="instruction-content">
+        <div class="game-instruction-section">
+          <h3>贪吃蛇</h3>
+          <p>使用键盘方向键或WASD键或触屏按钮控制蛇的移动方向</p>
+          <p>吃到食物可增加分数，碰到墙壁或自己的身体游戏结束</p>
+          <p>空格键可以暂停/继续游戏</p>
+        </div>
+        
+        <div class="game-instruction-section">
+          <h3>俄罗斯方块</h3>
+          <p>使用方向键控制：左右移动，上键旋转，下键加速，空格键直接落地</p>
+          <p>消除完整的行可得分，随着等级提高，方块下落速度会增加</p>
+          <p>P键可以暂停/继续游戏</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

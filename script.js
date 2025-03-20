@@ -209,4 +209,29 @@ const toggleGameView = (showGameId, hideElements) => {
             toggleGameView('games-selection', true);
         }, { once: true });
     });
+
+    // 游戏说明按钮点击事件
+    const instructionBtn = document.getElementById('games-instruction-btn');
+    const instructionModal = document.getElementById('instruction-modal');
+    
+    if (instructionBtn && instructionModal) {
+        instructionBtn.addEventListener('click', () => {
+            instructionModal.style.display = 'flex';
+        });
+        
+        // 为说明弹窗添加关闭按钮事件
+        const closeBtn = instructionModal.querySelector('.modal-close-btn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                instructionModal.style.display = 'none';
+            });
+        }
+        
+        // 点击弹窗背景关闭弹窗
+        instructionModal.addEventListener('click', (e) => {
+            if (e.target === instructionModal) {
+                instructionModal.style.display = 'none';
+            }
+        });
+    }
   });
