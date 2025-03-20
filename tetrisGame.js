@@ -316,36 +316,60 @@ freezeShape() {
   }
 }
   
-    removeCompleteRows() {
-      let rowsCleared = 0;
-      for (let y = this.rows - 1; y >= 0; y--) {
-        if (this.grid[y].every(cell => cell)) {
-          rowsCleared++;
-          this.grid.splice(y, 1);
-          this.grid.unshift(Array(this.cols).fill(0));
-          y++;
-        }
+removeCompleteRows() {
+  let rowsCleared = 0;
+  for (let y = this.rows - 1; y >= 0; y--) {
+    if (this.grid[y].every(cell => cell)) {
+      rowsCleared++;
+      this.grid.splice(y, 1);
+      this.grid.unshift(Array(this.cols).fill(0));
+      y++;
+    }
+  }
+  if (rowsCleared > 0) {
+    const points = [0, 100, 300, 500, 800];
+    this.score += points[rowsCleared] * this.level;
+    this.scoreElement.textContent = this.score;
+    if (this.score > this.highScore) {
+      this.highScore = this.score;
+      this.highScoreElement.textContent = this.highScore;
+      localStorage.setItem('tetrisHighScore', this.highScore);
+    }
+    // 修改等级计算逻辑，保持每1000分一级
+    if (Math.floor(this.score / 1000) > this.level - 1) {
+      this.level = Math.floor(this.score / 1000) + 1;
+      this.levelElement.textContent = this.level;
+      
+      // 修改速度计算公式，使难度曲线更平缓
+      // 前5级速度下降快，后面难度增加缓慢
+      if (this.level <= 5) {
+        // 前5级速度：1000ms -> 500ms (每级减少100ms)
+        this.speed = 1000 - (this.level - 1) * 100;
+      } else if (this.level <= 10) {
+        // 6-10级速度：500ms -> 350ms (每级减少30ms)
+        this.speed = 500 - (this.level - 5) * 30;
+      } else if (this.level <= 15) {
+        // 11-15级速度：350ms -> 250ms (每级减少20ms)
+        this.speed = 350 - (this.level - 10) * 20;
+      } else if (this.level <= 20) {
+        // 16-20级速度：250ms -> 200ms (每级减少10ms)
+        this.speed = 250 - (this.level - 15) * 10;
+      } else {
+        // 20级以上速度：固定为200ms
+        this.speed = 200;
       }
-      if (rowsCleared > 0) {
-        const points = [0, 100, 300, 500, 800];
-        this.score += points[rowsCleared] * this.level;
-        this.scoreElement.textContent = this.score;
-        if (this.score > this.highScore) {
-          this.highScore = this.score;
-          this.highScoreElement.textContent = this.highScore;
-          localStorage.setItem('tetrisHighScore', this.highScore);
-        }
-        if (Math.floor(this.score / 1000) > this.level - 1) {
-          this.level = Math.floor(this.score / 1000) + 1;
-          this.levelElement.textContent = this.level;
-          this.speed = Math.max(100, 1000 - (this.level - 1) * 100);
-          if (this.intervalId) {
-            clearInterval(this.intervalId);
-            this.intervalId = setInterval(() => this.moveDown(), this.speed);
-          }
-        }
+      
+      // 确保速度不小于设定的最低限制
+      if (this.speed < 200) this.speed = 200;
+      
+      // 更新游戏循环速度
+      if (this.intervalId) {
+        clearInterval(this.intervalId);
+        this.intervalId = setInterval(() => this.moveDown(), this.speed);
       }
     }
+  }
+}
   
     newShape() {
       this.currentShape = this.nextShape;
