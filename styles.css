@@ -446,12 +446,13 @@ button:focus {
   font-weight: bold;
 }
 
-/* 游戏选择页面样式 */
+/* 修改游戏选择页面布局 */
 #games-selection {
   text-align: center;
   padding: 20px;
   position: relative;
-  max-width: 800px;
+  width: 100%; /* 修改为 width: 100% */
+  max-width: 100%; /* 移除或增大 max-width 限制 */
   margin: 0 auto;
 }
 
@@ -466,11 +467,15 @@ button:focus {
   margin-top: 40px;
 }
 
+/* 游戏选择网格可以保持居中但不需要占满整行 */
 .games-grid {
   display: flex;
   justify-content: center;
   gap: 40px;
   margin-top: 40px;
+  max-width: 800px; /* 将宽度限制移到这里 */
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .game-select-btn {
@@ -1254,6 +1259,10 @@ body.winter .seasonal-decoration {
   margin-bottom: 30px;
   margin-top: 40px; /* 为返回按钮留出空间 */
   width: 100%;
+  max-width: 100%; /* 确保不会被父元素的max-width限制 */
+  box-sizing: border-box; /* 确保padding不会增加元素总宽度 */
+  padding-left: 15px; /* 为左侧返回按钮留出空间 */
+  padding-right: 15px; /* 为右侧说明按钮留出空间 */
 }
 
 .games-header h2 {
@@ -1262,12 +1271,13 @@ body.winter .seasonal-decoration {
   color: #333;
   position: relative; /* 保持居中定位 */
   text-align: center;
+  flex: 1; /* 让标题占据剩余空间 */
 }
 
 /* 游戏说明按钮样式 - 调整位置到右侧 */
 .instruction-btn {
   position: absolute;
-  right: 0;
+  right: 15px; /* 增加右侧距离 */
   top: 50%; /* 垂直居中 */
   transform: translateY(-50%);
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(240, 240, 240, 0.8));
@@ -1281,6 +1291,7 @@ body.winter .seasonal-decoration {
   transition: all 0.3s ease;
   font-weight: 500;
   margin: 0; /* 移除外边距干扰 */
+  white-space: nowrap; /* 防止文本换行 */
 }
 
 .instruction-btn:hover {
