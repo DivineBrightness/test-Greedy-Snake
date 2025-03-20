@@ -106,7 +106,7 @@ class SnakeGame {
       this.drawBlock(this.food.x, this.food.y, '#FF5722');
     }
   
-// 修改 drawGameOver 方法，添加关闭按钮
+// 修改 drawGameOver 方法中的模态框 HTML 结构
 drawGameOver() {
   // 清除Canvas
   this.ctx.clearRect(0, 0, this.width, this.height);
@@ -115,11 +115,11 @@ drawGameOver() {
   const modal = document.getElementById('snake-modal');
   const modalContent = modal.querySelector('div');
   
-  // 更新模态框内容
+  // 更新模态框内容 - 将关闭按钮移到外层
   modalContent.innerHTML = `
+    <button class="modal-close-btn">&times;</button>
     <div class="modal-header">
       <h2 style="color:rgb(3, 93, 61); margin-bottom: 15px; font-size: 24px;">游戏结束!</h2>
-      <button class="modal-close-btn">&times;</button>
     </div>
     <p style="font-size: 20px; margin-bottom: 20px;">最终得分: <strong>${this.score}</strong></p>
     <p style="margin-bottom: 15px;">选择你的名字提交成绩:</p>

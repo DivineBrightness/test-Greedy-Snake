@@ -250,6 +250,7 @@ body.winter { background-color: #f0f8ff; }
 }
 
 #snake-modal > div, #tetris-modal > div {
+  position: relative;
   background: linear-gradient(to bottom, #ffffff, #f5f5f7);
   padding: 30px;
   border-radius: 15px;
@@ -916,19 +917,22 @@ body.winter .seasonal-decoration {
 }
 
 
-/* 添加模态框关闭按钮的样式 */
+/* 修改模态框标题区域样式，保持居中 */
 .modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
   width: 100%;
-  margin-bottom: 5px;
+  text-align: center;
+  margin-bottom: 15px;
+  position: relative;
 }
 
+/* 修改模态框关闭按钮的样式，将其定位到弹窗右上角 */
 .modal-close-btn {
-  background: transparent;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255, 255, 255, 0.3);
   border: none;
-  color: #555;
+  color: #333;
   font-size: 24px;
   cursor: pointer;
   padding: 0;
@@ -939,13 +943,13 @@ body.winter .seasonal-decoration {
   justify-content: center;
   border-radius: 50%;
   transition: all 0.2s;
-  margin-top: -8px;
-  margin-right: -10px;
+  z-index: 10;
 }
 
 .modal-close-btn:hover {
   background: rgba(0, 0, 0, 0.1);
   color: #333;
+  transform: scale(1.1);
 }
 /* 移动设备上按钮会更大一些，便于触摸 */
 @media (max-width: 768px) {
@@ -953,5 +957,7 @@ body.winter .seasonal-decoration {
     width: 40px;
     height: 40px;
     font-size: 28px;
+    top: 8px;
+    right: 8px;
   }
 }
