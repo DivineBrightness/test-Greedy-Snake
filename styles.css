@@ -464,7 +464,7 @@ button:focus {
 }
 /* 同理，确保游戏页面的标题也不被遮挡 */
 #snake-game h2, #tetris-game h2 {
-  margin-top: 40px;
+  margin-top: 0px;
 }
 
 /* 游戏选择网格可以保持居中但不需要占满整行 */
