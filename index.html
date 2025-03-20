@@ -186,20 +186,22 @@
     </div>
     <footer>© 2025 四季 | 俄罗斯方块 & 贪吃蛇</footer>
   </div>
+  <script src="./debug.js"></script>
   <script src="./leaderboard.js"></script>
   <script src="./scenes.js"></script>
   <script src="./snakeGame.js"></script>
   <script src="./tetrisGame.js"></script>
   <script src="./script.js"></script>
 
-  <!-- 添加游戏说明弹窗 -->
-  <div id="instruction-modal" style="display: none;">
-    <div>
+  <!-- 修改游戏说明弹窗的样式 -->
+  <div id="instruction-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #ffffff; padding: 30px; border-radius: 15px; width: 450px; max-width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
+      <!-- 保持内部内容不变 -->
       <button class="modal-close-btn"><img src="./image/x-circle.svg" alt="关闭" class="close-icon"></button>
       <div class="modal-header">
         <h2 style="color: rgb(3, 93, 61); margin-bottom: 15px; font-size: 24px;">游戏说明</h2>
       </div>
-      
+      <!-- 其余内容不变 -->
       <div class="instruction-content">
         <div class="game-instruction-section">
           <h3>贪吃蛇</h3>

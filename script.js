@@ -218,6 +218,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 调用初始化函数
     initFlyingHeartAnimation();
+    // 获取飞心容器元素并添加拖动功能
+    const heartContainer = document.getElementById('flying-heart-container');
+    if (heartContainer) {
+        console.log('添加飞心拖动功能');
+        makeDraggable(heartContainer);
+    }
     
     populateSelect('snake-player-select');
     populateSelect('tetris-player-select');
