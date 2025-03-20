@@ -176,7 +176,15 @@ initMobileControls() {
     }
   
     getRandomShape() {
-      return this.shapes[Math.floor(Math.random() * this.shapes.length)];
+      // 获取随机形状的索引
+      const randomIndex = Math.floor(Math.random() * this.shapes.length);
+      const originalShape = this.shapes[randomIndex];
+      
+      // 创建深拷贝而不是直接引用
+      return {
+        shape: JSON.parse(JSON.stringify(originalShape.shape)),
+        color: originalShape.color
+      };
     }
   
     rotateShape() {
