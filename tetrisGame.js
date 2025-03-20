@@ -55,38 +55,48 @@ initMobileControls() {
     return this.isPlaying && !this.gameOver && !this.paused && !this.hasDrawnGameOver && !this.isDropping;
   };
   
-  let lastTap = 0;
-  const debounceTime = 200; // 防抖时间
+  // 设置不同的时间间隔参数，提供更好的手机触摸体验
+  const initialDelay = 100; // 首次触摸到开始重复的延迟
+  const repeatInterval = 120; // 重复的间隔时间，比键盘略慢一些，更适合触摸
   
+  // 单击处理函数
   const handleTap = (action) => (e) => {
     e.preventDefault();
-    const now = Date.now();
-    if (now - lastTap < debounceTime || !canControl()) return;
-    lastTap = now;
+    if (!canControl()) return;
     action();
     this.draw();
   };
   
+  // 长按处理函数，支持连续操作
   const handleHold = (action) => {
     let intervalId = null;
     return {
       start: (e) => {
         e.preventDefault();
         if (!canControl()) return;
+        
+        // 立即执行一次动作
         action();
         this.draw();
-        intervalId = setInterval(() => {
-          if (!canControl()) {
-            clearInterval(intervalId);
-            intervalId = null;
-            return;
-          }
-          action();
-          this.draw();
-        }, 150); 
+        
+        // 设置重复执行
+        intervalId = setTimeout(() => {
+          // 开始连续重复执行
+          intervalId = setInterval(() => {
+            if (!canControl()) {
+              clearInterval(intervalId);
+              intervalId = null;
+              return;
+            }
+            action();
+            this.draw();
+          }, repeatInterval);
+        }, initialDelay);
       },
       stop: () => { 
+        // 清理定时器
         if (intervalId) {
+          clearTimeout(intervalId);
           clearInterval(intervalId);
           intervalId = null;
         }
@@ -101,11 +111,26 @@ initMobileControls() {
   const newDownBtn = document.getElementById('tetris-down-btn');
   const newDropBtn = document.getElementById('drop-btn');
   
-  // 修复这行 - 使用正确的按钮引用
+  // 旋转按钮只需单击
   if (newRotateBtn) newRotateBtn.addEventListener('touchstart', handleTap(() => this.rotateShape()));
-  if (newLeftBtn) newLeftBtn.addEventListener('touchstart', handleTap(() => this.moveLeft()));
-  if (newRightBtn) newRightBtn.addEventListener('touchstart', handleTap(() => this.moveRight())); // 修复这里
   
+  // 左移按钮支持长按快速移动
+  if (newLeftBtn) {
+    const leftHandler = handleHold(() => this.moveLeft());
+    newLeftBtn.addEventListener('touchstart', leftHandler.start);
+    newLeftBtn.addEventListener('touchend', leftHandler.stop);
+    newLeftBtn.addEventListener('touchcancel', leftHandler.stop);
+  }
+  
+  // 右移按钮支持长按快速移动
+  if (newRightBtn) {
+    const rightHandler = handleHold(() => this.moveRight());
+    newRightBtn.addEventListener('touchstart', rightHandler.start);
+    newRightBtn.addEventListener('touchend', rightHandler.stop);
+    newRightBtn.addEventListener('touchcancel', rightHandler.stop);
+  }
+  
+  // 下移按钮支持长按快速移动
   if (newDownBtn) {
     const downHandler = handleHold(() => this.moveDown());
     newDownBtn.addEventListener('touchstart', downHandler.start);
@@ -465,17 +490,39 @@ drawGameOver() {
   };
 }
   
-// 改进 initEventListeners 方法，确保单次事件注册
+// 修改 initEventListeners 方法，添加键盘长按加速功能
 initEventListeners() {
   // 先移除旧的事件监听器
   if (this.keyDownHandler) {
     document.removeEventListener('keydown', this.keyDownHandler);
+  }
+  if (this.keyUpHandler) {
+    document.removeEventListener('keyup', this.keyUpHandler);
   }
   
   // 为快速下落添加更强的防抖控制
   let canDropAgain = true;
   const dropDebounceTime = 500; 
   
+  // 添加按键状态追踪
+  this.keyState = {
+    left: false,
+    right: false,
+    down: false
+  };
+  
+  // 添加重复按键的间隔控制
+  this.keyInterval = {
+    left: null,
+    right: null,
+    down: null
+  };
+  
+  // 设置重复间隔 - 初始延迟和后续重复的间隔
+  const initialDelay = 200; // 首次按下到开始重复的延迟
+  const repeatInterval = 80; // 重复的间隔时间
+  
+  // 处理按键按下事件
   this.keyDownHandler = (e) => {
     if (!this.isPlaying || this.gameOver || this.paused || this.hasDrawnGameOver) return;
     
@@ -484,7 +531,7 @@ initEventListeners() {
       e.preventDefault();
     }
     
-    // 使用防抖控制空格键（一键下落）
+    // 长按空格键（一键下落）使用防抖控制
     if (key === ' ') {
       if (canDropAgain && !this.isDropping) {
         canDropAgain = false;
@@ -494,17 +541,100 @@ initEventListeners() {
       return;
     }
     
-    // 其他按键正常响应
+    // 响应其他按键
     switch (key) {
-      case 'ArrowUp': case 'w': case 'W': this.rotateShape(); break;
-      case 'ArrowDown': case 's': case 'S': this.moveDown(); break;
-      case 'ArrowLeft': case 'a': case 'A': this.moveLeft(); break;
-      case 'ArrowRight': case 'd': case 'D': this.moveRight(); break;
-      case 'p': case 'P': this.togglePause(); break;
+      case 'ArrowUp': case 'w': case 'W': 
+        this.rotateShape(); 
+        break;
+        
+      case 'ArrowLeft': case 'a': case 'A': 
+        // 首次按下立即执行一次
+        if (!this.keyState.left) {
+          this.moveLeft();
+          this.keyState.left = true;
+          
+          // 设置延迟后开始重复执行
+          this.keyInterval.left = setTimeout(() => {
+            this.keyInterval.left = setInterval(() => {
+              this.moveLeft();
+            }, repeatInterval);
+          }, initialDelay);
+        }
+        break;
+        
+      case 'ArrowRight': case 'd': case 'D': 
+        // 首次按下立即执行一次
+        if (!this.keyState.right) {
+          this.moveRight();
+          this.keyState.right = true;
+          
+          // 设置延迟后开始重复执行
+          this.keyInterval.right = setTimeout(() => {
+            this.keyInterval.right = setInterval(() => {
+              this.moveRight();
+            }, repeatInterval);
+          }, initialDelay);
+        }
+        break;
+        
+      case 'ArrowDown': case 's': case 'S': 
+        // 首次按下立即执行一次
+        if (!this.keyState.down) {
+          this.moveDown();
+          this.keyState.down = true;
+          
+          // 设置延迟后开始重复执行
+          this.keyInterval.down = setTimeout(() => {
+            this.keyInterval.down = setInterval(() => {
+              this.moveDown();
+            }, repeatInterval);
+          }, initialDelay);
+        }
+        break;
+        
+      case 'p': case 'P': 
+        this.togglePause(); 
+        break;
     }
   };
   
+  // 处理按键释放事件
+  this.keyUpHandler = (e) => {
+    const key = e.key;
+    
+    switch (key) {
+      case 'ArrowLeft': case 'a': case 'A':
+        this.keyState.left = false;
+        if (this.keyInterval.left) {
+          clearTimeout(this.keyInterval.left);
+          clearInterval(this.keyInterval.left);
+          this.keyInterval.left = null;
+        }
+        break;
+        
+      case 'ArrowRight': case 'd': case 'D':
+        this.keyState.right = false;
+        if (this.keyInterval.right) {
+          clearTimeout(this.keyInterval.right);
+          clearInterval(this.keyInterval.right);
+          this.keyInterval.right = null;
+        }
+        break;
+        
+      case 'ArrowDown': case 's': case 'S':
+        this.keyState.down = false;
+        if (this.keyInterval.down) {
+          clearTimeout(this.keyInterval.down);
+          clearInterval(this.keyInterval.down);
+          this.keyInterval.down = null;
+        }
+        break;
+    }
+  };
+  
+  // 注册按键事件
   document.addEventListener('keydown', this.keyDownHandler);
+  document.addEventListener('keyup', this.keyUpHandler);
   
   // 游戏控制按钮 - 使用箭头函数以正确绑定this
   const startBtn = document.getElementById('tetris-start-btn');
@@ -580,7 +710,7 @@ initEventListeners() {
     reset() {
       this.fullReset();
     }
-// 修改 fullReset 方法，确保干净重置
+// 修改 fullReset 方法，确保清理所有按键状态
 fullReset() {
   console.log("执行完全重置");
   
@@ -590,9 +720,40 @@ fullReset() {
     this.intervalId = null;
   }
   
+  // 清除按键状态和间隔
+  if (this.keyInterval) {
+    if (this.keyInterval.left) {
+      clearTimeout(this.keyInterval.left);
+      clearInterval(this.keyInterval.left);
+      this.keyInterval.left = null;
+    }
+    if (this.keyInterval.right) {
+      clearTimeout(this.keyInterval.right);
+      clearInterval(this.keyInterval.right);
+      this.keyInterval.right = null;
+    }
+    if (this.keyInterval.down) {
+      clearTimeout(this.keyInterval.down);
+      clearInterval(this.keyInterval.down);
+      this.keyInterval.down = null;
+    }
+  }
+  
+  // 重置按键状态
+  if (this.keyState) {
+    this.keyState.left = false;
+    this.keyState.right = false;
+    this.keyState.down = false;
+  }
+  
   if (this.keyDownHandler) {
     document.removeEventListener('keydown', this.keyDownHandler);
     this.keyDownHandler = null;
+  }
+  
+  if (this.keyUpHandler) {
+    document.removeEventListener('keyup', this.keyUpHandler);
+    this.keyUpHandler = null;
   }
   
   // 重置游戏状态
@@ -636,8 +797,25 @@ fullReset() {
         this.intervalId = null;
       }
       
+      // 清除按键状态和间隔
+      if (this.keyInterval) {
+        if (this.keyInterval.left) {
+          clearTimeout(this.keyInterval.left);
+          clearInterval(this.keyInterval.left);
+        }
+        if (this.keyInterval.right) {
+          clearTimeout(this.keyInterval.right);
+          clearInterval(this.keyInterval.right);
+        }
+        if (this.keyInterval.down) {
+          clearTimeout(this.keyInterval.down);
+          clearInterval(this.keyInterval.down);
+        }
+      }
+      
       // 移除事件监听器
       document.removeEventListener('keydown', this.keyDownHandler);
+      document.removeEventListener('keyup', this.keyUpHandler);
       
       // 重置游戏状态
       this.gameOver = true;
