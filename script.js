@@ -12,17 +12,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 初始化飞心动画
     let flyingHeartAnimation = null;
+    // 修改飞心动画初始化函数
     const initFlyingHeartAnimation = () => {
         const container = document.getElementById('flying-heart-container');
         
         if (container) {
-            // 初始化 Lottie 动画
+            // 确保容器尺寸正确
+            container.style.width = '150px';
+            container.style.height = '150px';
+            container.style.overflow = 'hidden';
+            
+            // 初始化 Lottie 动画，增加明确的尺寸设置
             flyingHeartAnimation = lottie.loadAnimation({
                 container: container,
                 renderer: 'svg',
-                loop: false, // 不循环播放
-                autoplay: false, // 不自动播放
-                path: './image/flying-heart.json'
+                loop: false,
+                autoplay: false,
+                path: './image/flying-heart.json',
+                rendererSettings: {
+                    // 限制SVG尺寸
+                    preserveAspectRatio: 'xMidYMid meet',
+                    // 确保SVG在容器内居中
+                    viewBoxSize: '0 0 150 150'
+                }
+            });
+            
+            // 添加加载完成后强制设置尺寸的处理
+            flyingHeartAnimation.addEventListener('DOMLoaded', () => {
+                // 强制设置SVG尺寸
+                const svg = container.querySelector('svg');
+                if (svg) {
+                    svg.setAttribute('width', '150px');
+                    svg.setAttribute('height', '150px');
+                    svg.style.width = '100%';
+                    svg.style.height = '100%';
+                }
             });
             
             // 添加点击事件监听器
