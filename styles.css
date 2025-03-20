@@ -266,6 +266,7 @@ body.winter { background-color: #f0f8ff; }
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* 修复模态框关闭按钮样式冲突 */
 #snake-modal button, #tetris-modal button {
   margin-top: 15px;
   width: 140px;
@@ -925,39 +926,63 @@ body.winter .seasonal-decoration {
   position: relative;
 }
 
-/* 修改模态框关闭按钮的样式，将其定位到弹窗右上角 */
-.modal-close-btn {
+/* 增加选择器特异性，确保关闭按钮样式不被覆盖 */
+#snake-modal button.modal-close-btn, 
+#tetris-modal button.modal-close-btn {
   position: absolute;
   top: 10px;
   right: 10px;
-  background: rgba(255, 255, 255, 0.3);
-  border: none;
-  color: #333;
-  font-size: 24px;
-  cursor: pointer;
+  width: 45px;
+  height: 45px;
+  margin-top: 0; /* 覆盖上面的margin-top */
   padding: 0;
-  width: 30px;
-  height: 30px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.5); /* 半透明背景，与返回按钮一致 */
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  transition: all 0.3s ease;
   display: flex;
-  align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s;
+  align-items: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06); /* 淡淡的阴影 */
   z-index: 10;
 }
 
-.modal-close-btn:hover {
-  background: rgba(0, 0, 0, 0.1);
-  color: #333;
+#snake-modal button.modal-close-btn:hover, 
+#tetris-modal button.modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.7); /* 悬停时稍微不透明 */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  transform: scale(1.05);
+}
+
+#snake-modal button.modal-close-btn .close-icon, 
+#tetris-modal button.modal-close-btn .close-icon {
+  width: 24px;
+  height: 24px;
+  opacity: 0.8;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+#snake-modal button.modal-close-btn:hover .close-icon, 
+#tetris-modal button.modal-close-btn:hover .close-icon {
+  opacity: 1;
   transform: scale(1.1);
 }
-/* 移动设备上按钮会更大一些，便于触摸 */
+
+/* 移动设备样式 */
 @media (max-width: 768px) {
-  .modal-close-btn {
-    width: 40px;
-    height: 40px;
-    font-size: 28px;
+  #snake-modal button.modal-close-btn, 
+  #tetris-modal button.modal-close-btn {
+    width: 42px;
+    height: 42px;
     top: 8px;
     right: 8px;
+  }
+  
+  #snake-modal button.modal-close-btn:active, 
+  #tetris-modal button.modal-close-btn:active {
+    transform: scale(0.95);
+    background: rgba(255, 255, 255, 0.65);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
   }
 }

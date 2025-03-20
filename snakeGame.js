@@ -106,7 +106,7 @@ class SnakeGame {
       this.drawBlock(this.food.x, this.food.y, '#FF5722');
     }
   
-// 修改 drawGameOver 方法中的模态框 HTML 结构
+// 修改 drawGameOver 方法，确保关闭按钮使用SVG图标并位于正确位置
 drawGameOver() {
   // 清除Canvas
   this.ctx.clearRect(0, 0, this.width, this.height);
@@ -115,9 +115,9 @@ drawGameOver() {
   const modal = document.getElementById('snake-modal');
   const modalContent = modal.querySelector('div');
   
-  // 更新模态框内容 - 将关闭按钮移到外层
+  // 更新模态框内容 - 将关闭按钮单独放在右上角
   modalContent.innerHTML = `
-    <button class="modal-close-btn">&times;</button>
+    <button class="modal-close-btn"><img src="./image/x-circle.svg" alt="关闭" class="close-icon"></button>
     <div class="modal-header">
       <h2 style="color:rgb(3, 93, 61); margin-bottom: 15px; font-size: 24px;">游戏结束!</h2>
     </div>
