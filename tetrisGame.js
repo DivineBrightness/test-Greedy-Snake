@@ -416,7 +416,7 @@ freezeShape() {
       this.drawNextShape();
     }
   
-// 修改 drawGameOver 方法，确保重置相关状态
+// 修改 drawGameOver 方法，添加关闭按钮
 drawGameOver() {
   if (this.hasDrawnGameOver) return;
   this.hasDrawnGameOver = true;
@@ -449,7 +449,10 @@ drawGameOver() {
   // 更新模态框内容
   const modalContent = modal.querySelector('div');
   modalContent.innerHTML = `
-    <h2 style="color: rgb(3, 93, 61); margin-bottom: 15px; font-size: 24px;">游戏结束!</h2>
+    <div class="modal-header">
+      <h2 style="color: rgb(3, 93, 61); margin-bottom: 15px; font-size: 24px;">游戏结束!</h2>
+      <button class="modal-close-btn">&times;</button>
+    </div>
     <p style="font-size: 20px; margin-bottom: 20px;">最终得分: <strong>${this.score}</strong></p>
     <p style="margin-bottom: 15px;">选择你的名字提交成绩:</p>
     <select id="tetris-player-select"></select>
@@ -462,6 +465,21 @@ drawGameOver() {
   console.log("显示 tetris-modal");
   modal.style.display = 'flex';
   
+  // 为关闭按钮添加事件处理
+  const closeBtn = modalContent.querySelector('.modal-close-btn');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      console.log("点击关闭按钮");
+      modal.style.display = 'none';
+      this.fullReset();
+      
+      // 启用所有控制按钮
+      document.querySelectorAll('.direction-btn').forEach(btn => {
+        btn.disabled = false;
+      });
+    });
+  }
+  
   // 设置提交按钮事件
   const submitBtn = document.getElementById('tetris-submit-btn');
   if (!submitBtn) return console.error("未找到 tetris-submit-btn 元素");
@@ -471,9 +489,6 @@ drawGameOver() {
     if (playerName) {
       console.log(`提交分数: game=tetris, player=${playerName}, score=${this.score}`);
       await submitScore("tetris", playerName, this.score);
-      
-      // 这里不需要再额外调用loadLeaderboard，因为submitScore函数会处理
-      // loadLeaderboard 函数已经被修改为确保HTML结构一致
       
       // 关闭模态框并重置游戏
       console.log("关闭 tetris-modal");

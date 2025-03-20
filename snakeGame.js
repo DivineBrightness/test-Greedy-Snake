@@ -106,7 +106,7 @@ class SnakeGame {
       this.drawBlock(this.food.x, this.food.y, '#FF5722');
     }
   
-// 修改 drawGameOver 方法，解决提交按钮点击无效问题
+// 修改 drawGameOver 方法，添加关闭按钮
 drawGameOver() {
   // 清除Canvas
   this.ctx.clearRect(0, 0, this.width, this.height);
@@ -117,7 +117,10 @@ drawGameOver() {
   
   // 更新模态框内容
   modalContent.innerHTML = `
-    <h2 style="color:rgb(3, 93, 61); margin-bottom: 15px; font-size: 24px;">游戏结束!</h2>
+    <div class="modal-header">
+      <h2 style="color:rgb(3, 93, 61); margin-bottom: 15px; font-size: 24px;">游戏结束!</h2>
+      <button class="modal-close-btn">&times;</button>
+    </div>
     <p style="font-size: 20px; margin-bottom: 20px;">最终得分: <strong>${this.score}</strong></p>
     <p style="margin-bottom: 15px;">选择你的名字提交成绩:</p>
     <select id="snake-player-select"></select>
@@ -129,7 +132,17 @@ drawGameOver() {
   
   modal.style.display = 'flex';
   
-  // 获取提交按钮的引用 - 这里是修复点
+  // 为关闭按钮添加事件处理
+  const closeBtn = modalContent.querySelector('.modal-close-btn');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      console.log("点击关闭按钮");
+      modal.style.display = 'none';
+      this.reset();
+    });
+  }
+  
+  // 获取提交按钮的引用
   const submitBtn = document.getElementById('snake-submit-btn');
   
   // 如果找不到提交按钮，记录错误

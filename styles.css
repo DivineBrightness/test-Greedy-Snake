@@ -915,3 +915,43 @@ body.winter .seasonal-decoration {
   to { opacity: 1; }
 }
 
+
+/* 添加模态框关闭按钮的样式 */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  margin-bottom: 5px;
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  color: #555;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+  margin-top: -8px;
+  margin-right: -10px;
+}
+
+.modal-close-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #333;
+}
+/* 移动设备上按钮会更大一些，便于触摸 */
+@media (max-width: 768px) {
+  .modal-close-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 28px;
+  }
+}
