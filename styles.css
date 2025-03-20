@@ -190,8 +190,12 @@ body.winter { background-color: #f0f8ff; }
   display: none;
   justify-content: center;
   align-items: center;
-  margin-top: 20px;
+  margin-top: 10px;
   width: 100%;
+}
+/* 特别为俄罗斯方块调整间距 */
+#tetris-game .tetris-container {
+  margin-bottom: 10px; /* 减小底部间距，从原来的20px改为10px */
 }
 .control-row {
   display: flex;
@@ -214,8 +218,9 @@ body.winter { background-color: #f0f8ff; }
   .mobile-controls {
     display: block;
   }
+  /* 减小控制行之间的间距 */
   .control-row:nth-child(1) {
-    margin-bottom: 10px;
+    margin-bottom: 5px; /* 从原来的10px改为5px */
   }
   .control-row:nth-child(2) {
     justify-content: space-between;
@@ -227,6 +232,10 @@ body.winter { background-color: #f0f8ff; }
   }
   .game-instructions p:first-child::after {
     content: "或使用下方按钮控制";
+  }
+  /* 确保游戏说明与控制按钮之间有适当间距 */
+  .game-instructions {
+    margin-top: 10px;
   }
 }
 /* 优化模态框样式 */
@@ -1067,8 +1076,12 @@ body.winter .seasonal-decoration {
   }
 }
 
-/* 覆盖游戏控制区域的设置 */
+/* 移除多余的游戏控制区域样式，因为已删除相应元素 */
 .game-controls {
-  margin-top: 0;
-  min-height: 10px; /* 保留最小高度以避免布局变化 */
+  display: none; /* 完全隐藏，防止占用空间 */
+}
+
+ /* 减小俄罗斯方块游戏容器底部边距，使控制按钮更靠近 */
+ #tetris-game .tetris-container {
+  margin-bottom: 5px;
 }
