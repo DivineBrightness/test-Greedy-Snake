@@ -108,14 +108,10 @@ h1 {
   box-shadow: 0 8px 20px rgba(0,0,0,0.15);
 }
 .season-btn.active {
-  background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+  background: linear-gradient(270deg, #ff6b6b, #4ecdc4);
   color: white;
 }
-.game-btn {
-  background: linear-gradient(45deg, #43c6ac, #f8ffae);
-  color: #1d1d1f;
-  margin-top: 20px;
-}
+
 .spring-btn:hover { background-color: #ffccd5; }
 .summer-btn:hover { background-color: #fdffb6; }
 .autumn-btn:hover { background-color: #ffd6a5; }
@@ -346,7 +342,7 @@ body.winter { background-color: #f0f8ff; }
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  background: linear-gradient(45deg, #43c6ac, #f8ffae);
+  background: linear-gradient(45deg, rgba(255, 179, 71, 0.85), rgba(255, 204, 51, 0.7));
   color: #1d1d1f;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
@@ -1257,7 +1253,7 @@ body.winter .seasonal-decoration {
   align-items: center;
   position: relative;
   margin-bottom: 30px;
-  margin-top: 40px; /* 为返回按钮留出空间 */
+  margin-top: 0px; /* 为返回按钮留出空间 */
   width: 100%;
   max-width: 100%; /* 确保不会被父元素的max-width限制 */
   box-sizing: border-box; /* 确保padding不会增加元素总宽度 */
