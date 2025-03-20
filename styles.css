@@ -144,7 +144,7 @@ body.winter { background-color: #f0f8ff; }
   border-radius: 10px;
   background-color: #f0f0f0;
   box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-  margin-bottom: 20px;
+  /* margin-bottom: 20px; */
 }
 .game-info {
   display: flex;
@@ -195,7 +195,7 @@ body.winter { background-color: #f0f8ff; }
 }
 /* 特别为俄罗斯方块调整间距 */
 #tetris-game .tetris-container {
-  margin-bottom: 10px; /* 减小底部间距，从原来的20px改为10px */
+  margin-bottom: 0px; /* 减小底部间距，从原来的20px改为10px */
 }
 .control-row {
   display: flex;
@@ -313,12 +313,15 @@ body.winter { background-color: #f0f8ff; }
   flex: 3; /* 画布占据更多空间 */
 }
 
+/* 调整预览区域布局，使旋转按钮在底部 */
 .next-piece {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 140px; /* 增加宽度以容纳排行榜 */
-  flex: 1; /* 预览和排行榜区域占据较少空间 */
+  width: 140px;
+  flex: 1;
+  position: relative; /* 为绝对定位的子元素提供参考 */
+  padding-bottom: 70px; /* 为底部旋转按钮预留空间 */
 }
 
 #next-piece-canvas {
@@ -1084,4 +1087,77 @@ body.winter .seasonal-decoration {
  /* 减小俄罗斯方块游戏容器底部边距，使控制按钮更靠近 */
  #tetris-game .tetris-container {
   margin-bottom: 5px;
+}
+
+/* 调整按钮样式 */
+.rotate-btn-preview {
+  margin: 0 !important; /* 移除上下外边距 */
+  width: 50px !important;
+  height: 50px !important;
+  font-size: 24px;
+  padding: 0;
+  border-radius: 15px;
+  background: linear-gradient(45deg, #4ecdc4, #556270) !important;
+  color: white !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.rotate-btn-preview:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+}
+
+.rotate-btn-preview:active {
+  transform: scale(0.95);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+}
+/* 调整排行榜样式，确保与底部按钮有适当间距 */
+.tetris-leaderboard {
+  margin-top: 10px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 15px; /* 确保与底部旋转按钮有适当间距 */
+}
+/* 移动设备适配 */
+@media (max-width: 768px) {
+  .next-piece {
+    padding-bottom: 60px; /* 移动设备上稍微减小底部间距 */
+  }
+  
+  .rotate-btn-preview {
+    width: 42px !important;
+    height: 42px !important;
+    font-size: 20px;
+  }
+  
+  .rotate-btn-container {
+    bottom: 5px; /* 移动设备上稍微调整位置 */
+  }
+  
+  /* 调整控制行布局，适应没有旋转按钮的情况 */
+  #tetris-game .mobile-controls .control-row:first-child {
+    justify-content: space-between;
+    max-width: 200px;
+    margin: 0 auto 10px;
+  }
+  
+  /* 降落按钮居中 */
+  #tetris-game .mobile-controls .control-row:last-child {
+    justify-content: center;
+  }
+}
+
+/* 添加旋转按钮容器样式，确保它位于最底部 */
+.rotate-btn-container {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: auto; /* 推到容器底部 */
 }

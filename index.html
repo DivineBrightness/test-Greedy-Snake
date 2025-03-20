@@ -97,24 +97,30 @@
       <h2>俄罗斯方块</h2>
       <div class="game-info">
         <div class="game-score">分数: <span id="tetris-score">0</span></div>
-        
         <div class="game-high-score">最高分: <span id="tetris-high-score">0</span></div>
         <div class="level">等级: <span id="tetris-level">1</span></div>
       </div>
       <div id="tetris-modal" style="display: none;">
         <div>
-          <h3>选择你的名字</h3>
+          <button class="modal-close-btn"><img src="./image/x-circle.svg" alt="关闭" class="close-icon"></button>
+          <div class="modal-header">
+            <h2 style="color: rgb(3, 93, 61); margin-bottom: 15px; font-size: 24px;">游戏结束!</h2>
+          </div>
+          <p style="font-size: 20px; margin-bottom: 20px;">最终得分: <strong id="tetris-final-score">0</strong></p>
+          <p style="margin-bottom: 15px;">选择你的名字提交成绩:</p>
           <select id="tetris-player-select">
             <option value="">请选择</option>
           </select>
-          <button id="tetris-submit-btn">提交分数</button>
+          <button id="tetris-submit-btn">提交成绩</button>
         </div>
       </div>
+      <!-- 修改俄罗斯方块游戏的预览区域布局 -->
       <div class="tetris-container">
         <canvas id="tetris-canvas" width="240" height="400"></canvas>
         <div class="next-piece">
           <h3>下一个方块</h3>
           <canvas id="next-piece-canvas" width="100" height="100"></canvas>
+          
           <div class="tetris-leaderboard">
             <button class="leaderboard-btn" id="tetris-leaderboard-btn">排行榜</button>
             <div class="leaderboard-panel" id="tetris-leaderboard-content" style="display: none;">
@@ -136,13 +142,16 @@
               </div>
             </div>
           </div>
+          
+          <!-- 旋转按钮移到最底部，排行榜下方 -->
+          <div class="rotate-btn-container">
+            <button class="control-btn direction-btn rotate-btn-preview" id="rotate-btn">↻</button>
+          </div>
         </div>
       </div>
       
       <div class="mobile-controls">
-        <div class="control-row">
-          <button class="control-btn direction-btn" id="rotate-btn">↻</button>
-        </div>
+        <!-- 移除旋转按钮的原始位置 -->
         <div class="control-row">
           <button class="control-btn direction-btn" id="tetris-left-btn">←</button>
           <button class="control-btn direction-btn" id="tetris-down-btn">↓</button>
