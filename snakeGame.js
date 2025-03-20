@@ -17,6 +17,8 @@ class SnakeGame {
       this.snake = [{x: 6, y: 10}, {x: 5, y: 10}, {x: 4, y: 10}];
       this.direction = 'right';
       this.nextDirection = 'right';
+      this.pausedDirection = null; // 暂停时记录的方向
+      this.pausedNextDirection = null; // 暂停时记录的下一个方向
       this.food = this.createFood();
       this.scoreElement = document.getElementById('score');
       this.highScoreElement = document.getElementById('high-score');
@@ -60,16 +62,28 @@ initEventListeners() {
     playPauseBtn.addEventListener('click', this.playPauseBtnHandler);
   }
   
-  // 方向按钮处理保持不变
+  // 修改方向按钮处理，添加暂停检查
   const upBtn = document.getElementById('up-btn');
   const leftBtn = document.getElementById('left-btn');
   const rightBtn = document.getElementById('right-btn');
   const downBtn = document.getElementById('down-btn');
   
-  this.upBtnHandler = () => { if (this.direction !== 'down') this.nextDirection = 'up'; };
-  this.leftBtnHandler = () => { if (this.direction !== 'right') this.nextDirection = 'left'; };
-  this.rightBtnHandler = () => { if (this.direction !== 'left') this.nextDirection = 'right'; };
-  this.downBtnHandler = () => { if (this.direction !== 'up') this.nextDirection = 'down'; };
+  this.upBtnHandler = () => { 
+    if (!this.paused && !this.gameOver && this.direction !== 'down') 
+      this.nextDirection = 'up'; 
+  };
+  this.leftBtnHandler = () => { 
+    if (!this.paused && !this.gameOver && this.direction !== 'right') 
+      this.nextDirection = 'left'; 
+  };
+  this.rightBtnHandler = () => { 
+    if (!this.paused && !this.gameOver && this.direction !== 'left') 
+      this.nextDirection = 'right'; 
+  };
+  this.downBtnHandler = () => { 
+    if (!this.paused && !this.gameOver && this.direction !== 'up') 
+      this.nextDirection = 'down'; 
+  };
   
   if (upBtn) upBtn.addEventListener('click', this.upBtnHandler);
   if (leftBtn) leftBtn.addEventListener('click', this.leftBtnHandler);
@@ -77,24 +91,34 @@ initEventListeners() {
   if (downBtn) downBtn.addEventListener('click', this.downBtnHandler);
 }
 
-// 修改 handleKeyDown 方法，修复空格键暂停问题并阻止页面滚动
+// 修改 handleKeyDown 方法，防止暂停时改变方向
 handleKeyDown(e) {
-  // 阻止所有游戏控制键的默认行为，特别是空格键
+  // 阻止所有游戏控制键的默认行为，特别是空格键和方向键
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', ' '].includes(e.key)) {
-    e.preventDefault(); // 阻止默认行为，防止空格键滚动页面
+    e.preventDefault(); // 阻止默认行为，防止空格键滚动页面和方向键滚动
   }
   
   // 允许空格键在任何状态下都能触发暂停/继续，只要游戏没有结束
   if (e.key === ' ') {
     if (!this.gameOver) {
       this.togglePause();
+      
+      // 同步更新按钮图标
+      const playPauseIcon = document.getElementById('snake-play-pause-icon');
+      if (playPauseIcon) {
+        playPauseIcon.src = this.paused ? './image/start.svg' : './image/pause.svg';
+      }
     }
     return; // 直接返回，避免进入其他逻辑
   }
   
-  // 如果游戏结束或暂停，其他按键不处理
-  if (this.gameOver || this.paused) return;
+  // 如果游戏结束，其他按键不处理
+  if (this.gameOver) return;
   
+  // 如果游戏暂停，除了空格键外不响应其他按键
+  if (this.paused) return;
+  
+  // 游戏运行中才处理方向键
   switch(e.key) {
     case 'ArrowUp': case 'w': case 'W': if (this.direction !== 'down') this.nextDirection = 'up'; break;
     case 'ArrowDown': case 's': case 'S': if (this.direction !== 'up') this.nextDirection = 'down'; break;
@@ -313,7 +337,7 @@ start() {
   this.animationFrameId = requestAnimationFrame(gameLoop);
 }
   
-// 修改 togglePause 方法，确保空格键和点击按钮两种暂停方式一致
+// 修改 togglePause 方法，确保暂停状态记录方向
 togglePause() {
   if (this.gameOver) return;
   
@@ -321,6 +345,10 @@ togglePause() {
   const playPauseIcon = document.getElementById('snake-play-pause-icon');
   
   if (this.paused) {
+    // 在暂停时记录当前方向，以便恢复时保持原来的方向
+    this.pausedDirection = this.direction;
+    this.pausedNextDirection = this.nextDirection;
+    
     // 更新按钮图标为开始图标
     if (playPauseIcon) playPauseIcon.src = './image/start.svg';
     
@@ -338,6 +366,12 @@ togglePause() {
     
     console.log('游戏已暂停');
   } else {
+    // 恢复原来的方向
+    if (this.pausedDirection && this.pausedNextDirection) {
+      this.direction = this.pausedDirection;
+      this.nextDirection = this.pausedNextDirection;
+    }
+    
     // 更新按钮图标为暂停图标
     if (playPauseIcon) playPauseIcon.src = './image/pause.svg';
     
@@ -362,6 +396,8 @@ reset() {
   this.snake = [{x: 6, y: 10}, {x: 5, y: 10}, {x: 4, y: 10}];
   this.direction = 'right';
   this.nextDirection = 'right';
+  this.pausedDirection = null; // 重置暂停方向记录
+  this.pausedNextDirection = null; // 重置暂停下一方向记录
   this.food = this.createFood();
   this.score = 0;
   this.gameOver = false;
