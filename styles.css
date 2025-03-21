@@ -651,46 +651,61 @@ button:focus {
   }
 }
 
-/* 确保季节装饰在所有页面中可见 */
+/* 修改季节装饰，将背景图片定位在右侧 */
 .seasonal-decoration {
   position: fixed;
-  top: 20px;
-  right: 20px;
-  width: 80px;
-  height: 80px;
-  background-size: contain;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: 40%; /* 保持原来的尺寸 */
   background-repeat: no-repeat;
-  background-position: center;
-  opacity: 0.8;
-  pointer-events: none; /* 确保不会干扰用户交互 */
+  background-position: right center; /* 将背景图片定位在右侧 */
+  opacity: 0.15; /* 保持原有透明度 */
+  pointer-events: none;
   transition: all 0.5s ease;
-  z-index: 1000; /* 增加 z-index 确保装饰显示在游戏界面之上 */
+  z-index: -1;
 }
 
+/* 2. 修改各季节背景的动画应用 */
 body.spring .seasonal-decoration {
   background-image: url('./image/flower\ \(1\).svg');
-  animation: float 3s ease-in-out infinite;
+  background-size: 40%;
+  /* animation: float 0s ease-in-out infinite; */
+  transform-origin: center;
 }
 
 body.summer .seasonal-decoration {
   background-image: url('./image/summer-beach.svg');
-  animation: sway 4s ease-in-out infinite;
+  background-size: 40%;
+  /* animation: sway 0s ease-in-out infinite; */
+  transform-origin: center;
 }
 
 body.autumn .seasonal-decoration {
   background-image: url('./image/leaves.svg');
-  animation: fall 7s ease-in-out infinite;
+  background-size: 40%;
+  /* animation: fall 0s ease-in-out infinite; */
+  transform-origin: center;
 }
 
-/* 为冬季装饰添加一个特殊的opacity transition */
 body.winter .seasonal-decoration {
   background-image: url('./image/winter.svg');
-  animation: snow 5s ease-in-out infinite;
-  transition: opacity 0.5s ease-out; /* 确保透明度变化有平滑过渡 */
+  background-size: 40%;
+  /* animation: snow 0s ease-in-out infinite; */
+  transform-origin: center;
+  transition: opacity 0.5s ease-out;
 }
+/* 3. 确保动画优先级 */
+.seasonal-decoration {
+  animation-play-state: running !important;
+  will-change: transform; /* 改为只监听transform变化 */
+}
+
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  0% { transform: rotate(-2deg) translateY(0); transform-origin: bottom center; }
+  50% { transform: rotate(2deg) translateY(-2px); transform-origin: bottom center; }
+  100% { transform: rotate(-2deg) translateY(0); transform-origin: bottom center; }
 }
 
 @keyframes sway {
@@ -699,15 +714,15 @@ body.winter .seasonal-decoration {
 }
 
 @keyframes fall {
-  0% { transform: translateY(-10px) rotate(0deg); }
+  0% { transform: translateY(-20px) rotate(0deg); }
   50% { transform: translateY(0) rotate(5deg); }
-  100% { transform: translateY(-10px) rotate(0deg); }
+  100% { transform: translateY(-20px) rotate(0deg); }
 }
 
 /* 修改冬季动画，确保不影响透明度 */
 @keyframes snow {
   0%, 100% { transform: translateY(0) scale(1); /* 不要设置opacity */ }
-  50% { transform: translateY(-8px) scale(1.05); /* 不要设置opacity */ }
+  50% { transform: translateY(-0px) scale(1.0); /* 不要设置opacity */ }
 }
 
 /* 添加页面过渡效果 */
@@ -1521,6 +1536,7 @@ button,
 .leaderboard-btn,
 .play-pause-btn {
   -webkit-appearance: none; /* 移除iOS默认按钮样式 */
+  appearance: none; /* 标准属性 */
   -webkit-touch-callout: none; /* 禁止长按弹出菜单 */
   user-select: none; /* 防止文本被选中 */
   touch-action: manipulation; /* 优化触摸操作 */
