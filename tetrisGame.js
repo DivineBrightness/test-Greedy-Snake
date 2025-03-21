@@ -422,43 +422,43 @@ removeCompleteRows() {
     }
   
     // 修改 draw 方法，避免在暂停状态下重复绘制
-    draw() {
-      // 如果处于暂停状态且不是强制绘制，则不更新画面
-      if (this.paused && arguments.length === 0) return;
-      
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      this.ctx.strokeStyle = '#e0e0e0';
-      this.ctx.lineWidth = 0.5;
-      
-      // 绘制网格
-      for (let x = 0; x < this.cols; x++) {
-        for (let y = 0; y < this.rows; y++) {
-          this.ctx.strokeRect(x * this.blockSize, y * this.blockSize, this.blockSize, this.blockSize);
-        }
-      }
-      
-      // 绘制已固定的方块
-      for (let y = 0; y < this.rows; y++) {
-        for (let x = 0; x < this.cols; x++) {
-          if (this.grid[y][x]) this.drawBlock(x, y, this.grid[y][x]);
-        }
-      }
-      
-      // 绘制当前活动方块
-      if (this.isPlaying && !this.gameOver && this.currentShape) {
-        const shape = this.currentShape.shape;
-        for (let y = 0; y < shape.length; y++) {
-          for (let x = 0; x < shape[y].length; x++) {
-            if (shape[y][x] && this.currentY + y >= 0) {
-              this.drawBlock(this.currentX + x, this.currentY + y, this.currentShape.color);
-            }
-          }
-        }
-      }
-      
-      // 绘制下一个方块预览
-      this.drawNextShape();
+draw() {
+  // 如果处于暂停状态且不是强制绘制，则不更新画面
+  if (this.paused && arguments.length === 0) return;
+  
+  this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  this.ctx.strokeStyle = '#e0e0e0';
+  this.ctx.lineWidth = 0.5;
+  
+  // 绘制网格
+  for (let x = 0; x < this.cols; x++) {
+    for (let y = 0; y < this.rows; y++) {
+      this.ctx.strokeRect(x * this.blockSize, y * this.blockSize, this.blockSize, this.blockSize);
     }
+  }
+  
+  // 绘制已固定的方块
+  for (let y = 0; y < this.rows; y++) {
+    for (let x = 0; x < this.cols; x++) {
+      if (this.grid[y][x]) this.drawBlock(x, y, this.grid[y][x]);
+    }
+  }
+  
+  // 绘制当前活动方块
+  if (this.isPlaying && !this.gameOver && this.currentShape) {
+    const shape = this.currentShape.shape;
+    for (let y = 0; y < shape.length; y++) {
+      for (let x = 0; x < shape[y].length; x++) {
+        if (shape[y][x] && this.currentY + y >= 0) {
+          this.drawBlock(this.currentX + x, this.currentY + y, this.currentShape.color);
+        }
+      }
+    }
+  }
+  
+  // 绘制下一个方块预览
+  this.drawNextShape();
+}
   
 // 修改 drawGameOver 方法，确保关闭按钮使用SVG图标并位于正确位置
 drawGameOver() {

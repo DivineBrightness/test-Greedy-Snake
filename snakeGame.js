@@ -91,34 +91,38 @@ initEventListeners() {
   if (downBtn) downBtn.addEventListener('click', this.downBtnHandler);
 }
 
-// 修改 handleKeyDown 方法，防止暂停时改变方向
+// 更新 handleKeyDown 方法，确保空格键只触发一次暂停/继续
 handleKeyDown(e) {
-  // 阻止所有游戏控制键的默认行为，特别是空格键和方向键
+  // 阻止所有游戏控制键的默认行为
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', ' '].includes(e.key)) {
-    e.preventDefault(); // 阻止默认行为，防止空格键滚动页面和方向键滚动
+    e.preventDefault();
   }
   
-  // 允许空格键在任何状态下都能触发暂停/继续，只要游戏没有结束
+  // 防止快速连续按空格键导致的闪烁问题
   if (e.key === ' ') {
-    if (!this.gameOver) {
-      this.togglePause();
-      
-      // 同步更新按钮图标
-      const playPauseIcon = document.getElementById('snake-play-pause-icon');
-      if (playPauseIcon) {
-        playPauseIcon.src = this.paused ? './image/start.svg' : './image/pause.svg';
-      }
+    // 使用防抖处理空格键
+    if (this.spaceKeyTimeout) {
+      clearTimeout(this.spaceKeyTimeout);
     }
-    return; // 直接返回，避免进入其他逻辑
+    
+    this.spaceKeyTimeout = setTimeout(() => {
+      if (!this.gameOver) {
+        this.togglePause();
+        
+        // 同步更新按钮图标
+        const playPauseIcon = document.getElementById('snake-play-pause-icon');
+        if (playPauseIcon) {
+          playPauseIcon.src = this.paused ? './image/start.svg' : './image/pause.svg';
+        }
+      }
+    }, 100); // 100ms内的连续空格按键只响应一次
+    
+    return;
   }
   
-  // 如果游戏结束，其他按键不处理
-  if (this.gameOver) return;
+  // 其他按键处理保持不变
+  if (this.gameOver || this.paused) return;
   
-  // 如果游戏暂停，除了空格键外不响应其他按键
-  if (this.paused) return;
-  
-  // 游戏运行中才处理方向键
   switch(e.key) {
     case 'ArrowUp': case 'w': case 'W': if (this.direction !== 'down') this.nextDirection = 'up'; break;
     case 'ArrowDown': case 's': case 'S': if (this.direction !== 'up') this.nextDirection = 'down'; break;
@@ -293,7 +297,7 @@ move() {
       return this.snake.some((segment, index) => index > 0 && segment.x === head.x && segment.y === head.y);
     }
   
-    // 修改 start 方法，确保正确处理动画帧
+// 修改 start 方法，优化动画帧处理
 start() {
   // 防止多次调用
   if (this.animationFrameId) {
@@ -307,8 +311,6 @@ start() {
   }
   
   this.paused = false;
-  const pauseBtn = document.getElementById('pause-btn');
-  if (pauseBtn) pauseBtn.textContent = '暂停';
   
   console.log('游戏开始运行');
   
@@ -320,6 +322,7 @@ start() {
     // 游戏结束或暂停时不再继续动画循环
     if (this.gameOver || this.paused) {
       console.log('游戏循环停止，原因：', this.gameOver ? '游戏结束' : '游戏暂停');
+      this.animationFrameId = null; // 确保标志被正确重置
       return;
     }
     
@@ -337,7 +340,7 @@ start() {
   this.animationFrameId = requestAnimationFrame(gameLoop);
 }
   
-// 修改 togglePause 方法，确保暂停状态记录方向
+// 修改 SnakeGame 类中的 togglePause 方法
 togglePause() {
   if (this.gameOver) return;
   
@@ -358,11 +361,8 @@ togglePause() {
       this.animationFrameId = null;
     }
     
-    // 显示暂停文字
-    this.ctx.font = '30px Arial';
-    this.ctx.fillStyle = '#333';
-    this.ctx.textAlign = 'center';
-    this.ctx.fillText('游戏暂停', this.width / 2, this.height / 2);
+    // 绘制暂停画面，避免重复绘制导致闪烁
+    this.drawPauseScreen();
     
     console.log('游戏已暂停');
   } else {
@@ -375,6 +375,9 @@ togglePause() {
     // 更新按钮图标为暂停图标
     if (playPauseIcon) playPauseIcon.src = './image/pause.svg';
     
+    // 重绘游戏画面，清除暂停文字
+    this.draw();
+    
     // 确保不会重复启动动画
     if (!this.animationFrameId) {
       this.start();
@@ -383,6 +386,21 @@ togglePause() {
   }
 }
   
+// 添加专门处理暂停屏幕绘制的方法
+drawPauseScreen() {
+  // 首先绘制当前游戏状态
+  this.draw();
+  
+  // 添加半透明遮罩
+  this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+  this.ctx.fillRect(0, 0, this.width, this.height);
+  
+  // 添加暂停文字
+  this.ctx.font = '30px Arial';
+  this.ctx.fillStyle = '#333';
+  this.ctx.textAlign = 'center';
+  this.ctx.fillText('游戏暂停', this.width / 2, this.height / 2);
+}
     // 确保 reset 方法正确重置所有状态
 reset() {
   console.log('重置游戏');
