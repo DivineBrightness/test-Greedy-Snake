@@ -421,21 +421,31 @@ removeCompleteRows() {
       }
     }
   
+    // 修改 draw 方法，避免在暂停状态下重复绘制
     draw() {
+      // 如果处于暂停状态且不是强制绘制，则不更新画面
+      if (this.paused && arguments.length === 0) return;
+      
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.ctx.strokeStyle = '#e0e0e0';
       this.ctx.lineWidth = 0.5;
+      
+      // 绘制网格
       for (let x = 0; x < this.cols; x++) {
         for (let y = 0; y < this.rows; y++) {
           this.ctx.strokeRect(x * this.blockSize, y * this.blockSize, this.blockSize, this.blockSize);
         }
       }
+      
+      // 绘制已固定的方块
       for (let y = 0; y < this.rows; y++) {
         for (let x = 0; x < this.cols; x++) {
           if (this.grid[y][x]) this.drawBlock(x, y, this.grid[y][x]);
         }
       }
-      if (this.isPlaying && !this.gameOver && !this.paused && this.currentShape) {
+      
+      // 绘制当前活动方块
+      if (this.isPlaying && !this.gameOver && this.currentShape) {
         const shape = this.currentShape.shape;
         for (let y = 0; y < shape.length; y++) {
           for (let x = 0; x < shape[y].length; x++) {
@@ -445,6 +455,8 @@ removeCompleteRows() {
           }
         }
       }
+      
+      // 绘制下一个方块预览
       this.drawNextShape();
     }
   
@@ -758,7 +770,7 @@ start() {
   this.intervalId = setInterval(() => this.moveDown(), this.speed);
 }
   
-// 修改 togglePause 方法，更新按钮图标
+// 修改 togglePause 方法，避免闪烁
 togglePause() {
   if (this.gameOver) return;
   this.paused = !this.paused;
@@ -773,16 +785,32 @@ togglePause() {
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
-    this.ctx.font = '30px Arial';
-    this.ctx.fillStyle = '#333';
-    this.ctx.textAlign = 'center';
-    this.ctx.fillText('游戏暂停', this.canvas.width / 2, this.canvas.height / 2);
+    
+    // 绘制当前状态，然后叠加暂停文字，避免在间隔中重复绘制造成闪烁
+    this.drawPauseScreen();
   } else {
     // 更新按钮图标为暂停图标
     if (playPauseIcon) playPauseIcon.src = './image/pause.svg';
     
+    // 重新绘制游戏画面，移除暂停文字
+    this.draw();
     this.start();
   }
+}
+// 添加新方法，专门处理暂停屏幕绘制，避免反复重绘导致闪烁
+drawPauseScreen() {
+  // 先绘制当前游戏状态
+  this.draw();
+  
+  // 添加半透明遮罩
+  this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+  this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+  
+  // 添加暂停文字
+  this.ctx.font = '30px Arial';
+  this.ctx.fillStyle = '#333';
+  this.ctx.textAlign = 'center';
+  this.ctx.fillText('游戏暂停', this.canvas.width / 2, this.canvas.height / 2);
 }
   
 // 修复 fullReset 方法，确保事件监听器正确初始化
