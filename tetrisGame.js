@@ -857,21 +857,6 @@ togglePause() {
     }, 50);
   }
 }
-// 添加新方法，专门处理暂停屏幕绘制，避免反复重绘导致闪烁
-drawPauseScreen() {
-  // 先绘制当前游戏状态
-  this.draw();
-  
-  // 添加半透明遮罩
-  this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-  this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-  
-  // 添加暂停文字
-  this.ctx.font = '30px Arial';
-  this.ctx.fillStyle = '#333';
-  this.ctx.textAlign = 'center';
-  this.ctx.fillText('游戏暂停', this.canvas.width / 2, this.canvas.height / 2);
-}
   
 // 修复 fullReset 方法，确保事件监听器正确初始化
 fullReset() {
@@ -1048,7 +1033,7 @@ restoreGameState(state) {
   
   // 绘制当前状态
   this.draw();
-  this.drawPauseScreen();
+  this.drawStaticPauseScreen();
   
   // 更新暂停按钮图标
   const playPauseIcon = document.getElementById('tetris-play-pause-icon');
@@ -1064,24 +1049,6 @@ drawStaticPauseScreen() {
     pauseLayer = document.createElement('div');
     pauseLayer.id = 'tetris-pause-layer';
     
-    // 修改样式，使暂停层位于Canvas中心位置
-    pauseLayer.style.position = 'absolute';
-    // 计算Canvas中心位置
-    pauseLayer.style.top = `${(this.canvas.height - 60) / 2}px`;
-    pauseLayer.style.left = `${(this.canvas.width - 120) / 2}px`;
-    pauseLayer.style.width = '120px';
-    pauseLayer.style.height = '60px';
-    pauseLayer.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
-    pauseLayer.style.display = 'flex';
-    pauseLayer.style.justifyContent = 'center';
-    pauseLayer.style.alignItems = 'center';
-    pauseLayer.style.zIndex = '100'; // 降低z-index，确保不高于飞心(1000)
-    pauseLayer.style.fontFamily = 'Arial, sans-serif';
-    pauseLayer.style.fontSize = '24px'; // 稍微减小字体大小
-    pauseLayer.style.color = '#333';
-    pauseLayer.style.pointerEvents = 'none'; // 允许点击穿透到下方的按钮
-    pauseLayer.textContent = '游戏暂停';
-    
     // 将暂停层添加到canvas的直接父元素
     const canvasContainer = this.canvas.parentElement;
     
@@ -1091,8 +1058,27 @@ drawStaticPauseScreen() {
         canvasContainer.style.position = 'relative';
       }
       
-      // 插入到canvas之后，这样暂停层会覆盖在canvas上方
+      // 插入到canvas之后
       this.canvas.insertAdjacentElement('afterend', pauseLayer);
+      
+      // 使用绝对定位 + transform 实现完美居中
+      pauseLayer.style.position = 'absolute';
+      pauseLayer.style.top = '50%';
+      pauseLayer.style.left = '50%';
+      pauseLayer.style.transform = 'translate(-50%, -50%)';
+      pauseLayer.style.width = '120px';
+      pauseLayer.style.height = '60px';
+      pauseLayer.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+      pauseLayer.style.display = 'flex';
+      pauseLayer.style.justifyContent = 'center';
+      pauseLayer.style.alignItems = 'center';
+      pauseLayer.style.zIndex = '100';
+      pauseLayer.style.fontFamily = 'Arial, sans-serif';
+      pauseLayer.style.fontSize = '24px';
+      pauseLayer.style.color = '#333';
+      pauseLayer.style.pointerEvents = 'none';
+      pauseLayer.style.borderRadius = '10px';
+      pauseLayer.textContent = '游戏暂停';
     }
   } else {
     pauseLayer.style.display = 'flex';

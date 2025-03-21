@@ -1707,24 +1707,26 @@ body #games-selection .games-header h2,
   }
 }
 
-/* 添加到styles.css，确保暂停层样式一致并限制在画布范围内 */
-#tetris-pause-layer {
+/* 确保暂停层完全居中 */
+#tetris-pause-layer, #snake-pause-layer {
   position: absolute !important;
-  border-radius: 10px !important; /* 匹配画布的圆角 */
-  overflow: hidden !important;
-  text-align: center !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 120px !important;
+  height: 60px !important;
+  background-color: rgba(255, 255, 255, 0.7) !important;
   display: flex !important;
   justify-content: center !important;
   align-items: center !important;
-  font-weight: bold !important;
-  z-index: 100 !important; /* 确保低于飞心动画(1000) */
-  pointer-events: none !important; /* 允许点击穿透 */
-  user-select: none !important;
+  z-index: 100 !important;
+  font-family: Arial, sans-serif !important;
   font-size: 24px !important;
   color: #333 !important;
-  background-color: rgba(255, 255, 255, 0.7) !important;
-  backdrop-filter: blur(3px) !important;
-  -webkit-backdrop-filter: blur(3px) !important;
+  pointer-events: none !important;
+  border-radius: 10px !important;
+  text-align: center !important;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1) !important;
 }
 
 /* 适配移动设备 */

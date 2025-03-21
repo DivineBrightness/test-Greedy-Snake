@@ -363,8 +363,8 @@ togglePause() {
       this.animationFrameId = null;
     }
     
-    // 绘制暂停画面，避免重复绘制导致闪烁
-    this.drawPauseScreen();
+    // 使用DOM元素显示暂停状态，而不是在Canvas上绘制
+    this.showStaticPauseScreen();
     
     console.log('游戏已暂停');
   } else {
@@ -377,7 +377,10 @@ togglePause() {
     // 更新按钮图标为暂停图标
     if (playPauseIcon) playPauseIcon.src = './image/pause.svg';
     
-    // 重绘游戏画面，清除暂停文字
+    // 移除暂停层
+    this.removeStaticPauseScreen();
+    
+    // 重绘游戏画面
     this.draw();
     
     // 确保不会重复启动动画
@@ -431,7 +434,8 @@ reset() {
   this.draw();
 }
 
-    destroy() {
+  // 修改 destroy 方法，确保清理暂停层
+destroy() {
   // 清除游戏循环
   if (this.intervalId) {
     clearInterval(this.intervalId);
@@ -455,6 +459,9 @@ reset() {
   document.getElementById('left-btn')?.removeEventListener('click', this.leftBtnHandler);
   document.getElementById('right-btn')?.removeEventListener('click', this.rightBtnHandler);
   document.getElementById('down-btn')?.removeEventListener('click', this.downBtnHandler);
+  
+  // 移除暂停层
+  this.removeStaticPauseScreen();
   
   // 重置游戏状态
   this.gameOver = true;
@@ -484,7 +491,7 @@ saveGameState() {
   };
 }
 
-// 更改 restoreGameState 方法，确保正确恢复状态
+// 修改 restoreGameState 方法，使用DOM元素显示暂停状态
 restoreGameState(state) {
   if (!state || !state.gameInProgress) {
     console.log('没有可恢复的游戏状态');
@@ -510,7 +517,8 @@ restoreGameState(state) {
   
   // 绘制当前状态
   this.draw();
-  this.drawPauseScreen();
+  // 使用DOM元素显示暂停状态，而不是在Canvas上绘制
+  this.showStaticPauseScreen();
   
   // 更新暂停按钮图标
   const playPauseIcon = document.getElementById('snake-play-pause-icon');
@@ -518,5 +526,68 @@ restoreGameState(state) {
   
   console.log('贪吃蛇游戏状态已恢复');
   return true;
+}
+// 修改 SnakeGame 类中的 showStaticPauseScreen 方法
+showStaticPauseScreen() {
+  // 检查是否已存在暂停层，避免创建多个
+  let pauseLayer = document.getElementById('snake-pause-layer');
+  if (!pauseLayer) {
+    pauseLayer = document.createElement('div');
+    pauseLayer.id = 'snake-pause-layer';
+    
+    // 精确计算画布中心位置
+    const canvasRect = this.canvas.getBoundingClientRect();
+    const pauseWidth = 120;
+    const pauseHeight = 60;
+    
+    // 将暂停层添加到Canvas的父元素
+    const canvasContainer = this.canvas.parentElement;
+    
+    if (canvasContainer) {
+      // 确保父容器支持定位
+      if (getComputedStyle(canvasContainer).position === 'static') {
+        canvasContainer.style.position = 'relative';
+      }
+      
+      // 插入到Canvas之后
+      this.canvas.insertAdjacentElement('afterend', pauseLayer);
+      
+      // 调整样式，确保绝对居中
+      pauseLayer.style.position = 'absolute';
+      pauseLayer.style.top = '50%';
+      pauseLayer.style.left = '50%';
+      pauseLayer.style.transform = 'translate(-50%, -50%)';
+      pauseLayer.style.width = pauseWidth + 'px';
+      pauseLayer.style.height = pauseHeight + 'px';
+      pauseLayer.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+      pauseLayer.style.display = 'flex';
+      pauseLayer.style.justifyContent = 'center';
+      pauseLayer.style.alignItems = 'center';
+      pauseLayer.style.zIndex = '100';
+      pauseLayer.style.fontFamily = 'Arial, sans-serif';
+      pauseLayer.style.fontSize = '24px';
+      pauseLayer.style.color = '#333';
+      pauseLayer.style.pointerEvents = 'none';
+      pauseLayer.style.borderRadius = '10px';
+      pauseLayer.textContent = '游戏暂停';
+    }
+  } else {
+    pauseLayer.style.display = 'flex';
+  }
+}
+// 添加移除静态暂停屏幕的方法
+removeStaticPauseScreen() {
+  const pauseLayer = document.getElementById('snake-pause-layer');
+  if (pauseLayer) {
+    // 先隐藏
+    pauseLayer.style.display = 'none';
+    
+    // 完全移除元素
+    setTimeout(() => {
+      if (pauseLayer.parentNode) {
+        pauseLayer.parentNode.removeChild(pauseLayer);
+      }
+    }, 50);
+  }
 }
   }
