@@ -1,39 +1,53 @@
 // tetrisGame.js
 class TetrisGame {
-    constructor() {
-      this.canvas = document.getElementById('tetris-canvas');
-      this.ctx = this.canvas.getContext('2d');
-      this.nextCanvas = document.getElementById('next-piece-canvas');
-      this.nextCtx = this.nextCanvas.getContext('2d');
-      this.isPlaying = false;
-      this.blockSize = 20;
-      this.cols = this.canvas.width / this.blockSize;
-      this.rows = this.canvas.height / this.blockSize;
-      this.score = 0;
-      this.level = 1;
-      this.highScore = localStorage.getItem('tetrisHighScore') || 0;
-      this.gameOver = false;
-      this.paused = false;
-      this.grid = this.createGrid();
-      this.intervalId = null;
-      this.shapes = this.initShapes();
-      this.currentShape = this.getRandomShape();
-      this.nextShape = this.getRandomShape();
-      this.currentX = Math.floor(this.cols / 2) - Math.floor(this.currentShape.shape[0].length / 2);
-      this.currentY = 0;
-      this.scoreElement = document.getElementById('tetris-score');
-      this.highScoreElement = document.getElementById('tetris-high-score');
-      this.levelElement = document.getElementById('tetris-level');
-      this.highScoreElement.textContent = this.highScore;
-      this.speed = 1000 - (this.level - 1) * 100;
-      if (this.speed < 100) this.speed = 100;
-      this.hasDrawnGameOver = false;
-      this.isDropping = false; // 添加一键下落状态锁
-      this.initEventListeners();
-      this.initMobileControls();
-      this.draw();
-      loadLeaderboard("tetris", "tetris-leaderboard-content");
-    }
+  constructor() {
+    this.canvas = document.getElementById('tetris-canvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.nextCanvas = document.getElementById('next-piece-canvas');
+    this.nextCtx = this.nextCanvas.getContext('2d');
+    this.isPlaying = false;
+    this.blockSize = 20;
+    this.cols = this.canvas.width / this.blockSize;
+    this.rows = this.canvas.height / this.blockSize;
+    this.score = 0;
+    this.level = 1;
+    this.highScore = localStorage.getItem('tetrisHighScore') || 0;
+    this.gameOver = false;
+    this.paused = false;
+    this.grid = this.createGrid();
+    this.intervalId = null;
+    this.colors = this.initColors(); // 添加颜色数组
+    this.shapes = this.initShapes();
+    this.currentShape = this.getRandomShape();
+    this.nextShape = this.getRandomShape();
+    this.currentX = Math.floor(this.cols / 2) - Math.floor(this.currentShape.shape[0].length / 2);
+    this.currentY = 0;
+    this.scoreElement = document.getElementById('tetris-score');
+    this.highScoreElement = document.getElementById('tetris-high-score');
+    this.levelElement = document.getElementById('tetris-level');
+    this.highScoreElement.textContent = this.highScore;
+    this.speed = 1000 - (this.level - 1) * 100;
+    if (this.speed < 100) this.speed = 100;
+    this.hasDrawnGameOver = false;
+    this.isDropping = false; // 添加一键下落状态锁
+    this.initEventListeners();
+    this.initMobileControls();
+    this.draw();
+    loadLeaderboard("tetris", "tetris-leaderboard-content");
+  }
+
+  // 添加颜色初始化方法
+initColors() {
+  return [
+    '#4CC3D9',  // 较暗的青色
+    '#3465A4',  // 较暗的蓝色
+    '#D97E00',  // 较暗的橙色
+    '#EDD400',  // 较暗的黄色
+    '#73D216',  // 较暗的绿色
+    '#75507B',  // 较暗的紫色
+    '#CC0000'   // 较暗的红色
+  ];
+}
   
     // 修复触摸控制中的错误（使用了错误的按钮引用）
 initMobileControls() {
@@ -159,33 +173,37 @@ initMobileControls() {
   });
 }
   
-    initShapes() {
-      return [
-        { shape: [[0, 0, 0, 0], [1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0]], color: '#4CC3D9' },  // 较暗的青色
-        { shape: [[1, 0, 0], [1, 1, 1], [0, 0, 0]], color: '#3465A4' },  // 较暗的蓝色
-        { shape: [[0, 0, 1], [1, 1, 1], [0, 0, 0]], color: '#D97E00' },  // 较暗的橙色
-        { shape: [[1, 1], [1, 1]], color: '#EDD400' },  // 较暗的黄色
-        { shape: [[0, 1, 1], [1, 1, 0], [0, 0, 0]], color: '#73D216' },  // 较暗的绿色
-        { shape: [[0, 1, 0], [1, 1, 1], [0, 0, 0]], color: '#75507B' },  // 较暗的紫色
-        { shape: [[1, 1, 0], [0, 1, 1], [0, 0, 0]], color: '#CC0000' }   // 较暗的红色
-      ];
-    }
+// 修改形状初始化方法，移除颜色信息
+initShapes() {
+  return [
+    { shape: [[0, 0, 0, 0], [1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0]] },
+    { shape: [[1, 0, 0], [1, 1, 1], [0, 0, 0]] },
+    { shape: [[0, 0, 1], [1, 1, 1], [0, 0, 0]] },
+    { shape: [[1, 1], [1, 1]] },
+    { shape: [[0, 1, 1], [1, 1, 0], [0, 0, 0]] },
+    { shape: [[0, 1, 0], [1, 1, 1], [0, 0, 0]] },
+    { shape: [[1, 1, 0], [0, 1, 1], [0, 0, 0]] }
+  ];
+}
     
     createGrid() {
       return Array(this.rows).fill().map(() => Array(this.cols).fill(0));
     }
   
-    getRandomShape() {
-      // 获取随机形状的索引
-      const randomIndex = Math.floor(Math.random() * this.shapes.length);
-      const originalShape = this.shapes[randomIndex];
-      
-      // 创建深拷贝而不是直接引用
-      return {
-        shape: JSON.parse(JSON.stringify(originalShape.shape)),
-        color: originalShape.color
-      };
-    }
+    // 修改获取随机形状的方法，为形状随机分配颜色
+getRandomShape() {
+  // 获取随机形状的索引
+  const randomIndex = Math.floor(Math.random() * this.shapes.length);
+  // 获取随机颜色的索引
+  const randomColorIndex = Math.floor(Math.random() * this.colors.length);
+  const originalShape = this.shapes[randomIndex];
+  
+  // 创建深拷贝并分配随机颜色
+  return {
+    shape: JSON.parse(JSON.stringify(originalShape.shape)),
+    color: this.colors[randomColorIndex]
+  };
+}
   
     rotateShape() {
       if (!this.isPlaying || this.gameOver || this.paused) return;
