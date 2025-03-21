@@ -135,7 +135,7 @@ async function loadLeaderboard(game, elementId) {
   }
 }
 
-// 创建新的统一渲染函数
+// 修改 renderScores 函数
 function renderScores(scores, game, leaderboardBody) {
   // 检查是否返回了有效数据
   if (!scores || !Array.isArray(scores) || scores.length === 0) {
@@ -143,9 +143,35 @@ function renderScores(scores, game, leaderboardBody) {
     return;
   }
   
+  // 处理重复玩家，只保留每个玩家的最高分
+  const uniqueScores = [];
+  const playerMap = new Map();
+  
+  scores.forEach(score => {
+    const playerName = score.player_name || score.player || '未知玩家';
+    // 如果玩家已存在且当前分数更高，则替换
+    if (playerMap.has(playerName)) {
+      const existingScore = playerMap.get(playerName);
+      if (score.score > existingScore.score) {
+        playerMap.set(playerName, score);
+      }
+    } else {
+      // 新玩家，直接添加
+      playerMap.set(playerName, score);
+    }
+  });
+  
+  // 将唯一玩家数据添加到数组
+  playerMap.forEach(score => {
+    uniqueScores.push(score);
+  });
+  
+  // 重新按分数排序
+  uniqueScores.sort((a, b) => b.score - a.score);
+  
   // 渲染排行榜内容
   let html = '';
-  scores.forEach((score, index) => {
+  uniqueScores.forEach((score, index) => {
     // 添加排名样式
     let rankClass = '';
     if (index === 0) rankClass = 'rank-1';
