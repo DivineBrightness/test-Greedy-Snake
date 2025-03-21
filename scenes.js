@@ -27,16 +27,32 @@ function changeSeason(season) {
       const decoration = document.querySelector('.seasonal-decoration');
       decoration.style.opacity = 0;
       
+      // 在 scenes.js 的 changeSeason 函数中添加冬季特殊处理
       setTimeout(() => {
-          // 根据当前页面状态设置适当的透明度
-          if (document.getElementById('snake-game').style.display === 'block' ||
-              document.getElementById('tetris-game').style.display === 'block') {
-              decoration.style.opacity = 0.3; // 游戏页面使用70%透明度
-          } else if (document.getElementById('games-selection').style.display === 'block') {
-              decoration.style.opacity = 0.6; // 游戏选择页面使用80%透明度
-          } else {
-              decoration.style.opacity = 0.9; // 主页使用90%透明度
-          }
+        // 根据当前页面状态设置适当的透明度
+        if (document.getElementById('snake-game').style.display === 'block' ||
+            document.getElementById('tetris-game').style.display === 'block') {
+            // 冬季在游戏页面中使用更低的透明度
+            if (season === 'winter') {
+                decoration.style.opacity = 0.2; // 冬季使用20%不透明度
+            } else {
+                decoration.style.opacity = 0.3; // 其他季节保持30%不透明度
+            }
+        } else if (document.getElementById('games-selection').style.display === 'block') {
+            // 冬季在选择页面中使用更低的透明度
+            if (season === 'winter') {
+                decoration.style.opacity = 0.5; // 冬季使用50%不透明度
+            } else {
+                decoration.style.opacity = 0.6; // 其他季节保持60%不透明度
+            }
+        } else {
+            // 冬季在主页面中使用更低的透明度
+            if (season === 'winter') {
+                decoration.style.opacity = 0.8; // 冬季使用80%不透明度
+            } else {
+                decoration.style.opacity = 0.9; // 其他季节保持90%不透明度
+            }
+        }
       }, 300);
   } else {
       console.error('未找到季节按钮：', season);

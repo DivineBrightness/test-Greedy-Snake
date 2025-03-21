@@ -273,13 +273,17 @@ const toggleGameView = (showGameId, hideElements) => {
     // 调整季节装饰的透明度
     const decoration = document.querySelector('.seasonal-decoration');
     if (decoration) {
+        // 检查当前是否为冬季
+        const isWinter = document.body.className === 'winter';
+        
         // 如果是在游戏界面，降低透明度；如果在选择界面或主页，保持原有透明度
         if (showGameId === 'snake-game' || showGameId === 'tetris-game') {
-            decoration.style.opacity = '0.3'; // 在游戏界面中透明度降低为40%
+            // 冬季使用更低的透明度
+            decoration.style.opacity = isWinter ? '0.2' : '0.3';
         } else if (showGameId === 'games-selection') {
-            decoration.style.opacity = '0.6'; // 在游戏选择界面中透明度为60%
+            decoration.style.opacity = isWinter ? '0.5' : '0.6';
         } else {
-            decoration.style.opacity = '0.9'; // 在主页中保持原有透明度80%
+            decoration.style.opacity = isWinter ? '0.8' : '0.9';
         }
     }
 };

@@ -682,11 +682,12 @@ body.autumn .seasonal-decoration {
   animation: fall 7s ease-in-out infinite;
 }
 
+/* 为冬季装饰添加一个特殊的opacity transition */
 body.winter .seasonal-decoration {
   background-image: url('./image/winter.svg');
   animation: snow 5s ease-in-out infinite;
+  transition: opacity 0.5s ease-out; /* 确保透明度变化有平滑过渡 */
 }
-
 @keyframes float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
@@ -703,9 +704,10 @@ body.winter .seasonal-decoration {
   100% { transform: translateY(-10px) rotate(0deg); }
 }
 
+/* 修改冬季动画，确保不影响透明度 */
 @keyframes snow {
-  0%, 100% { transform: translateY(0) scale(1); opacity: 0.8; }
-  50% { transform: translateY(-8px) scale(1.05); opacity: 1; }
+  0%, 100% { transform: translateY(0) scale(1); /* 不要设置opacity */ }
+  50% { transform: translateY(-8px) scale(1.05); /* 不要设置opacity */ }
 }
 
 /* 添加页面过渡效果 */
