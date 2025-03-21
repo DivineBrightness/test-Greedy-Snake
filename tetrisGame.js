@@ -757,9 +757,13 @@ initEventListeners() {
       }
     }
   
-// 修改 start 方法，更新按钮图标
+// 5. 修改 start 方法，使用 requestAnimationFrame 实现更平滑的动画
 start() {
-  if (this.intervalId) return;
+  if (this.intervalId) {
+    console.log('游戏已经在运行中，忽略重复启动');
+    return;
+  }
+  
   this.paused = false;
   this.isPlaying = true;
   
@@ -767,13 +771,52 @@ start() {
   const playPauseIcon = document.getElementById('tetris-play-pause-icon');
   if (playPauseIcon) playPauseIcon.src = './image/pause.svg';
   
-  this.intervalId = setInterval(() => this.moveDown(), this.speed);
+  // 移除可能存在的暂停层
+  this.removeStaticPauseScreen();
+  
+  // 使用 requestAnimationFrame 替代 setInterval
+  let lastUpdateTime = Date.now();
+  let animationFrameHandler = null;
+  
+  const gameLoop = () => {
+    if (this.gameOver || this.paused) {
+      console.log('游戏循环停止，原因:', this.gameOver ? '游戏结束' : '游戏暂停');
+      this.intervalId = null;
+      return;
+    }
+    
+    const now = Date.now();
+    if (now - lastUpdateTime >= this.speed) {
+      this.moveDown();
+      lastUpdateTime = now;
+    }
+    
+    // 继续游戏循环
+    this.intervalId = requestAnimationFrame(gameLoop);
+  };
+  
+  // 启动游戏循环
+  this.intervalId = requestAnimationFrame(gameLoop);
+  console.log('游戏循环已启动，使用requestAnimationFrame');
 }
   
-// 修改 togglePause 方法，避免闪烁
+// 修改 togglePause 方法，确保在取消暂停时彻底移除暂停层
 togglePause() {
   if (this.gameOver) return;
+  
+  // 添加防抖，防止短时间内多次调用
+  if (this._togglePauseTimeout) {
+    console.log('忽略快速连续的暂停请求');
+    return;
+  }
+  
+  this._togglePauseTimeout = setTimeout(() => {
+    this._togglePauseTimeout = null;
+  }, 300);
+  
+  // 切换暂停状态
   this.paused = !this.paused;
+  console.log(`游戏${this.paused ? '暂停' : '继续'}`);
   
   const playPauseIcon = document.getElementById('tetris-play-pause-icon');
   
@@ -781,20 +824,37 @@ togglePause() {
     // 更新按钮图标为开始图标
     if (playPauseIcon) playPauseIcon.src = './image/start.svg';
     
+    // 取消所有定时器，确保不再发生绘制
     if (this.intervalId) {
-      clearInterval(this.intervalId);
+      if (typeof this.intervalId === 'number') {
+        cancelAnimationFrame(this.intervalId);
+      } else {
+        clearInterval(this.intervalId);
+      }
       this.intervalId = null;
     }
     
-    // 绘制当前状态，然后叠加暂停文字，避免在间隔中重复绘制造成闪烁
-    this.drawPauseScreen();
+    // 清理所有按键状态
+    this.clearAllKeyStates();
+    
+    // 绘制暂停画面
+    this.drawStaticPauseScreen();
   } else {
     // 更新按钮图标为暂停图标
     if (playPauseIcon) playPauseIcon.src = './image/pause.svg';
     
-    // 重新绘制游戏画面，移除暂停文字
+    // 彻底移除暂停画面层
+    this.removeStaticPauseScreen();
+    
+    // 重新绘制游戏画面并启动游戏循环
     this.draw();
-    this.start();
+    
+    // 确保游戏重新启动前有一小段延迟，让暂停层完全移除
+    setTimeout(() => {
+      if (!this.gameOver && !this.paused) {
+        this.start();
+      }
+    }, 50);
   }
 }
 // 添加新方法，专门处理暂停屏幕绘制，避免反复重绘导致闪烁
@@ -950,4 +1010,125 @@ fullReset() {
       
       console.log('俄罗斯方块游戏资源已清理');
     }
+    // 添加到 TetrisGame 类中
+saveGameState() {
+  return {
+      grid: this.grid,
+      score: this.score,
+      level: this.level,
+      currentShape: this.currentShape,
+      nextShape: this.nextShape,
+      currentX: this.currentX,
+      currentY: this.currentY,
+      gameInProgress: true
+  };
+}
+
+restoreGameState(state) {
+  if (!state || !state.gameInProgress) return false;
+  
+  this.grid = state.grid;
+  this.score = state.score;
+  this.level = state.level;
+  this.currentShape = state.currentShape;
+  this.nextShape = state.nextShape;
+  this.currentX = state.currentX;
+  this.currentY = state.currentY;
+  this.gameOver = false;
+  this.paused = true; // 恢复时先暂停
+  this.isPlaying = true;
+  this.hasDrawnGameOver = false;
+  
+  // 更新分数和等级显示
+  this.scoreElement.textContent = this.score;
+  this.levelElement.textContent = this.level;
+  
+  // 更新游戏速度
+  this.speed = Math.max(200, 1000 - (this.level - 1) * 100);
+  
+  // 绘制当前状态
+  this.draw();
+  this.drawPauseScreen();
+  
+  // 更新暂停按钮图标
+  const playPauseIcon = document.getElementById('tetris-play-pause-icon');
+  if (playPauseIcon) playPauseIcon.src = './image/start.svg';
+  
+  return true;
+}
+// 修改 TetrisGame 类中的 drawStaticPauseScreen 方法
+drawStaticPauseScreen() {
+  // 检查是否已存在暂停层，避免创建多个
+  let pauseLayer = document.getElementById('tetris-pause-layer');
+  if (!pauseLayer) {
+    pauseLayer = document.createElement('div');
+    pauseLayer.id = 'tetris-pause-layer';
+    
+    // 修改样式，使暂停层位于Canvas中心位置
+    pauseLayer.style.position = 'absolute';
+    // 计算Canvas中心位置
+    pauseLayer.style.top = `${(this.canvas.height - 60) / 2}px`;
+    pauseLayer.style.left = `${(this.canvas.width - 120) / 2}px`;
+    pauseLayer.style.width = '120px';
+    pauseLayer.style.height = '60px';
+    pauseLayer.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+    pauseLayer.style.display = 'flex';
+    pauseLayer.style.justifyContent = 'center';
+    pauseLayer.style.alignItems = 'center';
+    pauseLayer.style.zIndex = '100'; // 降低z-index，确保不高于飞心(1000)
+    pauseLayer.style.fontFamily = 'Arial, sans-serif';
+    pauseLayer.style.fontSize = '24px'; // 稍微减小字体大小
+    pauseLayer.style.color = '#333';
+    pauseLayer.style.pointerEvents = 'none'; // 允许点击穿透到下方的按钮
+    pauseLayer.textContent = '游戏暂停';
+    
+    // 将暂停层添加到canvas的直接父元素
+    const canvasContainer = this.canvas.parentElement;
+    
+    if (canvasContainer) {
+      // 确保父容器支持定位
+      if (getComputedStyle(canvasContainer).position === 'static') {
+        canvasContainer.style.position = 'relative';
+      }
+      
+      // 插入到canvas之后，这样暂停层会覆盖在canvas上方
+      this.canvas.insertAdjacentElement('afterend', pauseLayer);
+    }
+  } else {
+    pauseLayer.style.display = 'flex';
+  }
+}
+// 修改 removeStaticPauseScreen 方法，彻底移除暂停层
+removeStaticPauseScreen() {
+  const pauseLayer = document.getElementById('tetris-pause-layer');
+  if (pauseLayer) {
+    // 先将元素隐藏
+    pauseLayer.style.display = 'none';
+    
+    // 然后完全移除元素
+    setTimeout(() => {
+      if (pauseLayer.parentNode) {
+        pauseLayer.parentNode.removeChild(pauseLayer);
+      }
+    }, 50);
+  }
+}
+// 4. 清理所有按键状态的辅助方法
+clearAllKeyStates() {
+  if (this.keyState) {
+    this.keyState.left = false;
+    this.keyState.right = false;
+    this.keyState.down = false;
+  }
+  
+  if (this.keyInterval) {
+    Object.keys(this.keyInterval).forEach(key => {
+      if (this.keyInterval[key]) {
+        clearTimeout(this.keyInterval[key]);
+        clearInterval(this.keyInterval[key]);
+        this.keyInterval[key] = null;
+      }
+    });
+  }
+}
   }

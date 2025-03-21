@@ -1,6 +1,7 @@
 // snakeGame.js
 class SnakeGame {
     constructor() {
+      this.isPlaying = false; // 添加游戏状态标记
       this.canvas = document.getElementById('game-canvas');
       this.ctx = this.canvas.getContext('2d');
       if (!this.ctx) console.error('Canvas 上下文未初始化');
@@ -311,6 +312,7 @@ start() {
   }
   
   this.paused = false;
+  this.isPlaying = true; // 设置游戏正在进行标记
   
   console.log('游戏开始运行');
   
@@ -459,5 +461,62 @@ reset() {
   this.paused = true;
   
   console.log('贪吃蛇游戏资源已清理');
+}
+
+// 更改 saveGameState 方法，确保所有必要状态都被保存
+saveGameState() {
+  // 确保游戏正在运行才保存状态
+  if (this.gameOver || (!this.animationFrameId && !this.paused)) {
+    console.log('游戏未在运行中，不保存状态');
+    return null;
+  }
+  
+  console.log('保存贪吃蛇游戏状态');
+  return {
+    snake: JSON.parse(JSON.stringify(this.snake)), // 深拷贝蛇身数组
+    direction: this.direction,
+    nextDirection: this.nextDirection,
+    food: JSON.parse(JSON.stringify(this.food)), // 深拷贝食物对象
+    score: this.score,
+    highScore: this.highScore,
+    gameInProgress: true,
+    isPlaying: true // 添加这个关键标记
+  };
+}
+
+// 更改 restoreGameState 方法，确保正确恢复状态
+restoreGameState(state) {
+  if (!state || !state.gameInProgress) {
+    console.log('没有可恢复的游戏状态');
+    return false;
+  }
+  
+  console.log('恢复贪吃蛇游戏状态');
+  
+  // 恢复游戏数据
+  this.snake = state.snake;
+  this.direction = state.direction;
+  this.nextDirection = state.nextDirection;
+  this.food = state.food;
+  this.score = state.score;
+  this.highScore = state.highScore || this.highScore;
+  this.gameOver = false;
+  this.paused = true; // 恢复时先暂停
+  this.isPlaying = true; // 关键：标记游戏已经开始
+  
+  // 更新分数显示
+  this.scoreElement.textContent = this.score;
+  this.highScoreElement.textContent = this.highScore;
+  
+  // 绘制当前状态
+  this.draw();
+  this.drawPauseScreen();
+  
+  // 更新暂停按钮图标
+  const playPauseIcon = document.getElementById('snake-play-pause-icon');
+  if (playPauseIcon) playPauseIcon.src = './image/start.svg';
+  
+  console.log('贪吃蛇游戏状态已恢复');
+  return true;
 }
   }

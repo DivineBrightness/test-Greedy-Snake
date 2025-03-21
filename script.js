@@ -331,6 +331,28 @@ const toggleGameView = (showGameId, hideElements) => {
         
         // 创建新的游戏实例并保存引用 - 只创建一个实例
         currentSnakeGame = new SnakeGame();
+
+        // 恢复保存的游戏状态
+        const savedSnakeGame = JSON.parse(localStorage.getItem('snakeGameState') || 'null');
+
+
+        // 检查是否有有效的保存状态，并且用户选择恢复
+        if (savedSnakeGame && savedSnakeGame.gameInProgress) {
+            if (confirm('是否恢复上次未完成的游戏？')) {
+            const restored = currentSnakeGame.restoreGameState(savedSnakeGame);
+            if (restored) {
+                console.log('成功恢复贪吃蛇游戏状态');
+                // 恢复成功后删除保存的状态，防止重复恢复
+                // localStorage.removeItem('snakeGameState'); // 暂时注释掉，直到确认恢复正常
+            } else {
+                console.warn('恢复游戏状态失败，开始新游戏');
+            }
+            } else {
+            // 用户选择不恢复，清除保存的状态
+            localStorage.removeItem('snakeGameState');
+            console.log('用户选择不恢复游戏，清除保存的状态');
+            }
+        }
         
         const leaderboardBtn = document.getElementById('snake-leaderboard-btn');
         const leaderboardContent = document.getElementById('snake-leaderboard-content');
@@ -359,35 +381,36 @@ const toggleGameView = (showGameId, hideElements) => {
         leaderboardBtn.addEventListener('click', snakeLeaderboardClickHandler);
         document.addEventListener('click', snakeDocumentClickHandler);
   
-        // 修改贪吃蛇游戏的返回按钮处理
+        // 修改返回按钮处理，更可靠地保存游戏状态
         document.getElementById('back-btn').addEventListener('click', () => {
             if (currentSnakeGame) {
-                // 如果游戏正在运行且未暂停，自动暂停游戏
-                if (currentSnakeGame.isPlaying && !currentSnakeGame.paused && !currentSnakeGame.gameOver) {
-                    // 1. 先模拟点击暂停按钮，保证UI状态一致
-                    const pauseBtn = document.querySelector('.play-pause-btn');
-                    if (pauseBtn) {
-                        // 触发点击事件，确保所有相关状态正确更新
-                        pauseBtn.click();
-                    } else {
-                        // 如果找不到按钮，则直接调用暂停方法
-                        currentSnakeGame.togglePause();
-                        
-                        // 更新暂停按钮图标
-                        const playPauseIcon = document.getElementById('snake-play-pause-icon');
-                        if (playPauseIcon) {
-                            playPauseIcon.src = './image/start.svg';
-                        }
-                    }
+            // 保存游戏状态之前先检查游戏是否正在进行
+            const shouldSaveState = !currentSnakeGame.gameOver && 
+                                    (currentSnakeGame.animationFrameId || currentSnakeGame.paused);
+            
+            if (shouldSaveState) {
+                // 确保游戏处于暂停状态
+                if (!currentSnakeGame.paused) {
+                currentSnakeGame.togglePause();
                 }
                 
-                // 2. 设置游戏状态标志，确保下次进入游戏时状态正确
-                currentSnakeGame.pausedBeforeExit = true;
-                
-                // 3. 销毁游戏实例
-                currentSnakeGame.destroy();
-                currentSnakeGame = null;
+                // 保存游戏状态
+                const gameState = currentSnakeGame.saveGameState();
+                if (gameState) {
+                localStorage.setItem('snakeGameState', JSON.stringify(gameState));
+                console.log('贪吃蛇游戏状态已保存');
+                }
+            } else {
+                // 游戏已结束或未开始，清除保存的状态
+                localStorage.removeItem('snakeGameState');
+                console.log('游戏未在进行中，清除保存的状态');
             }
+            
+            // 销毁游戏实例
+            currentSnakeGame.destroy();
+            currentSnakeGame = null;
+            }
+            
             console.log('返回游戏选择页面');
             debouncedToggleGameView('games-selection', true);
         }, { once: true });
@@ -398,6 +421,10 @@ const toggleGameView = (showGameId, hideElements) => {
         console.log('进入俄罗斯方块游戏');
         toggleGameView('tetris-game', true);
         
+        // 检查是否有保存的游戏状态
+        const savedTetrisGame = JSON.parse(localStorage.getItem('tetrisGameState') || 'null');
+
+
         // 确保销毁任何之前的游戏实例
         if (currentTetrisGame) {
             if (currentTetrisGame.intervalId) {
@@ -408,6 +435,24 @@ const toggleGameView = (showGameId, hideElements) => {
         
         // 只创建一个实例
         currentTetrisGame = new TetrisGame();
+
+        // 如果有保存的状态，询问用户是否恢复
+  if (savedTetrisGame && savedTetrisGame.gameInProgress) {
+    if (confirm('是否恢复上次未完成的游戏？')) {
+      const restored = currentTetrisGame.restoreGameState(savedTetrisGame);
+      if (restored) {
+        console.log('成功恢复俄罗斯方块游戏状态');
+        // 恢复成功后删除保存的状态，防止重复恢复
+        localStorage.removeItem('tetrisGameState');
+      } else {
+        console.warn('恢复游戏状态失败，开始新游戏');
+      }
+    } else {
+      // 用户选择不恢复，清除保存的状态
+      localStorage.removeItem('tetrisGameState');
+      console.log('用户选择不恢复游戏，清除保存的状态');
+    }
+  }
         
         // 为俄罗斯方块添加排行榜切换功能
         const tetrisLeaderboardBtn = document.getElementById('tetris-leaderboard-btn');
@@ -449,40 +494,36 @@ const toggleGameView = (showGameId, hideElements) => {
         // 绑定文档点击事件
         document.addEventListener('click', tetrisDocumentClickHandler);
         
-// 修改俄罗斯方块游戏的返回按钮处理
+// 修改返回按钮处理
 document.getElementById('tetris-back-btn').addEventListener('click', () => {
     if (currentTetrisGame) {
-        // 如果游戏正在运行且未暂停，自动暂停游戏
-        if (currentTetrisGame.isPlaying && !currentTetrisGame.paused && !currentTetrisGame.gameOver) {
-            // 暂停游戏
-            currentTetrisGame.togglePause();
-            
-            // 更新暂停按钮图标
-            const playPauseIcon = document.getElementById('tetris-play-pause-icon');
-            if (playPauseIcon) {
-                playPauseIcon.src = './image/start.svg';
-            }
-            
-            // 在游戏对象上设置一个标志，表示游戏是从暂停状态退出的
-            currentTetrisGame.pausedBeforeExit = true;
-            
-            // 将暂停状态保存到localStorage，确保返回后能恢复
-            localStorage.setItem('tetrisGamePaused', 'true');
+      // 确保游戏处于暂停状态
+      if (!currentTetrisGame.paused && currentTetrisGame.isPlaying) {
+        currentTetrisGame.togglePause();
+      }
+      
+      // 如果游戏正在运行且未结束，保存状态
+      if (!currentTetrisGame.gameOver && currentTetrisGame.isPlaying) {
+        // 保存游戏状态
+        const gameState = currentTetrisGame.saveGameState();
+        if (gameState) {
+          localStorage.setItem('tetrisGameState', JSON.stringify(gameState));
+          console.log('俄罗斯方块游戏状态已保存');
         }
-        
-        // 清理游戏资源
-        if (currentTetrisGame.intervalId) {
-            clearInterval(currentTetrisGame.intervalId);
-        }
-        currentTetrisGame = null;
-        
-        // 移除文档点击事件监听器
-        document.removeEventListener('click', tetrisDocumentClickHandler);
+      } else {
+        // 如果游戏已结束或未开始，清除保存的状态
+        localStorage.removeItem('tetrisGameState');
+        console.log('游戏未在进行中，清除保存的状态');
+      }
+      
+      // 彻底销毁游戏实例
+      currentTetrisGame.destroy();
+      currentTetrisGame = null;
     }
     
     console.log('返回游戏选择页面');
     toggleGameView('games-selection', true);
-}, { once: true });
+  }, { once: true });
     });
 
     // 游戏说明按钮点击事件

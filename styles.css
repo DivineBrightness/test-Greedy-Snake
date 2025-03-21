@@ -1706,3 +1706,30 @@ body #games-selection .games-header h2,
     font-size: 28px !important;
   }
 }
+
+/* 添加到styles.css，确保暂停层样式一致并限制在画布范围内 */
+#tetris-pause-layer {
+  position: absolute !important;
+  border-radius: 10px !important; /* 匹配画布的圆角 */
+  overflow: hidden !important;
+  text-align: center !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  font-weight: bold !important;
+  z-index: 100 !important; /* 确保低于飞心动画(1000) */
+  pointer-events: none !important; /* 允许点击穿透 */
+  user-select: none !important;
+  font-size: 24px !important;
+  color: #333 !important;
+  background-color: rgba(255, 255, 255, 0.7) !important;
+  backdrop-filter: blur(3px) !important;
+  -webkit-backdrop-filter: blur(3px) !important;
+}
+
+/* 适配移动设备 */
+@media (max-width: 768px) {
+  #tetris-pause-layer {
+    font-size: 20px !important;
+  }
+}
