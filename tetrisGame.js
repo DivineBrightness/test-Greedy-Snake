@@ -343,38 +343,34 @@ removeCompleteRows() {
       this.highScoreElement.textContent = this.highScore;
       localStorage.setItem('tetrisHighScore', this.highScore);
     }
-    // 修改等级计算逻辑，保持每1000分一级
+    // 在 removeCompleteRows 方法中修改以下代码段
     if (Math.floor(this.score / 1000) > this.level - 1) {
       this.level = Math.floor(this.score / 1000) + 1;
       this.levelElement.textContent = this.level;
       
-      // 修改速度计算公式，使难度曲线更平缓
-      // 前5级速度下降快，后面难度增加缓慢
+      // 保持之前的速度计算逻辑
       if (this.level <= 5) {
-        // 前5级速度：1000ms -> 500ms (每级减少100ms)
         this.speed = 1000 - (this.level - 1) * 100;
       } else if (this.level <= 10) {
-        // 6-10级速度：500ms -> 350ms (每级减少30ms)
         this.speed = 500 - (this.level - 5) * 30;
       } else if (this.level <= 15) {
-        // 11-15级速度：350ms -> 250ms (每级减少20ms)
         this.speed = 350 - (this.level - 10) * 20;
       } else if (this.level <= 20) {
-        // 16-20级速度：250ms -> 200ms (每级减少10ms)
         this.speed = 250 - (this.level - 15) * 10;
       } else {
-        // 20级以上速度：固定为200ms
         this.speed = 200;
       }
       
-      // 确保速度不小于设定的最低限制
       if (this.speed < 200) this.speed = 200;
       
-      // 更新游戏循环速度
-      if (this.intervalId) {
-        clearInterval(this.intervalId);
-        this.intervalId = setInterval(() => this.moveDown(), this.speed);
-      }
+      // 移除这段代码，不再使用 setInterval 重置游戏循环
+      // if (this.intervalId) {
+      //   clearInterval(this.intervalId);
+      //   this.intervalId = setInterval(() => this.moveDown(), this.speed);
+      // }
+      
+      // 只需更新速度变量，让 requestAnimationFrame 循环使用新速度即可
+      console.log(`升级到 ${this.level} 级，速度更新为 ${this.speed}ms`);
     }
   }
 }
