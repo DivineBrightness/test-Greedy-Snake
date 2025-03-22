@@ -286,6 +286,17 @@ const toggleGameView = (showGameId, hideElements) => {
             decoration.style.opacity = isWinter ? '0.85' : '0.80';
         }
     }
+    
+    // 控制浮动水果的显示和隐藏
+    if (window.floatingFruits) {
+        if (showGameId === null && !hideElements) {
+            // 在主页显示水果
+            window.floatingFruits.show();
+        } else {
+            // 不在主页隐藏水果
+            window.floatingFruits.hide();
+        }
+    }
 };
   
     // 添加防抖功能

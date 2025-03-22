@@ -664,7 +664,7 @@ button:focus {
   }
 }
 
-/* 修改季节装饰，将背景图片定位在右侧 */
+/* 修改季节装饰，调整z-index，确保在水果层下方 */
 .seasonal-decoration {
   position: fixed;
   top: 0;
@@ -677,7 +677,7 @@ button:focus {
   opacity: 0.15; /* 保持原有透明度 */
   pointer-events: none;
   transition: all 0.5s ease;
-  z-index: -1;
+  z-index: -2; /* 修改为-2，确保在水果层下方 */
 }
 
 /* 2. 修改各季节背景的动画应用 */
@@ -1781,4 +1781,30 @@ body #games-selection .games-header h2,
   border-color: #4CAF50;
   box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
   z-index: 10; /* 确保焦点时在顶层 */
+}
+
+
+
+/* 浮动水果样式 - 调整z-index使其位于内容之下 */
+.floating-fruits {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1; /* 修改为-1，确保在所有内容下方 */
+  pointer-events: none; /* 确保水果不会阻挡用户交互 */
+  overflow: hidden;
+}
+
+.fruit {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  will-change: transform; /* 提高动画性能 */
+  transition: opacity 0.3s ease;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.1));
 }
