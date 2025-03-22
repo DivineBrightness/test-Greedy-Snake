@@ -18,7 +18,7 @@ class FloatingFruits {
         './image/fruit/fruit.svg',
         './image/fruit/Grape.png',
         './image/fruit/pineapple.svg',
-        './image/fruit/watermelon (1).svg',
+        './image/fruit/watermelon1.svg',
         './image/fruit/bell.svg'
       ];
       
@@ -40,83 +40,94 @@ class FloatingFruits {
     }
     
     createFruits() {
-      // 清空容器
-      this.fruitContainer.innerHTML = '';
-      this.fruits = [];
-      
-      // 打乱水果图片数组，以确保随机排序但不重复
-      const shuffledFruits = [...this.fruitImages].sort(() => Math.random() - 0.5);
-      
-      // 使用所有水果，确保不重复
-      const fruitCount = this.fruitImages.length;
-      
-      // 固定水果大小
-      const fixedSize = 60;
-      
-      // 尝试创建不重叠的水果
-      for (let i = 0; i < fruitCount; i++) {
-        let attempts = 0;
-        let validPosition = false;
-        let x, y;
+        // 清空容器
+        this.fruitContainer.innerHTML = '';
+        this.fruits = [];
         
-        // 尝试最多20次找到一个不重叠的位置
-        while (!validPosition && attempts < 20) {
-          attempts++;
+        // 打乱水果图片数组，以确保随机排序但不重复
+        const shuffledFruits = [...this.fruitImages].sort(() => Math.random() - 0.5);
+        
+        // 使用所有水果，确保不重复
+        const fruitCount = this.fruitImages.length;
+        
+        // 固定水果大小
+        const fixedSize = 60;
+        
+        // 尝试创建不重叠的水果
+        for (let i = 0; i < fruitCount; i++) {
+          let attempts = 0;
+          let validPosition = false;
+          let x, y;
           
-          // 随机位置
-          x = Math.random() * (window.innerWidth - fixedSize);
-          y = Math.random() * (window.innerHeight - fixedSize);
-          
-          validPosition = true;
-          
-          // 检查与已创建的水果是否重叠
-          for (let j = 0; j < this.fruits.length; j++) {
-            const existingFruit = this.fruits[j];
-            const dx = x - existingFruit.x;
-            const dy = y - existingFruit.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
+          // 尝试最多20次找到一个不重叠的位置
+          while (!validPosition && attempts < 20) {
+            attempts++;
             
-            // 如果太近，则位置无效
-            if (distance < fixedSize * 1.2) {
-              validPosition = false;
-              break;
+            // 随机位置
+            x = Math.random() * (window.innerWidth - fixedSize);
+            y = Math.random() * (window.innerHeight - fixedSize);
+            
+            validPosition = true;
+            
+            // 检查与已创建的水果是否重叠
+            for (let j = 0; j < this.fruits.length; j++) {
+              const existingFruit = this.fruits[j];
+              const dx = x - existingFruit.x;
+              const dy = y - existingFruit.y;
+              const distance = Math.sqrt(dx * dx + dy * dy);
+              
+              // 如果太近，则位置无效
+              if (distance < fixedSize * 1.2) {
+                validPosition = false;
+                break;
+              }
             }
           }
+          
+          const fruit = document.createElement('div');
+          fruit.className = 'fruit';
+          
+          // 从打乱的数组中按顺序选择水果，确保不重复
+          const fruitImage = shuffledFruits[i];
+          
+          // 添加调试代码，检查图片是否能加载
+          const img = new Image();
+          img.onload = () => {
+            console.log(`成功加载: ${fruitImage}`);
+          };
+          img.onerror = () => {
+            console.error(`无法加载: ${fruitImage}`);
+          };
+          img.src = fruitImage;
+          
+          fruit.style.backgroundImage = `url(${fruitImage})`;
+          
+          // 使用固定大小
+          fruit.style.width = `${fixedSize}px`;
+          fruit.style.height = `${fixedSize}px`;
+          
+          // 设置位置
+          fruit.style.transform = `translate(${x}px, ${y}px)`;
+          
+          // 随机速度和方向 (较慢的速度)
+          const speedX = (Math.random() - 0.5) * 0.8;
+          const speedY = (Math.random() - 0.5) * 0.8;
+          
+          // 添加到容器
+          this.fruitContainer.appendChild(fruit);
+          
+          // 保存水果数据
+          this.fruits.push({
+            element: fruit,
+            x,
+            y,
+            speedX,
+            speedY,
+            size: fixedSize,
+            lastCollision: 0 // 添加碰撞冷却计时器
+          });
         }
-        
-        const fruit = document.createElement('div');
-        fruit.className = 'fruit';
-        
-        // 从打乱的数组中按顺序选择水果，确保不重复
-        const fruitImage = shuffledFruits[i];
-        fruit.style.backgroundImage = `url(${fruitImage})`;
-        
-        // 使用固定大小
-        fruit.style.width = `${fixedSize}px`;
-        fruit.style.height = `${fixedSize}px`;
-        
-        // 设置位置
-        fruit.style.transform = `translate(${x}px, ${y}px)`;
-        
-        // 随机速度和方向 (较慢的速度)
-        const speedX = (Math.random() - 0.5) * 0.8;
-        const speedY = (Math.random() - 0.5) * 0.8;
-        
-        // 添加到容器
-        this.fruitContainer.appendChild(fruit);
-        
-        // 保存水果数据
-        this.fruits.push({
-          element: fruit,
-          x,
-          y,
-          speedX,
-          speedY,
-          size: fixedSize,
-          lastCollision: 0 // 添加碰撞冷却计时器
-        });
       }
-    }
     
     update() {
       if (!this.isActive) return;
