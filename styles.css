@@ -146,7 +146,6 @@ body.winter { background-color: #f0f8ff; }
   display: flex;
   justify-content: space-between;
   align-items: center; /* 垂直居中对齐 */
-  margin-bottom: 20px;
   position: relative; /* 为排行榜定位提供参考 */
 }
 .game-score, .game-high-score {
@@ -1842,4 +1841,18 @@ body #games-selection .games-header h2,
   position: relative;
   font-size: 16px;
   color: inherit;
+}
+
+/* 添加血量显示样式 */
+.health-display {
+  display: flex;
+  justify-content: flex-start;
+  padding: 8px 0;
+  width: 100%;
+}
+
+.health-display img {
+  width: 30px;
+  height: 30px;
+  margin: 0 2px;
 }
