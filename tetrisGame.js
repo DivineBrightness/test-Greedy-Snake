@@ -516,24 +516,25 @@ drawGameOver() {
   // 更新模态框内容 - 将关闭按钮单独放在右上角
   const modalContent = modal.querySelector('div');
   
-  // 完全重写HTML内容，确保按钮在正确位置，并包含自定义输入框
-  modalContent.innerHTML = `
-    <button class="modal-close-btn"><img src="./image/x-circle.svg" alt="关闭" class="close-icon"></button>
-    <div class="modal-header">
-      <h2 style="color: rgb(3, 93, 61); margin-bottom: 15px; font-size: 24px;">游戏结束!</h2>
-    </div>
-    <p style="font-size: 20px; margin-bottom: 20px;">最终得分: <strong id="tetris-final-score">${this.score}</strong></p>
-    <p style="margin-bottom: 15px;">选择你的名字提交成绩:</p>
-    <select id="tetris-player-select">
-      <option value="">请选择</option>
-    </select>
-    <!-- 添加自定义输入框 -->
-    <div class="custom-name-container">
-      <span>或者</span>
-      <input type="text" id="tetris-custom-name" placeholder="输入自定义名字" maxlength="20">
-    </div>
-    <button id="tetris-submit-btn" class="control-btn">提交成绩</button>
-  `;
+  // 修改俄罗斯方块游戏中的模态框HTML
+
+modalContent.innerHTML = `
+<button class="modal-close-btn"><img src="./image/x-circle.svg" alt="关闭" class="close-icon"></button>
+<div class="modal-header">
+  <h2 style="color: rgb(3, 93, 61); margin-bottom: 15px; font-size: 24px;">游戏结束!</h2>
+</div>
+<p style="font-size: 20px; margin-bottom: 20px;">最终得分: <strong id="tetris-final-score">${this.score}</strong></p>
+<p style="margin-bottom: 15px;">选择你的名字提交成绩:</p>
+<select id="tetris-player-select">
+  <option value="">请选择</option>
+</select>
+<!-- 修改自定义输入框，限制13个字符 -->
+<div class="custom-name-container">
+  <span>或者</span>
+  <input type="text" id="tetris-custom-name" placeholder="输入自定义名字(最多12个字)" maxlength="13">
+</div>
+<button id="tetris-submit-btn" class="control-btn">提交成绩</button>
+`;
   
   // 重新填充玩家选择器
   populateSelect('tetris-player-select');
@@ -571,30 +572,38 @@ drawGameOver() {
   const submitBtn = document.getElementById('tetris-submit-btn');
   if (!submitBtn) return console.error("未找到 tetris-submit-btn 元素");
   
-  submitBtn.onclick = async () => {
-    const selectPlayerName = document.getElementById('tetris-player-select').value;
-    const customPlayerName = document.getElementById('tetris-custom-name').value.trim();
-    
-    // 优先使用自定义名称，如果有的话
-    const playerName = customPlayerName || selectPlayerName;
-    
-    if (playerName) {
-      console.log(`提交分数: game=tetris, player=${playerName}, score=${this.score}`);
-      await submitScore("tetris", playerName, this.score);
-      
-      // 关闭模态框并重置游戏
-      console.log("关闭 tetris-modal");
-      modal.style.display = 'none';
-      this.fullReset();
-      
-      // 启用所有控制按钮
-      document.querySelectorAll('.direction-btn').forEach(btn => {
-        btn.disabled = false;
-      });
-    } else {
-      alert("请选择或输入一个名字");
+  // 修改俄罗斯方块提交按钮逻辑
+
+submitBtn.onclick = async () => {
+  const selectPlayerName = document.getElementById('tetris-player-select').value;
+  const customPlayerName = document.getElementById('tetris-custom-name').value.trim();
+  
+  // 优先使用自定义名称，如果有的话
+  const playerName = customPlayerName || selectPlayerName;
+  
+  // 验证名称长度
+  if (playerName) {
+    if (playerName.length > 13) {
+      alert("名字最多只能包含13个字符");
+      return;
     }
-  };
+    
+    console.log(`提交分数: game=tetris, player=${playerName}, score=${this.score}`);
+    await submitScore("tetris", playerName, this.score);
+    
+    // 关闭模态框并重置游戏
+    console.log("关闭 tetris-modal");
+    modal.style.display = 'none';
+    this.fullReset();
+    
+    // 启用所有控制按钮
+    document.querySelectorAll('.direction-btn').forEach(btn => {
+      btn.disabled = false;
+    });
+  } else {
+    alert("请选择或输入一个名字");
+  }
+};
 }
   
 // 修改键盘处理事件，确保空格键不导致页面滚动

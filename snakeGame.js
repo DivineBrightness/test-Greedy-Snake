@@ -178,24 +178,25 @@ drawGameOver() {
   const modal = document.getElementById('snake-modal');
   const modalContent = modal.querySelector('div');
   
-  // 更新模态框内容 - 将关闭按钮单独放在右上角
-  modalContent.innerHTML = `
-    <button class="modal-close-btn"><img src="./image/x-circle.svg" alt="关闭" class="close-icon"></button>
-    <div class="modal-header">
-      <h2 style="color:rgb(3, 93, 61); margin-bottom: 15px; font-size: 24px;">游戏结束!</h2>
-    </div>
-    <p style="font-size: 20px; margin-bottom: 20px;">最终得分: <strong>${this.score}</strong></p>
-    <p style="margin-bottom: 15px;">选择你的名字提交成绩:</p>
-    <select id="snake-player-select">
-      <option value="">请选择</option>
-    </select>
-    <!-- 添加自定义输入框 -->
-    <div class="custom-name-container">
-      <span>或者</span>
-      <input type="text" id="snake-custom-name" placeholder="输入自定义名字" maxlength="20">
-    </div>
-    <button id="snake-submit-btn" class="control-btn">提交成绩</button>
-  `;
+// 修改贪吃蛇游戏中的模态框HTML
+
+modalContent.innerHTML = `
+  <button class="modal-close-btn"><img src="./image/x-circle.svg" alt="关闭" class="close-icon"></button>
+  <div class="modal-header">
+    <h2 style="color:rgb(3, 93, 61); margin-bottom: 15px; font-size: 24px;">游戏结束!</h2>
+  </div>
+  <p style="font-size: 20px; margin-bottom: 20px;">最终得分: <strong>${this.score}</strong></p>
+  <p style="margin-bottom: 15px;">选择你的名字提交成绩:</p>
+  <select id="snake-player-select">
+    <option value="">请选择</option>
+  </select>
+  <!-- 修改自定义输入框，限制13个字符 -->
+  <div class="custom-name-container">
+    <span>或者</span>
+    <input type="text" id="snake-custom-name" placeholder="输入自定义名字(最多12个字)" maxlength="13">
+  </div>
+  <button id="snake-submit-btn" class="control-btn">提交成绩</button>
+`;
   
   // 重新填充玩家选择器
   populateSelect('snake-player-select');
@@ -235,45 +236,53 @@ drawGameOver() {
     });
   }
   
-  submitBtn.onclick = async () => {
-    const selectPlayerName = document.getElementById('snake-player-select').value;
-    const customPlayerName = document.getElementById('snake-custom-name').value.trim();
-    
-    // 优先使用自定义名称，如果有的话
-    const playerName = customPlayerName || selectPlayerName;
-    
-    if (playerName) {
-      console.log(`提交分数: game=snake, player=${playerName}, score=${this.score}`);
-      
-      // 禁用按钮，防止重复提交
-      submitBtn.disabled = true;
-      submitBtn.textContent = '提交中...';
-      
-      try {
-        await submitScore("snake", playerName, this.score);
-        
-        // 关闭模态框并重置游戏
-        console.log("关闭 snake-modal");
-        modal.style.display = 'none';
-        this.reset();
-        
-        // 确保在提交后不立即重新出现排行榜，而是让用户有选择地点击排行榜按钮
-        const leaderboardContent = document.getElementById('snake-leaderboard-content');
-        if (leaderboardContent) {
-          leaderboardContent.style.display = 'none';
-        }
-      } catch (error) {
-        console.error('提交分数失败:', error);
-        alert('提交失败，请重试');
-      } finally {
-        // 无论成功失败都恢复按钮状态
-        submitBtn.disabled = false;
-        submitBtn.textContent = '提交成绩';
-      }
-    } else {
-      alert("请选择或输入一个名字");
+  // 修改贪吃蛇提交按钮逻辑
+
+submitBtn.onclick = async () => {
+  const selectPlayerName = document.getElementById('snake-player-select').value;
+  const customPlayerName = document.getElementById('snake-custom-name').value.trim();
+  
+  // 优先使用自定义名称，如果有的话
+  const playerName = customPlayerName || selectPlayerName;
+  
+  if (playerName) {
+    // 验证名称长度
+    if (playerName.length > 13) {
+      alert("名字最多只能包含13个字符");
+      return;
     }
-  };
+    
+    console.log(`提交分数: game=snake, player=${playerName}, score=${this.score}`);
+    
+    // 禁用按钮，防止重复提交
+    submitBtn.disabled = true;
+    submitBtn.textContent = '提交中...';
+    
+    try {
+      await submitScore("snake", playerName, this.score);
+      
+      // 关闭模态框并重置游戏
+      console.log("关闭 snake-modal");
+      modal.style.display = 'none';
+      this.reset();
+      
+      // 确保在提交后不立即重新出现排行榜，而是让用户有选择地点击排行榜按钮
+      const leaderboardContent = document.getElementById('snake-leaderboard-content');
+      if (leaderboardContent) {
+        leaderboardContent.style.display = 'none';
+      }
+    } catch (error) {
+      console.error('提交分数失败:', error);
+      alert('提交失败，请重试');
+    } finally {
+      // 无论成功失败都恢复按钮状态
+      submitBtn.disabled = false;
+      submitBtn.textContent = '提交成绩';
+    }
+  } else {
+    alert("请选择或输入一个名字");
+  }
+};
 }
   
     // 修改 move 方法，增加更多防护措施

@@ -174,13 +174,25 @@ function renderScores(scores, game, leaderboardBody) {
   uniqueScores.forEach((score, index) => {
     // 添加排名样式
     let rankClass = '';
-    if (index === 0) rankClass = 'rank-1';
-    else if (index === 1) rankClass = 'rank-2';
-    else if (index === 2) rankClass = 'rank-3';
+    let rankDisplay = '';
+    
+    // 使用奖牌图标替换前三名的数字
+    if (index === 0) {
+      rankClass = 'rank-1';
+      rankDisplay = '<img src="./image/gold-medal-svgrepo-com.svg" alt="1" class="medal-icon">';
+    } else if (index === 1) {
+      rankClass = 'rank-2';
+      rankDisplay = '<img src="./image/silver-medal-svgrepo-com.svg" alt="2" class="medal-icon">';
+    } else if (index === 2) {
+      rankClass = 'rank-3';
+      rankDisplay = '<img src="./image/bronze-medal-svgrepo-com.svg" alt="3" class="medal-icon">';
+    } else {
+      rankDisplay = index + 1;
+    }
     
     html += `
       <div class="leaderboard-row">
-        <div class="rank ${rankClass}">${index + 1}</div>
+        <div class="rank ${rankClass}">${rankDisplay}</div>
         <div class="player">${score.player_name || score.player || '未知玩家'}</div>
         <div class="score">${score.score}</div>
         <div class="date">${new Date().toLocaleDateString('zh-CN')}</div>
