@@ -168,7 +168,8 @@ handleKeyDown(e) {
       this.drawBlock(this.food.x, this.food.y, '#FF5722');
     }
   
-// 修改 drawGameOver 方法，确保关闭按钮使用SVG图标并位于正确位置
+// 修改 drawGameOver 方法，在显示模态框时禁用键盘事件
+
 drawGameOver() {
   // 清除Canvas
   this.ctx.clearRect(0, 0, this.width, this.height);
@@ -185,7 +186,14 @@ drawGameOver() {
     </div>
     <p style="font-size: 20px; margin-bottom: 20px;">最终得分: <strong>${this.score}</strong></p>
     <p style="margin-bottom: 15px;">选择你的名字提交成绩:</p>
-    <select id="snake-player-select"></select>
+    <select id="snake-player-select">
+      <option value="">请选择</option>
+    </select>
+    <!-- 添加自定义输入框 -->
+    <div class="custom-name-container">
+      <span>或者</span>
+      <input type="text" id="snake-custom-name" placeholder="输入自定义名字" maxlength="20">
+    </div>
     <button id="snake-submit-btn" class="control-btn">提交成绩</button>
   `;
   
@@ -213,9 +221,27 @@ drawGameOver() {
     return;
   }
   
-  // 为提交按钮添加点击事件
+  // 获取自定义输入框，添加焦点事件
+  const customNameInput = document.getElementById('snake-custom-name');
+  if (customNameInput) {
+    // 当输入框获得焦点时，移除文档级别的键盘事件
+    customNameInput.addEventListener('focus', () => {
+      document.removeEventListener('keydown', this.keyDownHandler);
+    });
+    
+    // 当输入框失去焦点时，恢复键盘事件
+    customNameInput.addEventListener('blur', () => {
+      document.addEventListener('keydown', this.keyDownHandler);
+    });
+  }
+  
   submitBtn.onclick = async () => {
-    const playerName = document.getElementById('snake-player-select').value;
+    const selectPlayerName = document.getElementById('snake-player-select').value;
+    const customPlayerName = document.getElementById('snake-custom-name').value.trim();
+    
+    // 优先使用自定义名称，如果有的话
+    const playerName = customPlayerName || selectPlayerName;
+    
     if (playerName) {
       console.log(`提交分数: game=snake, player=${playerName}, score=${this.score}`);
       
@@ -245,7 +271,7 @@ drawGameOver() {
         submitBtn.textContent = '提交成绩';
       }
     } else {
-      alert("请选择一个名字");
+      alert("请选择或输入一个名字");
     }
   };
 }

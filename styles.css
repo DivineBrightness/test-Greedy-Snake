@@ -1735,3 +1735,50 @@ body #games-selection .games-header h2,
     font-size: 20px !important;
   }
 }
+
+/* 可以添加到styles.css文件中 */
+.custom-name-container {
+  margin: 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.custom-name-container span {
+  color: #666;
+  font-size: 14px;
+}
+
+.custom-name-container input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.custom-name-container input:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+/* 确保自定义输入框样式支持所有类型输入 */
+.custom-name-container input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: #fff;
+  min-width: 0;
+  width: 100%;
+}
+
+.custom-name-container input:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+  z-index: 10; /* 确保焦点时在顶层 */
+}

@@ -474,7 +474,8 @@ draw() {
   this.drawNextShape();
 }
   
-// 修改 drawGameOver 方法，确保关闭按钮使用SVG图标并位于正确位置
+// 修改 drawGameOver 方法，在显示模态框时禁用键盘事件
+
 drawGameOver() {
   if (this.hasDrawnGameOver) return;
   this.hasDrawnGameOver = true;
@@ -497,6 +498,14 @@ drawGameOver() {
     btn.disabled = true;
   });
   
+  // 暂时移除键盘事件
+  if (this.keyDownHandler) {
+    document.removeEventListener('keydown', this.keyDownHandler);
+  }
+  if (this.keyUpHandler) {
+    document.removeEventListener('keyup', this.keyUpHandler);
+  }
+  
   // 不再在Canvas上绘制文字
   this.draw(); // 最后一次绘制当前状态
   
@@ -507,15 +516,22 @@ drawGameOver() {
   // 更新模态框内容 - 将关闭按钮单独放在右上角
   const modalContent = modal.querySelector('div');
   
-  // 完全重写HTML内容，确保按钮在正确位置
+  // 完全重写HTML内容，确保按钮在正确位置，并包含自定义输入框
   modalContent.innerHTML = `
     <button class="modal-close-btn"><img src="./image/x-circle.svg" alt="关闭" class="close-icon"></button>
     <div class="modal-header">
       <h2 style="color: rgb(3, 93, 61); margin-bottom: 15px; font-size: 24px;">游戏结束!</h2>
     </div>
-    <p style="font-size: 20px; margin-bottom: 20px;">最终得分: <strong>${this.score}</strong></p>
+    <p style="font-size: 20px; margin-bottom: 20px;">最终得分: <strong id="tetris-final-score">${this.score}</strong></p>
     <p style="margin-bottom: 15px;">选择你的名字提交成绩:</p>
-    <select id="tetris-player-select"></select>
+    <select id="tetris-player-select">
+      <option value="">请选择</option>
+    </select>
+    <!-- 添加自定义输入框 -->
+    <div class="custom-name-container">
+      <span>或者</span>
+      <input type="text" id="tetris-custom-name" placeholder="输入自定义名字" maxlength="20">
+    </div>
     <button id="tetris-submit-btn" class="control-btn">提交成绩</button>
   `;
   
@@ -525,6 +541,14 @@ drawGameOver() {
   console.log("显示 tetris-modal");
   modal.style.display = 'flex';
   
+  // 为自定义名称输入框添加焦点事件
+  const customNameInput = document.getElementById('tetris-custom-name');
+  if (customNameInput) {
+    // 确保输入框能正常接收所有类型的输入
+    customNameInput.type = "text";
+    customNameInput.setAttribute("inputmode", "text");
+  }
+  
   // 为关闭按钮添加事件处理
   const closeBtn = modalContent.querySelector('.modal-close-btn');
   if (closeBtn) {
@@ -532,6 +556,9 @@ drawGameOver() {
       console.log("点击关闭按钮");
       modal.style.display = 'none';
       this.fullReset();
+      
+      // 恢复键盘事件监听器
+      this.initEventListeners();
       
       // 启用所有控制按钮
       document.querySelectorAll('.direction-btn').forEach(btn => {
@@ -545,7 +572,12 @@ drawGameOver() {
   if (!submitBtn) return console.error("未找到 tetris-submit-btn 元素");
   
   submitBtn.onclick = async () => {
-    const playerName = document.getElementById('tetris-player-select').value;
+    const selectPlayerName = document.getElementById('tetris-player-select').value;
+    const customPlayerName = document.getElementById('tetris-custom-name').value.trim();
+    
+    // 优先使用自定义名称，如果有的话
+    const playerName = customPlayerName || selectPlayerName;
+    
     if (playerName) {
       console.log(`提交分数: game=tetris, player=${playerName}, score=${this.score}`);
       await submitScore("tetris", playerName, this.score);
@@ -560,7 +592,7 @@ drawGameOver() {
         btn.disabled = false;
       });
     } else {
-      alert("请选择一个名字");
+      alert("请选择或输入一个名字");
     }
   };
 }

@@ -74,12 +74,18 @@
       </div>
       <canvas id="game-canvas" width="400" height="400"></canvas>
       
+      <!-- 修改贪吃蛇游戏的模态框 -->
       <div id="snake-modal" style="display: none;">
         <div>
           <h3>选择你的名字</h3>
           <select id="snake-player-select">
             <option value="">请选择</option>
           </select>
+          <!-- 添加自定义输入框 -->
+          <div class="custom-name-container">
+            <span>或者</span>
+            <input type="text" id="snake-custom-name" placeholder="输入自定义名字" maxlength="20">
+          </div>
           <button id="snake-submit-btn">提交分数</button>
         </div>
       </div>
@@ -115,6 +121,7 @@
         <div class="game-high-score">最高分: <span id="tetris-high-score">0</span></div>
         <div class="level">等级: <span id="tetris-level">1</span></div>
       </div>
+      <!-- 修改俄罗斯方块游戏的模态框 -->
       <div id="tetris-modal" style="display: none;">
         <div>
           <button class="modal-close-btn"><img src="./image/x-circle.svg" alt="关闭" class="close-icon"></button>
@@ -126,6 +133,11 @@
           <select id="tetris-player-select">
             <option value="">请选择</option>
           </select>
+          <!-- 添加自定义输入框 -->
+          <div class="custom-name-container">
+            <span>或者</span>
+            <input type="text" id="tetris-custom-name" placeholder="输入自定义名字" maxlength="20">
+          </div>
           <button id="tetris-submit-btn">提交成绩</button>
         </div>
       </div>
