@@ -1902,3 +1902,27 @@ body #games-selection .games-header h2,
   height: 30px;
   margin: 0 2px;
 }
+
+/* 增强back-btn样式优先级，确保始终固定在视口 */
+button.back-btn,
+html body .back-btn {
+  position: fixed !important;
+  z-index: 2000 !important; /* 提高z-index确保在其他元素上方 */
+  left: 15px !important;
+  top: 15px !important;
+}
+
+/* 修复组合选择器中包含back-btn的样式 */
+.container, 
+.play-pause-btn.fixed-btn, 
+#snake-game, 
+#tetris-game,
+#games-selection {
+  position: relative;
+  z-index: 1000;
+}
+
+/* 单独定义back-btn的z-index */
+.back-btn {
+  z-index: 2000; /* 高于其他UI元素 */
+}
