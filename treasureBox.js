@@ -392,25 +392,114 @@ verifyKey: function(key, dialog) {
 },
 
     // 添加新方法：验证成功后打开心动瞬间
-    openHeartMomentsAfterVerification: function() {
-      // 隐藏宝箱界面
-      const treasureBox = document.getElementById('treasure-box');
-      if (treasureBox) {
-        treasureBox.classList.remove('open');
-        
-        setTimeout(() => {
-          treasureBox.remove();
-          this.isOpen = false;
-          
-          // 显示心动瞬间页面
-          if (window.heartMoments) {
-            window.heartMoments.show();
-          } else {
-            console.error('心动瞬间模块未加载');
-          }
-        }, 300);
-      }
-    },
+openHeartMomentsAfterVerification: function() {
+  // 隐藏宝箱界面
+  const treasureBox = document.getElementById('treasure-box');
+  if (treasureBox) {
+    treasureBox.classList.remove('open');
+    
+    setTimeout(() => {
+      treasureBox.remove();
+      this.isOpen = false;
+      
+      // 播放心形动画
+      this.playHeartAnimation(() => {
+        // 动画播放完成后显示心动瞬间页面
+        if (window.heartMoments) {
+          window.heartMoments.show();
+        } else {
+          console.error('心动瞬间模块未加载');
+        }
+      });
+    }, 300);
+  }
+},
+
+// 添加方法：播放心形动画
+playHeartAnimation: function(callback) {
+  // 创建动画容器
+  const animContainer = document.createElement('div');
+  animContainer.id = 'heart-animation-container';
+  animContainer.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    background-color: rgba(0, 0, 0, 0.7);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  `;
+  
+  // 创建动画元素
+  const animElement = document.createElement('div');
+  animElement.id = 'heart-animation';
+  animElement.style.cssText = `
+    width: 80%;
+    max-width: 400px;
+    height: 400px;
+  `;
+  
+  animContainer.appendChild(animElement);
+  document.body.appendChild(animContainer);
+  
+  // 淡入动画容器
+  setTimeout(() => {
+    animContainer.style.opacity = '1';
+  }, 10);
+  
+  // 加载Lottie库(如果尚未加载)
+  this.loadLottieIfNeeded(() => {
+    // 播放动画
+    const animation = lottie.loadAnimation({
+      container: animElement,
+      renderer: 'svg',
+      loop: false,
+      autoplay: true,
+      path: './image/heart.json' // 使用相对路径
+    });
+    
+    // 设置播放速度为正常速度的50%，使动画更慢
+    animation.setSpeed(0.5);
+    
+    // 动画完成后淡出并移除
+    animation.addEventListener('complete', () => {
+      animContainer.style.opacity = '0';
+      setTimeout(() => {
+        animContainer.remove();
+        if (callback && typeof callback === 'function') {
+          callback();
+        }
+      }, 300);
+    });
+  });
+},
+
+// 添加方法：按需加载Lottie库
+loadLottieIfNeeded: function(callback) {
+  if (window.lottie) {
+    callback();
+    return;
+  }
+  
+  console.log('加载Lottie动画库...');
+  const script = document.createElement('script');
+  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.6/lottie.min.js';
+  script.onload = () => {
+    console.log('Lottie动画库加载完成');
+    callback();
+  };
+  script.onerror = () => {
+    console.error('加载Lottie动画库失败');
+    // 加载失败也调用回调，确保流程继续
+    callback();
+  };
+  document.head.appendChild(script);
+},
 
     // 添加新方法：应用密钥验证样式
     applyKeyVerificationStyles: function() {
