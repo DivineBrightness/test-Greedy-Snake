@@ -1,5 +1,6 @@
 // snakeGame.js
 class SnakeGame {
+    // 修改 SnakeGame 构造函数，在最后添加绘制血量的调用
     constructor() {
       this.isPlaying = false;
       this.canvas = document.getElementById('game-canvas');
@@ -10,6 +11,25 @@ class SnakeGame {
       this.blockSize = 10;
       this.widthInBlocks = this.width / this.blockSize;
       this.heightInBlocks = this.height / this.blockSize;
+
+      // 添加血量系统
+      this.maxHealth = 3;
+      this.health = this.maxHealth;
+      this.isInvincible = false;
+      this.invincibleTime = 3000; // 无敌时间3秒
+      this.isBlinking = false;
+      this.blinkCount = 0;
+      this.heartImg = new Image();
+      this.heartImg.src = './image/heart.svg';
+      this.emptyHeartImg = new Image();
+      this.emptyHeartImg.src = './image/heart-empty.svg';
+      
+      // 添加怪物图像
+      this.monsterImg = new Image();
+      this.monsterImg.src = './image/monster.svg';
+      // 添加眩晕状态标志
+      this.isStunned = false;
+      
       this.score = 0;
       this.highScore = localStorage.getItem('snakeHighScore') || 0;
       this.gameOver = false;
@@ -27,7 +47,11 @@ class SnakeGame {
       this.keyDownHandler = this.handleKeyDown.bind(this);
       this.initEventListeners();
       loadLeaderboard("snake", "snake-leaderboard-content");
+      
+      // 在构造函数最后添加：初始化绘制血量
+      this.drawHealth();
     }
+
   
 // 修改 initEventListeners 方法，合并开始和暂停按钮
 initEventListeners() {
@@ -169,22 +193,85 @@ handleKeyDown(e) {
       }
     }
   
-    draw() {
-      this.ctx.clearRect(0, 0, this.width, this.height);
-      this.drawGrid();
-      this.snake.forEach((segment, index) => {
-        const ratio = index / this.snake.length;
-        const green = Math.floor(140 - ratio * 40);
-        const color = index === 0 
-          ? '#4CAF50'
+// 在 draw 方法中添加绘制怪物的代码
+draw() {
+  this.ctx.clearRect(0, 0, this.width, this.height);
+  this.drawGrid();
+  
+  // 绘制怪物和边界
+  const centerX = Math.floor(this.widthInBlocks / 2);
+  const centerY = Math.floor(this.heightInBlocks / 2);
+  
+  // 先绘制怪物边界区域
+  const monsterLeft = centerX - 1;
+  const monsterRight = centerX + 2;
+  const monsterTop = centerY - 1;
+  const monsterBottom = centerY + 2;
+  
+  // 以半透明红色绘制怪物边界
+  this.ctx.strokeStyle = 'rgba(255, 50, 50, 0.5)';
+  this.ctx.lineWidth = 2;
+  this.ctx.setLineDash([3, 3]); // 设置虚线样式
+  this.ctx.strokeRect(
+    monsterLeft * this.blockSize,
+    monsterTop * this.blockSize,
+    (monsterRight - monsterLeft) * this.blockSize,
+    (monsterBottom - monsterTop) * this.blockSize
+  );
+  this.ctx.setLineDash([]); // 重置线条样式
+  
+  // 绘制怪物图像
+  if (this.monsterImg.complete) {
+    this.ctx.drawImage(
+      this.monsterImg, 
+      monsterLeft * this.blockSize,
+      monsterTop * this.blockSize,
+      (monsterRight - monsterLeft) * this.blockSize,
+      (monsterBottom - monsterTop) * this.blockSize
+    );
+  }
+  
+  // 更明显的无敌状态效果
+  if (this.isInvincible) {
+    // 添加无敌状态提示
+    this.ctx.font = '16px Arial';
+    this.ctx.fillStyle = 'rgba(255, 0, 0, 0.7)';
+    this.ctx.textAlign = 'center';
+    
+    // 修改提示文字
+    const statusText = this.isStunned ? '眩晕状态' : '无敌状态';
+    this.ctx.fillText(statusText, this.width / 2, 20);
+  }
+  
+  // 根据闪烁状态决定是否绘制蛇
+  if (!this.isBlinking || this.blinkCount % 2 === 0) {
+    // 绘制蛇，添加无敌状态的更明显效果
+    this.snake.forEach((segment, index) => {
+      const ratio = index / this.snake.length;
+      const green = Math.floor(140 - ratio * 40);
+      
+      let color;
+      if (this.isInvincible) {
+        // 无敌状态下使用闪光金色
+        color = index === 0 
+          ? 'rgba(255, 215, 0, 0.8)' // 头部金色
+          : `rgba(255, ${215 - ratio * 50}, 0, 0.7)`; // 身体渐变金色
+      } else {
+        // 正常状态下的颜色
+        color = index === 0 
+          ? '#4CAF50' 
           : `rgb(76, ${green + 55}, 80)`;
-        this.drawBlock(segment.x, segment.y, color);
-        if (index === 0) {
-          this.drawSnakeEyes(segment);
-        }
-      });
-      this.drawBlock(this.food.x, this.food.y, '#FF5722');
-    }
+      }
+      
+      this.drawBlock(segment.x, segment.y, color);
+      if (index === 0) {
+        this.drawSnakeEyes(segment);
+      }
+    });
+  }
+  
+  this.drawBlock(this.food.x, this.food.y, '#FF5722');
+}
   
 
 // 在 SnakeGame 类中添加 drawGrid 方法
@@ -381,14 +468,21 @@ submitBtn.onclick = async () => {
 };
 }
   
-    // 修改 move 方法，增加更多防护措施
+// 修改 move 方法来正确处理碰撞后的位置和反弹效果
 move() {
-  if (this.paused || this.gameOver) {
-    console.log('移动被跳过，原因：', this.gameOver ? '游戏结束' : '游戏暂停');
+  if (this.paused || this.gameOver || this.isStunned) { // 添加眩晕检查
+    // 如果是眩晕状态，仍然绘制，但不更新位置
+    if (this.isStunned) {
+      this.draw();
+    }
     return;
   }
   
-  const head = {x: this.snake[0].x, y: this.snake[0].y};
+  // 保存旧的头部位置，以便在碰撞时回退
+  const oldHead = {...this.snake[0]};
+  
+  // 计算新的头部位置
+  const head = {x: oldHead.x, y: oldHead.y};
   this.direction = this.nextDirection;
   
   switch(this.direction) {
@@ -398,20 +492,56 @@ move() {
     case 'right': head.x++; break;
   }
   
+  // 检查碰撞
   if (this.checkCollision(head)) {
-    console.log('检测到碰撞，游戏结束');
-    this.gameOver = true;
+    console.log('检测到碰撞');
     
-    // 取消动画循环
-    if (this.animationFrameId) {
-      cancelAnimationFrame(this.animationFrameId);
-      this.animationFrameId = null;
+    // 蛇反弹：根据当前方向后退一格
+    let backupHead = {x: oldHead.x, y: oldHead.y};
+    
+    // 计算反方向的后退一格
+    switch(this.direction) {
+      case 'up': backupHead.y += 1; break;     // 向上撞墙，向下后退一格
+      case 'down': backupHead.y -= 1; break;   // 向下撞墙，向上后退一格
+      case 'left': backupHead.x += 1; break;   // 向左撞墙，向右后退一格
+      case 'right': backupHead.x -= 1; break;  // 向右撞墙，向左后退一格
     }
     
-    this.drawGameOver();
-    return;
+    // 确保后退位置不超出边界
+    backupHead.x = Math.max(0, Math.min(backupHead.x, this.widthInBlocks - 1));
+    backupHead.y = Math.max(0, Math.min(backupHead.y, this.heightInBlocks - 1));
+    
+    // 更新蛇头为后退位置
+    this.snake[0] = backupHead;
+    
+    // 减少血量
+    this.health--; 
+    this.drawHealth();
+    
+    if (this.health <= 0) {
+      // 血量为0时游戏结束
+      console.log('血量耗尽，游戏结束');
+      this.gameOver = true;
+      
+      if (this.animationFrameId) {
+        cancelAnimationFrame(this.animationFrameId);
+        this.animationFrameId = null;
+      }
+      
+      this.drawGameOver();
+      return;
+    } else {
+      // 还有血量，触发闪烁和无敌状态（眩晕3秒）
+      this.startBlinking();
+      this.startInvincibility();
+      
+      // 绘制当前状态，确保蛇仍然可见
+      this.draw();
+      return; // 不再继续移动，等待下一个循环
+    }
   }
   
+  // 正常移动逻辑：只有在没有碰撞的情况下执行
   this.snake.unshift(head);
   if (head.x === this.food.x && head.y === this.food.y) {
     this.score++;
@@ -424,10 +554,107 @@ move() {
   this.draw();
 }
   
-    checkCollision(head) {
-      if (head.x < 0 || head.x >= this.widthInBlocks || head.y < 0 || head.y >= this.heightInBlocks) return true;
-      return this.snake.some((segment, index) => index > 0 && segment.x === head.x && segment.y === head.y);
+// 改进闪烁效果，确保蛇始终可见
+startBlinking() {
+  if (this.isBlinking) return;
+  
+  this.isBlinking = true;
+  this.blinkCount = 0;
+  
+  const doBlink = () => {
+    if (this.blinkCount >= 6 || this.gameOver) {
+      this.isBlinking = false;
+      // 确保结束闪烁后重新绘制蛇
+      this.draw();
+      return;
     }
+    
+    this.blinkCount++;
+    // 每次闪烁后强制重绘
+    this.draw();
+    setTimeout(doBlink, 150); // 增加闪烁时间间隔以更明显
+  };
+  
+  doBlink();
+}
+
+// 修改 startInvincibility 方法，添加眩晕效果
+startInvincibility() {
+  this.isInvincible = true;
+  this.isStunned = true; // 设置眩晕状态
+  
+  // 在无敌状态提示上显示更明确的信息
+  const stunText = document.createElement('div');
+  stunText.id = 'stun-text';
+  stunText.style.position = 'absolute';
+  stunText.style.top = '30px';
+  stunText.style.left = '50%';
+  stunText.style.transform = 'translateX(-50%)';
+  stunText.style.color = 'red';
+  stunText.style.fontWeight = 'bold';
+  stunText.textContent = '眩晕中...';
+  this.canvas.parentNode.appendChild(stunText);
+  
+  // 无敌时间结束后恢复正常
+  setTimeout(() => {
+    this.isInvincible = false;
+    this.isStunned = false; // 眩晕结束
+    
+    // 移除眩晕提示
+    const stunText = document.getElementById('stun-text');
+    if (stunText) stunText.remove();
+  }, this.invincibleTime);
+}
+
+// 添加绘制血量的方法
+drawHealth() {
+  const healthDisplay = document.querySelector('.health-display');
+  if (!healthDisplay) return;
+  
+  // 清空现有内容
+  healthDisplay.innerHTML = '';
+  
+  // 添加心形图标
+  for (let i = 0; i < this.maxHealth; i++) {
+    const heartImg = document.createElement('img');
+    heartImg.src = i < this.health ? './image/heart.svg' : './image/heart-empty.svg';
+    heartImg.alt = '生命值';
+    healthDisplay.appendChild(heartImg);
+  }
+}
+// 修改 checkCollision 方法，添加无敌状态检查
+checkCollision(head) {
+  // 无敌状态下不检测碰撞
+  if (this.isInvincible) {
+    return false;
+  }
+  
+  // 检查是否撞墙
+  if (head.x < 0 || head.x >= this.widthInBlocks || head.y < 0 || head.y >= this.heightInBlocks) 
+    return true;
+    
+  // 检查是否撞到自己
+  if (this.snake.some((segment, index) => index > 0 && segment.x === head.x && segment.y === head.y))
+    return true;
+    
+  // 检查是否撞到怪物
+  const centerX = Math.floor(this.widthInBlocks / 2);
+  const centerY = Math.floor(this.heightInBlocks / 2);
+  
+  // 怪物占据的区域是中心点周围的4x4方块
+  const monsterLeft = centerX - 1;
+  const monsterRight = centerX + 2;
+  const monsterTop = centerY - 1;
+  const monsterBottom = centerY + 2;
+  
+  // 判断蛇头是否在怪物区域内
+  if (head.x >= monsterLeft && head.x < monsterRight && 
+      head.y >= monsterTop && head.y < monsterBottom) {
+    return true;
+  }
+  
+  return false;
+}
   
 // 修改 start 方法，优化动画帧处理
 start() {
@@ -444,6 +671,8 @@ start() {
   
   this.paused = false;
   this.isPlaying = true;
+  // 确保开始游戏时显示正确的血量
+  this.drawHealth();
   
   console.log('游戏开始运行');
   
@@ -521,7 +750,7 @@ drawPauseScreen() {
   this.ctx.textAlign = 'center';
   this.ctx.fillText('游戏暂停', this.width / 2, this.height / 2);
 }
-    // 确保 reset 方法正确重置所有状态
+// 修改 reset 方法，重置血量
 reset() {
   console.log('重置游戏');
   
@@ -539,6 +768,13 @@ reset() {
   this.score = 0;
   this.gameOver = false;
   this.paused = false;
+  
+  // 重置血量相关属性
+  this.health = this.maxHealth;
+  this.isInvincible = false;
+  this.isBlinking = false;
+  this.blinkCount = 0;
+  this.drawHealth();
   
   const playPauseIcon = document.getElementById('snake-play-pause-icon');
   if (playPauseIcon) playPauseIcon.src = './image/start.svg';
