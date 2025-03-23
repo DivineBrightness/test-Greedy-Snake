@@ -29,6 +29,46 @@ class SnakeGame {
       this.monsterImg.src = './image/monster.svg';
       // 添加眩晕状态标志
       this.isStunned = false;
+
+      // 添加水果系统
+  this.fruitImages = [
+    './image/fruit/avocado.svg',
+    './image/fruit/cherry.svg',
+    './image/fruit/lemon.svg',
+    './image/fruit/radish.svg',
+    './image/fruit/watermelon.svg',
+    './image/fruit/fruit.svg',
+    './image/fruit/pineapple.svg',
+    './image/fruit/watermelon1.svg',
+    './image/fruit/bell.svg',
+    './image/fruit/apple1.svg',
+    './image/fruit/avacado.svg',
+    './image/fruit/beet.svg',
+    './image/fruit/bell1.svg',
+    './image/fruit/blueberry.svg',
+    './image/fruit/broccoli.svg',
+    './image/fruit/coconut.svg'
+  ];
+  
+  // 预加载水果图片
+  this.fruitImagesLoaded = this.fruitImages.map(src => {
+    const img = new Image();
+    img.src = src;
+    return img;
+  });
+  
+  this.foodEatenCount = 0;     // 记录已吃的普通食物数量
+  this.specialFruit = null;    // 特殊水果对象
+  this.specialFruitScore = 5;  // 特殊水果的分数
+
+  // 添加子弹系统
+  this.bullets = [];
+  this.bulletSpeed = 5; // 子弹移动速度
+  this.bulletSize = this.blockSize / 2; // 子弹大小
+  this.monsterHit = false; // 记录怪物是否被击中
+  this.monsterHitTime = 0; // 怪物被击中的时间
+  this.monsterHitDuration = 500; // 怪物被击中闪烁时间(毫秒)
+
       
       this.score = 0;
       this.highScore = localStorage.getItem('snakeHighScore') || 0;
@@ -219,6 +259,21 @@ draw() {
     (monsterBottom - monsterTop) * this.blockSize
   );
   this.ctx.setLineDash([]); // 重置线条样式
+
+  // 检查怪物是否被击中，如果是，绘制黄色闪烁效果
+  if (this.monsterHit && Date.now() - this.monsterHitTime < this.monsterHitDuration) {
+    // 创建黄色闪烁的怪物图像
+    this.ctx.globalAlpha = 0.8;
+    this.ctx.fillStyle = 'rgba(255, 255, 0, 0.5)';
+    this.ctx.fillRect(
+      monsterLeft * this.blockSize,
+      monsterTop * this.blockSize,
+      (monsterRight - monsterLeft) * this.blockSize,
+      (monsterBottom - monsterTop) * this.blockSize
+    );
+    this.ctx.globalAlpha = 1.0;
+  }
+  
   
   // 绘制怪物图像
   if (this.monsterImg.complete) {
@@ -229,6 +284,41 @@ draw() {
       (monsterRight - monsterLeft) * this.blockSize,
       (monsterBottom - monsterTop) * this.blockSize
     );
+  }
+
+  // 绘制子弹
+  this.ctx.fillStyle = 'rgba(255, 0, 0, 0.8)';
+  for (const bullet of this.bullets) {
+    this.ctx.beginPath();
+    this.ctx.arc(bullet.x, bullet.y, this.bulletSize, 0, Math.PI * 2);
+    this.ctx.fill();
+  }
+  
+  // 绘制特殊水果 (如果存在)
+  if (this.specialFruit) {
+    const img = this.fruitImagesLoaded[this.specialFruit.imageIndex];
+    if (img.complete) {
+      this.ctx.drawImage(
+        img,
+        this.specialFruit.x * this.blockSize,
+        this.specialFruit.y * this.blockSize,
+        this.blockSize,
+        this.blockSize
+      );
+      
+      // 添加闪烁特效
+      const time = Date.now() / 200;
+      const alpha = 0.5 + 0.5 * Math.sin(time);
+      
+      this.ctx.strokeStyle = `rgba(255, 215, 0, ${alpha})`;
+      this.ctx.lineWidth = 2;
+      this.ctx.strokeRect(
+        this.specialFruit.x * this.blockSize - 2,
+        this.specialFruit.y * this.blockSize - 2,
+        this.blockSize + 4,
+        this.blockSize + 4
+      );
+    }
   }
   
   // 更明显的无敌状态效果
@@ -468,15 +558,17 @@ submitBtn.onclick = async () => {
 };
 }
   
-// 修改 move 方法来正确处理碰撞后的位置和反弹效果
+// 修改 move 方法，添加碰撞检测和处理
 move() {
-  if (this.paused || this.gameOver || this.isStunned) { // 添加眩晕检查
-    // 如果是眩晕状态，仍然绘制，但不更新位置
+  if (this.paused || this.gameOver || this.isStunned) {
     if (this.isStunned) {
       this.draw();
     }
     return;
   }
+  
+  // 更新子弹位置
+  this.updateBullets();
   
   // 保存旧的头部位置，以便在碰撞时回退
   const oldHead = {...this.snake[0]};
@@ -494,66 +586,178 @@ move() {
   
   // 检查碰撞
   if (this.checkCollision(head)) {
-    console.log('检测到碰撞');
+    // 发生碰撞时减少生命值
+    this.health--;
+    this.drawHealth();
     
-    // 蛇反弹：根据当前方向后退一格
-    let backupHead = {x: oldHead.x, y: oldHead.y};
-    
-    // 计算反方向的后退一格
-    switch(this.direction) {
-      case 'up': backupHead.y += 1; break;     // 向上撞墙，向下后退一格
-      case 'down': backupHead.y -= 1; break;   // 向下撞墙，向上后退一格
-      case 'left': backupHead.x += 1; break;   // 向左撞墙，向右后退一格
-      case 'right': backupHead.x -= 1; break;  // 向右撞墙，向左后退一格
+    // 判断是否游戏结束
+    if (this.health <= 0) {
+      this.gameOver = true;
+      this.drawGameOver();
+      return;
     }
     
-    // 确保后退位置不超出边界
-    backupHead.x = Math.max(0, Math.min(backupHead.x, this.widthInBlocks - 1));
-    backupHead.y = Math.max(0, Math.min(backupHead.y, this.heightInBlocks - 1));
+    // 蛇反弹：根据当前方向后退一格
+    let backupHead = {...oldHead}; 
+    // 注意：保持在原位，不进入碰撞区域
     
     // 更新蛇头为后退位置
     this.snake[0] = backupHead;
     
-    // 减少血量
-    this.health--; 
-    this.drawHealth();
+    // 触发闪烁和眩晕效果
+    this.startBlinking();
+    this.startInvincibility();
     
-    if (this.health <= 0) {
-      // 血量为0时游戏结束
-      console.log('血量耗尽，游戏结束');
-      this.gameOver = true;
-      
-      if (this.animationFrameId) {
-        cancelAnimationFrame(this.animationFrameId);
-        this.animationFrameId = null;
-      }
-      
-      this.drawGameOver();
-      return;
-    } else {
-      // 还有血量，触发闪烁和无敌状态（眩晕3秒）
-      this.startBlinking();
-      this.startInvincibility();
-      
-      // 绘制当前状态，确保蛇仍然可见
-      this.draw();
-      return; // 不再继续移动，等待下一个循环
-    }
+    // 绘制当前状态
+    this.draw();
+    return;
   }
   
   // 正常移动逻辑：只有在没有碰撞的情况下执行
   this.snake.unshift(head);
+  
+  // 检查是否吃到普通食物
   if (head.x === this.food.x && head.y === this.food.y) {
     this.score++;
+    this.foodEatenCount++;
     this.drawScore();
+    
+    // 每吃5个普通方块，生成一个特殊水果
+    if (this.foodEatenCount % 5 === 0) {
+      this.createSpecialFruit();
+    }
+    
     this.food = this.createFood();
-  } else {
+  } 
+  // 检查是否吃到特殊水果
+  else if (this.specialFruit && head.x === this.specialFruit.x && head.y === this.specialFruit.y) {
+    // 吃到特殊水果加更多分数
+    this.score += this.specialFruitScore;
+    this.drawScore();
+    
+    // 发射子弹攻击怪物
+    this.fireBullet();
+    
+    // 移除特殊水果
+    this.specialFruit = null;
+  } 
+  else {
     this.snake.pop();
   }
   
   this.draw();
 }
+// 添加创建特殊水果的方法
+createSpecialFruit() {
+  let newFruit;
+  let attempts = 0;
+  const maxAttempts = 50;
   
+  do {
+    attempts++;
+    newFruit = {
+      x: Math.floor(Math.random() * this.widthInBlocks),
+      y: Math.floor(Math.random() * this.heightInBlocks),
+      imageIndex: Math.floor(Math.random() * this.fruitImages.length)
+    };
+    
+    // 确保特殊水果不会出现在蛇身上、普通食物上或怪物上
+    const centerX = Math.floor(this.widthInBlocks / 2);
+    const centerY = Math.floor(this.heightInBlocks / 2);
+    const monsterLeft = centerX - 1;
+    const monsterRight = centerX + 2;
+    const monsterTop = centerY - 1;
+    const monsterBottom = centerY + 2;
+    
+    const onSnake = this.snake.some(segment => 
+      segment.x === newFruit.x && segment.y === newFruit.y
+    );
+    
+    const onFood = (this.food.x === newFruit.x && this.food.y === newFruit.y);
+    
+    const onMonster = (
+      newFruit.x >= monsterLeft && newFruit.x < monsterRight && 
+      newFruit.y >= monsterTop && newFruit.y < monsterBottom
+    );
+    
+    if (!onSnake && !onFood && !onMonster) break;
+    
+  } while (attempts < maxAttempts);
+  
+  // 设置特殊水果
+  this.specialFruit = newFruit;
+  
+  // 10秒后水果消失
+  setTimeout(() => {
+    if (this.specialFruit === newFruit) {
+      this.specialFruit = null;
+    }
+  }, 10000);
+}
+
+// 添加子弹发射方法
+fireBullet() {
+  const head = this.snake[0];
+  const centerX = Math.floor(this.widthInBlocks / 2);
+  const centerY = Math.floor(this.heightInBlocks / 2);
+  
+  // 计算蛇头到怪物中心的方向向量
+  const dirX = centerX - head.x;
+  const dirY = centerY - head.y;
+  
+  // 归一化方向向量
+  const length = Math.sqrt(dirX * dirX + dirY * dirY);
+  const normalizedDirX = dirX / length;
+  const normalizedDirY = dirY / length;
+  
+  // 从蛇头发射子弹
+  this.bullets.push({
+    x: head.x * this.blockSize + this.blockSize / 2,
+    y: head.y * this.blockSize + this.blockSize / 2,
+    dirX: normalizedDirX,
+    dirY: normalizedDirY
+  });
+}
+
+// 更新子弹位置和碰撞检测
+updateBullets() {
+  // 更新子弹位置
+  for (let i = 0; i < this.bullets.length; i++) {
+    const bullet = this.bullets[i];
+    bullet.x += bullet.dirX * this.bulletSpeed;
+    bullet.y += bullet.dirY * this.bulletSpeed;
+    
+    // 检查是否击中怪物
+    const centerX = Math.floor(this.widthInBlocks / 2);
+    const centerY = Math.floor(this.heightInBlocks / 2);
+    const monsterLeft = centerX - 1;
+    const monsterRight = centerX + 2;
+    const monsterTop = centerY - 1;
+    const monsterBottom = centerY + 2;
+    
+    const bulletBlockX = Math.floor(bullet.x / this.blockSize);
+    const bulletBlockY = Math.floor(bullet.y / this.blockSize);
+    
+    if (bulletBlockX >= monsterLeft && bulletBlockX < monsterRight && 
+        bulletBlockY >= monsterTop && bulletBlockY < monsterBottom) {
+      // 子弹击中怪物
+      this.monsterHit = true;
+      this.monsterHitTime = Date.now();
+      
+      // 移除击中的子弹
+      this.bullets.splice(i, 1);
+      i--;
+      continue;
+    }
+    
+    // 检查子弹是否超出边界
+    if (bullet.x < 0 || bullet.x > this.width || bullet.y < 0 || bullet.y > this.height) {
+      // 移除超出边界的子弹
+      this.bullets.splice(i, 1);
+      i--;
+    }
+  }
+}
 // 改进闪烁效果，确保蛇始终可见
 startBlinking() {
   if (this.isBlinking) return;
@@ -779,6 +983,11 @@ reset() {
   const playPauseIcon = document.getElementById('snake-play-pause-icon');
   if (playPauseIcon) playPauseIcon.src = './image/start.svg';
   
+    // 重置子弹系统
+    this.bullets = [];
+    this.foodEatenCount = 0;
+    this.specialFruit = null;
+    this.monsterHit = false;
   this.drawScore();
   this.draw();
 }
