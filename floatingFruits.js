@@ -1,47 +1,242 @@
 // 创建一个类来管理浮动水果
 class FloatingFruits {
     constructor() {
-      // 创建容器
-      this.createContainer();
-      this.fruits = [];
-      this.isActive = false;
-      this.animationFrameId = null;
-      
-    this.fruitImages = [
-      './image/fruit/avocado.svg',
-      './image/fruit/cherry.svg',
-      './image/fruit/lemon.svg',
-      './image/fruit/radish.svg',
-      './image/fruit/watermelon.svg',
-      './image/fruit/fruit.svg',
-      './image/fruit/pineapple.svg',
-      './image/fruit/watermelon1.svg',
-      './image/fruit/bell.svg',
-      './image/fruit/apple1.svg',
-      './image/fruit/avacado.svg',
-      './image/fruit/beet.svg',
-      './image/fruit/bell1.svg',
-      './image/fruit/blueberry.svg',
-      './image/fruit/broccoli.svg',
-      './image/fruit/coconut.svg'
-    ];
-      
-      // 创建水果元素
-      this.createFruits();
+        // 创建容器
+        this.createContainer();
+        this.fruits = [];
+        this.isActive = false;
+        this.animationFrameId = null;
+        // 水果图片数组
+        this.fruitImages = [
+          './image/fruit/avocado.svg',
+          './image/fruit/cherry.svg',
+          './image/fruit/lemon.svg',
+          './image/fruit/radish.svg',
+          './image/fruit/watermelon.svg',
+          './image/fruit/fruit.svg',
+          './image/fruit/pineapple.svg',
+          './image/fruit/watermelon1.svg',
+          './image/fruit/bell.svg',
+          './image/fruit/apple1.svg',
+          './image/fruit/avacado.svg',
+          './image/fruit/beet.svg',
+          './image/fruit/bell1.svg',
+          './image/fruit/blueberry.svg',
+          './image/fruit/broccoli.svg',
+          './image/fruit/coconut.svg'
+        ];
+        
+        // 为每种水果指定具体大小
+        this.fruitSizes = {
+          './image/fruit/avocado.svg': 60,
+          './image/fruit/cherry.svg': 55,
+          './image/fruit/lemon.svg': 45,
+          './image/fruit/radish.svg': 65,
+          './image/fruit/watermelon.svg': 50,
+          './image/fruit/fruit.svg': 60,
+          './image/fruit/pineapple.svg': 90,
+          './image/fruit/watermelon1.svg': 70,
+          './image/fruit/bell.svg': 65,
+          './image/fruit/apple1.svg': 55,
+          './image/fruit/avacado.svg': 60,
+          './image/fruit/beet.svg': 60,
+          './image/fruit/bell1.svg': 65,
+          './image/fruit/blueberry.svg': 50,
+          './image/fruit/broccoli.svg': 70,
+          './image/fruit/coconut.svg': 95
+        };
+        
+        // 默认大小
+        this.defaultSize = 60;
+        
+        // 初始化收集的水果数组为空
+        this.collectedFruits = [];
+        
+        // 将所有水果信息预先放入果篮
+        this.initializeFruitsInBasket();
+      }
+      // 新增方法：初始化时将所有水果放入果篮
+initializeFruitsInBasket() {
+    // 打乱水果图片数组，保证随机性
+    const shuffledFruits = [...this.fruitImages].sort(() => Math.random() - 0.5);
+    
+    // 将所有水果信息添加到已收集数组中
+    shuffledFruits.forEach(fruitImage => {
+      const size = this.fruitSizes[fruitImage] || this.defaultSize;
+      this.collectedFruits.push({
+        imageUrl: fruitImage,
+        size: size
+      });
+    });
+    
+    console.log(`初始化完成，果篮中有 ${this.collectedFruits.length} 个水果`);
+    
+    // 更新果篮显示
+    this.updateBasketDisplay();
+  }
+  
+  // 新增方法：更新果篮显示
+  updateBasketDisplay() {
+    if (!this.fruitBasket) return;
+    
+    // 更新果篮文本标签
+    const basketLabel = this.fruitBasket.querySelector('div');
+    if (basketLabel) {
+      basketLabel.textContent = `点击释放水果 (${this.collectedFruits.length})`;
     }
     
-    createContainer() {
-      // 检查容器是否已存在
-      this.fruitContainer = document.getElementById('floating-fruits');
-      
-      if (!this.fruitContainer) {
-        // 创建容器
-        this.fruitContainer = document.createElement('div');
-        this.fruitContainer.id = 'floating-fruits';
-        this.fruitContainer.className = 'floating-fruits';
-        document.body.appendChild(this.fruitContainer);
-      }
+    // 如果果篮中有水果，添加一个视觉提示
+    if (this.collectedFruits.length > 0) {
+      this.fruitBasket.classList.add('has-fruits');
+      // 果篮有水果时的样式
+      this.fruitBasket.style.filter = 'brightness(1.1) saturate(1.2)';
+    } else {
+      this.fruitBasket.classList.remove('has-fruits');
+      // 果篮空时的样式
+      this.fruitBasket.style.filter = 'brightness(1) saturate(1)';
     }
+  }
+
+// 点击果篮时放出随机水果
+releaseRandomFruit() {
+    // 检查果篮是否有水果
+    if (this.collectedFruits.length === 0) {
+      console.log('果篮中没有水果可放出');
+      // 播放空篮子的抖动动画，提示用户
+      this.animateBasket();
+      return;
+    }
+    
+    // 随机选择一个水果信息
+    const randomIndex = Math.floor(Math.random() * this.collectedFruits.length);
+    const fruitInfo = this.collectedFruits[randomIndex];
+    
+    // 从收集数组中移除
+    this.collectedFruits.splice(randomIndex, 1);
+    console.log(`从果篮放出水果，剩余 ${this.collectedFruits.length} 个`);
+    
+    // 更新果篮显示
+    this.updateBasketDisplay();
+    
+    // 创建新水果元素
+    const fruit = document.createElement('div');
+    fruit.className = 'fruit';
+    
+    // 设置背景图片
+    fruit.style.backgroundImage = `url(${fruitInfo.imageUrl})`;
+    
+    // 使用保存的大小
+    fruit.style.width = `${fruitInfo.size}px`;
+    fruit.style.height = `${fruitInfo.size}px`;
+    
+    // 从果篮位置出发
+    const basketRect = this.fruitBasket.getBoundingClientRect();
+    const x = basketRect.left + basketRect.width / 2 - fruitInfo.size / 2;
+    const y = basketRect.top + basketRect.height / 2 - fruitInfo.size / 2;
+    
+    fruit.style.transform = `translate(${x}px, ${y}px) scale(0)`;
+    
+    // 添加到容器
+    this.fruitContainer.appendChild(fruit);
+    
+    // 随机速度和方向
+    const speedX = (Math.random() - 0.5) * 1.5; // 放出时速度稍快
+    const speedY = (Math.random() * 2 - 0.5); // 向下的概率更大
+    
+    // 创建水果数据对象
+    const fruitData = {
+      element: fruit,
+      x,
+      y,
+      speedX,
+      speedY,
+      size: fruitInfo.size,
+      lastCollision: 0,
+      isDragging: false,
+      dragOffsetX: 0,
+      dragOffsetY: 0
+    };
+    
+    // 创建从果篮弹出的动画
+    const keyframes = [
+      { transform: `translate(${x}px, ${y}px) scale(0)`, opacity: 0 },
+      { transform: `translate(${x}px, ${y}px) scale(1.2)`, opacity: 0.7 },
+      { transform: `translate(${x}px, ${y}px) scale(1)`, opacity: 1 }
+    ];
+    
+    const animation = fruit.animate(keyframes, {
+      duration: 400,
+      easing: 'cubic-bezier(0.22, 1, 0.36, 1)'
+    });
+    
+    // 动画完成后开始移动
+    animation.onfinish = () => {
+      this.fruits.push(fruitData);
+      this.addDragEvents(fruitData);
+    };
+    
+    // 播放果篮抖动动画
+    this.animateBasket();
+  }
+    
+    createContainer() {
+        // 检查容器是否已存在
+        this.fruitContainer = document.getElementById('floating-fruits');
+        
+        if (!this.fruitContainer) {
+          // 创建容器
+          this.fruitContainer = document.createElement('div');
+          this.fruitContainer.id = 'floating-fruits';
+          this.fruitContainer.className = 'floating-fruits';
+          document.body.appendChild(this.fruitContainer);
+        }
+        
+        // 添加果篮 - 检查是否已存在
+        this.fruitBasket = document.getElementById('fruit-basket');
+        if (!this.fruitBasket) {
+        this.fruitBasket = document.createElement('div');
+        this.fruitBasket.id = 'fruit-basket';
+        this.fruitBasket.className = 'fruit-basket';
+        
+        // 设置果篮图像
+        this.fruitBasket.style.backgroundImage = 'url("./image/fruit/fruit-basket.svg")';
+        this.fruitBasket.style.backgroundSize = 'contain';
+        this.fruitBasket.style.backgroundRepeat = 'no-repeat';
+        this.fruitBasket.style.backgroundPosition = 'center';
+        this.fruitBasket.style.width = '80px';
+        this.fruitBasket.style.height = '80px';
+        this.fruitBasket.style.position = 'fixed';
+        this.fruitBasket.style.top = '20px';
+        this.fruitBasket.style.right = '20px';
+        this.fruitBasket.style.zIndex = '1000';
+        this.fruitBasket.style.cursor = 'pointer';
+        this.fruitBasket.style.transition = 'transform 0.2s, filter 0.3s';
+        
+        // 添加提示文本
+        const basketLabel = document.createElement('div');
+        basketLabel.style.fontSize = '12px';
+        basketLabel.style.textAlign = 'center';
+        basketLabel.style.marginTop = '5px';
+        basketLabel.style.color = '#555';
+        this.fruitBasket.appendChild(basketLabel);
+        
+        // 添加鼠标悬停效果
+        this.fruitBasket.addEventListener('mouseenter', () => {
+            if (this.collectedFruits.length > 0) {
+            this.fruitBasket.style.transform = 'scale(1.05)';
+            }
+        });
+        
+        this.fruitBasket.addEventListener('mouseleave', () => {
+            this.fruitBasket.style.transform = 'scale(1)';
+        });
+        
+        // 添加点击事件，点击时放出一个收集的水果
+        this.fruitBasket.addEventListener('click', () => this.releaseRandomFruit());
+        
+        document.body.appendChild(this.fruitBasket);
+        }
+      }
     // 添加重置水果位置的方法
 resetFruitsPosition() {
   console.log('重置水果位置');
@@ -121,126 +316,6 @@ resetFruitsPosition() {
   return animations;
 }
     
-    createFruits() {
-        // 清空容器
-        this.fruitContainer.innerHTML = '';
-        this.fruits = [];
-        
-        // 打乱水果图片数组，以确保随机排序但不重复
-        const shuffledFruits = [...this.fruitImages].sort(() => Math.random() - 0.5);
-        
-        // 使用所有水果，确保不重复
-        const fruitCount = this.fruitImages.length;
-        
-        // 为每种水果指定具体大小
-        const fruitSizes = {
-          './image/fruit/avocado.svg': 60,
-          './image/fruit/cherry.svg': 55,
-          './image/fruit/lemon.svg': 45,
-          './image/fruit/radish.svg': 65,
-          './image/fruit/watermelon.svg': 50,
-          './image/fruit/fruit.svg': 60,
-          './image/fruit/pineapple.svg': 90,
-          './image/fruit/watermelon1.svg': 70,
-          './image/fruit/bell.svg': 65,
-          './image/fruit/apple1.svg': 55,
-          './image/fruit/avacado.svg': 60,
-          './image/fruit/beet.svg': 60,
-          './image/fruit/bell1.svg': 65,
-          './image/fruit/blueberry.svg': 50,
-          './image/fruit/broccoli.svg': 70,
-          './image/fruit/coconut.svg': 95
-        };
-        
-        // 默认大小，如果在映射中找不到对应图片
-        const defaultSize = 60;
-        
-        // 尝试创建不重叠的水果
-        for (let i = 0; i < fruitCount; i++) {
-          let attempts = 0;
-          let validPosition = false;
-          let x, y;
-          
-          // 从打乱的数组中按顺序选择水果，确保不重复
-          const fruitImage = shuffledFruits[i];
-          
-          // 获取当前水果的大小，如果没有设置则使用默认值
-          const currentSize = fruitSizes[fruitImage] || defaultSize;
-          
-          // 尝试最多20次找到一个不重叠的位置
-          while (!validPosition && attempts < 20) {
-            attempts++;
-            
-            // 随机位置
-            x = Math.random() * (window.innerWidth - currentSize);
-            y = Math.random() * (window.innerHeight - currentSize);
-            
-            validPosition = true;
-            
-            // 检查与已创建的水果是否重叠
-            for (let j = 0; j < this.fruits.length; j++) {
-              const existingFruit = this.fruits[j];
-              const dx = x - existingFruit.x;
-              const dy = y - existingFruit.y;
-              const distance = Math.sqrt(dx * dx + dy * dy);
-              
-              // 如果太近，则位置无效
-              if (distance < (currentSize + existingFruit.size) / 2 * 1.2) {
-                validPosition = false;
-                break;
-              }
-            }
-          }
-          
-          const fruit = document.createElement('div');
-          fruit.className = 'fruit';
-          
-          // 添加调试代码，检查图片是否能加载
-          const img = new Image();
-          img.onload = () => {
-            console.log(`成功加载: ${fruitImage}`);
-          };
-          img.onerror = () => {
-            console.error(`无法加载: ${fruitImage}`);
-          };
-          img.src = fruitImage;
-          
-          fruit.style.backgroundImage = `url(${fruitImage})`;
-          
-          // 使用对应大小
-          fruit.style.width = `${currentSize}px`;
-          fruit.style.height = `${currentSize}px`;
-          
-          // 设置位置
-          fruit.style.transform = `translate(${x}px, ${y}px)`;
-          
-          // 随机速度和方向 (较慢的速度)
-          const speedX = (Math.random() - 0.5) * 0.8;
-          const speedY = (Math.random() - 0.5) * 0.8;
-          
-          // 添加到容器
-          this.fruitContainer.appendChild(fruit);
-          
-          // 保存水果数据
-          const fruitData = {
-            element: fruit,
-            x,
-            y,
-            speedX,
-            speedY,
-            size: currentSize,
-            lastCollision: 0, // 添加碰撞冷却计时器
-            isDragging: false, // 拖拽状态
-            dragOffsetX: 0,    // 拖拽偏移X
-            dragOffsetY: 0     // 拖拽偏移Y
-          };
-          
-          this.fruits.push(fruitData);
-          
-          // 添加拖拽事件
-          this.addDragEvents(fruitData);
-        }
-      }
       
       // 添加拖拽相关事件
 addDragEvents(fruit) {
@@ -458,51 +533,184 @@ toggleFreeze() {
       });
     }
   }
-  // 优化停止拖拽函数
-  stopDragging(fruit) {
+
+  // 检查水果是否拖到了果篮
+checkBasketDrop(fruit) {
+    if (!this.fruitBasket) return false;
+    
+    // 获取果篮的位置和大小
+    const basketRect = this.fruitBasket.getBoundingClientRect();
+    
+    // 获取水果的位置
+    const fruitCenterX = fruit.x + fruit.size / 2;
+    const fruitCenterY = fruit.y + fruit.size / 2;
+    
+    // 检查水果中心是否在果篮区域内
+    if (fruitCenterX >= basketRect.left && 
+        fruitCenterX <= basketRect.right && 
+        fruitCenterY >= basketRect.top && 
+        fruitCenterY <= basketRect.bottom) {
+      
+      // 水果被放入果篮，执行动画然后移除
+      this.fruitDroppedInBasket(fruit);
+      return true;
+    }
+    
+    return false;
+  }
+  
+// 处理水果放入果篮的效果
+fruitDroppedInBasket(fruit) {
+    console.log('水果被放入果篮!');
+    
+    // 保存水果信息用于后续放出
+    const fruitInfo = {
+      imageUrl: fruit.element.style.backgroundImage.replace(/url\(['"]?(.*?)['"]?\)/i, '$1'),
+      size: fruit.size
+    };
+    this.collectedFruits.push(fruitInfo);
+    console.log(`水果已收集，果篮中共有 ${this.collectedFruits.length} 个水果`);
+    
+    // 更新果篮显示
+    this.updateBasketDisplay();
+    
+    // 创建缩小并移动到果篮中心的动画
+    const basketRect = this.fruitBasket.getBoundingClientRect();
+    const basketCenterX = basketRect.left + basketRect.width / 2;
+    const basketCenterY = basketRect.top + basketRect.height / 2;
+    
+    // 停止该水果的自动运动
+    fruit.speedX = 0;
+    fruit.speedY = 0;
+    
+    // 创建动画
+    const keyframes = [
+      { 
+        transform: `translate(${fruit.x}px, ${fruit.y}px) scale(1)`,
+        opacity: 1
+      },
+      { 
+        transform: `translate(${basketCenterX - fruit.size/2}px, ${basketCenterY - fruit.size/2}px) scale(0.5)`,
+        opacity: 0.7
+      },
+      { 
+        transform: `translate(${basketCenterX - fruit.size/2}px, ${basketCenterY - fruit.size/2}px) scale(0)`,
+        opacity: 0
+      }
+    ];
+    
+    const animation = fruit.element.animate(keyframes, {
+      duration: 500,
+      easing: 'cubic-bezier(0.42, 0, 0.58, 1)'
+    });
+    
+    // 动画结束后从数组和DOM中移除该水果
+    animation.onfinish = () => {
+      this.removeFruit(fruit);
+      // 添加果篮抖动效果
+      this.animateBasket();
+    };
+  }
+  
+  // 从游戏中移除水果
+  removeFruit(fruit) {
+    // 从DOM中移除
+    if (fruit.element && fruit.element.parentNode) {
+      fruit.element.parentNode.removeChild(fruit.element);
+    }
+    
+    // 从数组中移除
+    const index = this.fruits.indexOf(fruit);
+    if (index !== -1) {
+      this.fruits.splice(index, 1);
+      console.log(`水果已移除，剩余水果: ${this.fruits.length}`);
+    }
+    
+    // 清除全局事件监听器
+    if (fruit.mouseMoveHandler) {
+      document.removeEventListener('mousemove', fruit.mouseMoveHandler, { capture: true });
+    }
+    if (fruit.mouseUpHandler) {
+      document.removeEventListener('mouseup', fruit.mouseUpHandler, { capture: true });
+      document.removeEventListener('mouseleave', fruit.mouseUpHandler);
+    }
+    if (fruit.touchMoveHandler) {
+      document.removeEventListener('touchmove', fruit.touchMoveHandler, { passive: false, capture: true });
+    }
+    if (fruit.touchEndHandler) {
+      document.removeEventListener('touchend', fruit.touchEndHandler, { passive: false, capture: true });
+      document.removeEventListener('touchcancel', fruit.touchEndHandler, { passive: false, capture: true });
+    }
+  }
+  
+  // 果篮抖动动画
+  animateBasket() {
+    if (!this.fruitBasket) return;
+    
+    const keyframes = [
+      { transform: 'translateY(0)' },
+      { transform: 'translateY(-10px)' },
+      { transform: 'translateY(0)' },
+      { transform: 'translateY(-5px)' },
+      { transform: 'translateY(0)' }
+    ];
+    
+    this.fruitBasket.animate(keyframes, {
+      duration: 500,
+      easing: 'ease-in-out'
+    });
+  }
+// 优化停止拖拽函数
+stopDragging(fruit) {
     fruit.isDragging = false;
     
-    // 计算拖动的最终速度和方向
-    if (fruit.dragStartClientX !== undefined && fruit.dragStartClientY !== undefined) {
-      // 计算移动距离和时间
-      const dx = fruit.x - fruit.dragStartX;
-      const dy = fruit.y - fruit.dragStartY;
-      const dragDuration = Date.now() - fruit.dragStartTime;
-      
-      // 计算拖动速度（像素/秒）并转换为适合游戏的速度单位
-      if (dragDuration > 0) {
-        // 计算速度向量，值越大移动越快
-        let velX = (dx / dragDuration) * 20; 
-        let velY = (dy / dragDuration) * 20;
+    // 检查是否拖到了果篮
+    const basketDropped = this.checkBasketDrop(fruit);
+    
+    // 如果放入了果篮，就不应用后续的速度计算
+    if (!basketDropped) {
+      // 计算拖动的最终速度和方向
+      if (fruit.dragStartClientX !== undefined && fruit.dragStartClientY !== undefined) {
+        // 计算移动距离和时间
+        const dx = fruit.x - fruit.dragStartX;
+        const dy = fruit.y - fruit.dragStartY;
+        const dragDuration = Date.now() - fruit.dragStartTime;
         
-        // 限制最大速度
-        const maxSpeed = 3;
-        const speed = Math.sqrt(velX * velX + velY * velY);
-        if (speed > maxSpeed) {
-          const scale = maxSpeed / speed;
-          velX *= scale;
-          velY *= scale;
-        }
-        
-        // 应用拖动方向的速度，只有当速度足够大时才应用
-        if (speed > 0.3) {
-          fruit.speedX = velX;
-          fruit.speedY = velY;
-          console.log(`水果朝拖动方向移动，速度: ${speed.toFixed(2)}`);
+        // 计算拖动速度（像素/秒）并转换为适合游戏的速度单位
+        if (dragDuration > 0) {
+          // 计算速度向量，值越大移动越快
+          let velX = (dx / dragDuration) * 20; 
+          let velY = (dy / dragDuration) * 20;
+          
+          // 限制最大速度
+          const maxSpeed = 3;
+          const speed = Math.sqrt(velX * velX + velY * velY);
+          if (speed > maxSpeed) {
+            const scale = maxSpeed / speed;
+            velX *= scale;
+            velY *= scale;
+          }
+          
+          // 应用拖动方向的速度，只有当速度足够大时才应用
+          if (speed > 0.3) {
+            fruit.speedX = velX;
+            fruit.speedY = velY;
+            console.log(`水果朝拖动方向移动，速度: ${speed.toFixed(2)}`);
+          } else {
+            // 速度太小，使用随机速度
+            fruit.speedX = (Math.random() - 0.5) * 0.8;
+            fruit.speedY = (Math.random() - 0.5) * 0.8;
+          }
         } else {
-          // 速度太小，使用随机速度
+          // 极短拖动，给一个随机速度
           fruit.speedX = (Math.random() - 0.5) * 0.8;
           fruit.speedY = (Math.random() - 0.5) * 0.8;
         }
       } else {
-        // 极短拖动，给一个随机速度
+        // 如果没有记录拖动起始位置，使用随机速度
         fruit.speedX = (Math.random() - 0.5) * 0.8;
         fruit.speedY = (Math.random() - 0.5) * 0.8;
       }
-    } else {
-      // 如果没有记录拖动起始位置，使用随机速度
-      fruit.speedX = (Math.random() - 0.5) * 0.8;
-      fruit.speedY = (Math.random() - 0.5) * 0.8;
     }
     
     // 删除拖拽中的样式
@@ -622,24 +830,35 @@ toggleFreeze() {
     this.animationFrameId = requestAnimationFrame(() => this.update());
   }
     
-    show() {
-      if (this.isActive) return;
-      
-      this.isActive = true;
-      this.fruitContainer.style.display = 'block';
-      this.update();
+  show() {
+    if (this.isActive) return;
+    
+    this.isActive = true;
+    this.fruitContainer.style.display = 'block';
+    
+    // 同时显示果篮
+    if (this.fruitBasket) {
+      this.fruitBasket.style.display = 'block';
     }
     
-    hide() {
-      this.isActive = false;
-      
-      if (this.animationFrameId) {
-        cancelAnimationFrame(this.animationFrameId);
-        this.animationFrameId = null;
-      }
-      
-      this.fruitContainer.style.display = 'none';
+    this.update();
+  }
+  
+  hide() {
+    this.isActive = false;
+    
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
     }
+    
+    this.fruitContainer.style.display = 'none';
+    
+    // 同时隐藏果篮
+    if (this.fruitBasket) {
+      this.fruitBasket.style.display = 'none';
+    }
+  }
     
     // 用于窗口大小改变时重新定位水果
     resize() {
