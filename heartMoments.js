@@ -10,7 +10,7 @@ const heartMoments = {
     // 从本地存储加载已保存的心动瞬间
     this.loadFromLocalStorage();
   },
-  // 在heartMoments对象中添加同步方法
+// 修改同步到云端的方法，使用已验证的密钥
 syncWithCloud: function() {
   // 检查是否需要同步
   if (!this.moments || this.moments.length === 0) return;
@@ -25,9 +25,18 @@ syncWithCloud: function() {
     return;
   }
   
+  // 获取之前验证过的密钥
+  const verifiedKey = sessionStorage.getItem('verified_treasure_key');
+  
+  // 如果没有验证过的密钥，则不进行同步
+  if (!verifiedKey) {
+    console.error('无法同步：未找到有效的已验证密钥');
+    return;
+  }
+  
   // 对于每条未同步的记录进行同步
   unsyncedMoments.forEach((moment, index) => {
-    // 发送到服务器，使用密钥验证
+    // 发送到服务器，使用已验证的密钥
     fetch('https://331600.xyz/heart-moments', {
       method: 'POST',
       headers: {
@@ -35,7 +44,7 @@ syncWithCloud: function() {
       },
       body: JSON.stringify({
         content: moment.content,
-        key: '123456', // 使用与验证相同的密钥
+        key: verifiedKey, // 使用已验证的密钥
         user_name: localStorage.getItem('preferred_name') || 'anonymous'
       })
     })

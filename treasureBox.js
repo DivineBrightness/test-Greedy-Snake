@@ -279,60 +279,117 @@ hide: function() {
       }, 10);
     },
 
-    // 添加新方法：验证密钥
-    verifyKey: function(key, dialog) {
-      if (!key.trim()) {
-        // 显示错误信息
-        const errorMsg = document.getElementById('key-error-message');
-        errorMsg.textContent = '请输入密钥';
-        errorMsg.style.display = 'block';
-        return;
+// 修改验证密钥方法，添加尝试次数限制
+verifyKey: function(key, dialog) {
+  if (!key.trim()) {
+    // 显示错误信息
+    const errorMsg = document.getElementById('key-error-message');
+    errorMsg.textContent = '请输入密钥';
+    errorMsg.style.display = 'block';
+    return;
+  }
+  
+  // 检查尝试次数
+  const MAX_ATTEMPTS = 5; // 最大尝试次数
+  const LOCKOUT_TIME = 30 * 60 * 1000; // 锁定时间（30分钟）
+  
+  // 获取当前尝试信息
+  let keyAttempts = sessionStorage.getItem('key_attempts') || 0;
+  let lockoutUntil = sessionStorage.getItem('key_lockout_until') || 0;
+  
+  keyAttempts = parseInt(keyAttempts);
+  lockoutUntil = parseInt(lockoutUntil);
+  
+  const now = Date.now();
+  
+  // 检查是否在锁定期
+  if (lockoutUntil > now) {
+    const remainingMinutes = Math.ceil((lockoutUntil - now) / 60000);
+    const errorMsg = document.getElementById('key-error-message');
+    errorMsg.textContent = `尝试次数过多，请在${remainingMinutes}分钟后再试`;
+    errorMsg.style.display = 'block';
+    return;
+  }
+  
+  // 超过锁定时间，重置尝试次数
+  if (lockoutUntil > 0 && lockoutUntil <= now) {
+    keyAttempts = 0;
+    sessionStorage.setItem('key_lockout_until', '0');
+  }
+  
+  // 检查是否超过最大尝试次数
+  if (keyAttempts >= MAX_ATTEMPTS) {
+    // 设置锁定时间
+    const lockoutTime = now + LOCKOUT_TIME;
+    sessionStorage.setItem('key_lockout_until', lockoutTime.toString());
+    
+    const errorMsg = document.getElementById('key-error-message');
+    errorMsg.textContent = `尝试次数过多，请在30分钟后再试`;
+    errorMsg.style.display = 'block';
+    return;
+  }
+  
+  // 显示加载状态
+  const verifyBtn = document.getElementById('verify-key-btn');
+  const originalText = verifyBtn.textContent;
+  verifyBtn.textContent = '验证中...';
+  verifyBtn.disabled = true;
+  
+  // 调用API验证密钥
+  fetch('https://331600.xyz/verify-treasure-key', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: key })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // 密钥正确，重置尝试次数
+      sessionStorage.setItem('key_attempts', '0');
+      sessionStorage.setItem('key_lockout_until', '0');
+      
+      // 保存到会话存储中，以便后续使用
+      sessionStorage.setItem('verified_treasure_key', key);
+      
+      // 关闭对话框并打开心动瞬间
+      dialog.classList.remove('open');
+      setTimeout(() => {
+        dialog.remove();
+        this.openHeartMomentsAfterVerification();
+      }, 300);
+    } else {
+      // 密钥错误，增加尝试次数
+      keyAttempts++;
+      sessionStorage.setItem('key_attempts', keyAttempts.toString());
+      
+      // 显示错误信息
+      const errorMsg = document.getElementById('key-error-message');
+      errorMsg.textContent = data.message || '密钥不正确，请重试';
+      
+      // 添加剩余尝试次数提示
+      if (MAX_ATTEMPTS - keyAttempts > 0) {
+        errorMsg.textContent += `（还剩${MAX_ATTEMPTS - keyAttempts}次尝试机会）`;
       }
       
-      // 显示加载状态
-      const verifyBtn = document.getElementById('verify-key-btn');
-      const originalText = verifyBtn.textContent;
-      verifyBtn.textContent = '验证中...';
-      verifyBtn.disabled = true;
+      errorMsg.style.display = 'block';
       
-      // 调用API验证密钥
-      fetch('https://331600.xyz/verify-treasure-key', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: key })
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          // 密钥正确，关闭对话框并打开心动瞬间
-          dialog.classList.remove('open');
-          setTimeout(() => {
-            dialog.remove();
-            this.openHeartMomentsAfterVerification();
-          }, 300);
-        } else {
-          // 密钥错误，显示错误信息
-          const errorMsg = document.getElementById('key-error-message');
-          errorMsg.textContent = data.message || '密钥不正确，请重试';
-          errorMsg.style.display = 'block';
-          
-          // 重置按钮状态
-          verifyBtn.textContent = originalText;
-          verifyBtn.disabled = false;
-        }
-      })
-      .catch(error => {
-        console.error('验证密钥出错:', error);
-        // 显示错误信息
-        const errorMsg = document.getElementById('key-error-message');
-        errorMsg.textContent = '验证过程出错，请稍后再试';
-        errorMsg.style.display = 'block';
-        
-        // 重置按钮状态
-        verifyBtn.textContent = originalText;
-        verifyBtn.disabled = false;
-      });
-    },
+      // 重置按钮状态
+      verifyBtn.textContent = originalText;
+      verifyBtn.disabled = false;
+    }
+  })
+  .catch(error => {
+    console.error('验证密钥出错:', error);
+    // 显示错误信息
+    const errorMsg = document.getElementById('key-error-message');
+    errorMsg.textContent = '验证过程出错，请稍后再试';
+    errorMsg.style.display = 'block';
+    
+    // 重置按钮状态
+    verifyBtn.textContent = originalText;
+    verifyBtn.disabled = false;
+  });
+},
 
     // 添加新方法：验证成功后打开心动瞬间
     openHeartMomentsAfterVerification: function() {
