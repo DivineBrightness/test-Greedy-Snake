@@ -9,6 +9,11 @@ const tianGangCharacters = [
   "米奇妙妙屋", "唐老鸭"
 ];
 
+// 添加序列检测功能
+const secretSequence = ['summer', 'winter', 'spring', 'autumn', 'summer', 'winter'];
+let currentSequence = [];
+let sequenceTimer = null;
+
 function populateSelect(selectId) {
   const select = document.getElementById(selectId);
   tianGangCharacters.forEach(character => {
@@ -58,4 +63,49 @@ function changeSeason(season) {
   } else {
       console.error('未找到季节按钮：', season);
   }
+  
+  // 添加序列检测逻辑
+  checkSecretSequence(season);
+}
+
+// 检测秘密序列
+function checkSecretSequence(season) {
+  // 清除之前的定时器
+  if (sequenceTimer) {
+    clearTimeout(sequenceTimer);
+  }
+  
+  // 添加当前季节到序列
+  currentSequence.push(season);
+  
+  // 如果序列长度超过秘密序列，删除最老的点击
+  if (currentSequence.length > secretSequence.length) {
+    currentSequence.shift();
+  }
+  
+  // 检查是否匹配秘密序列
+  if (currentSequence.length === secretSequence.length) {
+    let match = true;
+    for (let i = 0; i < secretSequence.length; i++) {
+      if (secretSequence[i] !== currentSequence[i]) {
+        match = false;
+        break;
+      }
+    }
+    
+    // 如果匹配成功，打开宝箱
+    if (match && window.treasureBox) {
+      console.log('秘密序列匹配成功！');
+      window.treasureBox.show();
+      
+      // 重置序列
+      currentSequence = [];
+    }
+  }
+  
+  // 设置超时重置序列（5秒内需要完成）
+  sequenceTimer = setTimeout(() => {
+    currentSequence = [];
+    console.log('序列已重置');
+  }, 5000);
 }
