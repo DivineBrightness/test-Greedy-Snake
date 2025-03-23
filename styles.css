@@ -130,29 +130,19 @@ body.spring { background-color: #f8f5ff; }
 body.summer { background-color: #fffbe5; }
 body.autumn { background-color: #fff5eb; }
 body.winter { background-color: #f0f8ff; }
-#snake-game, #tetris-game {
+#tetris-game {
   display: none;
   margin: 10px auto 0; /* 顶部外边距设为 20px，靠上一点 */
   max-width: 500px;
 }
-#game-canvas, #tetris-canvas {
+#tetris-canvas {
   border: 2px solid #333;
   border-radius: 10px;
   background-color: #f0f0f0;
   box-shadow: 0 10px 20px rgba(0,0,0,0.1);
   /* margin-bottom: 20px; */
 }
-.game-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center; /* 垂直居中对齐 */
-  position: relative; /* 为排行榜定位提供参考 */
-}
-.game-score, .game-high-score {
-  /* font-size: 24px; */
-  font-weight: bold;
-  color: #333;
-}
+
 .control-btn {
   padding: 10px 20px;
   border: none;
@@ -180,16 +170,6 @@ body.winter { background-color: #f0f8ff; }
   h1 { font-size: 36px; }
   .season-controls { flex-wrap: wrap; }
   #game-canvas { width: 100%; height: auto; }
-}
-/* 修复方向键布局问题 */
-.mobile-controls {
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: center !important;
-  align-items: center !important;
-  margin-top: 15px !important;
-  width: 100% !important;
-  clear: both !important; /* 确保不受浮动元素影响 */
 }
 /* 特别为俄罗斯方块调整间距 */
 #tetris-game .tetris-container {
@@ -244,7 +224,7 @@ body.winter { background-color: #f0f8ff; }
   }
 }
 /* 优化模态框样式 */
-#snake-modal, #tetris-modal {
+#tetris-modal {
   display: none;
   position: fixed;
   top: 0;
@@ -257,7 +237,7 @@ body.winter { background-color: #f0f8ff; }
   z-index: 9999; /* 确保在最顶层 */
 }
 
-#snake-modal > div, #tetris-modal > div {
+#tetris-modal > div {
   position: relative;
   background: linear-gradient(to bottom, #ffffff, #f5f5f7);
   padding: 30px;
@@ -921,10 +901,6 @@ body.winter .seasonal-decoration {
   font-style: italic;
 }
 
-/* 针对snake和tetris的特定样式 */
-.snake-leaderboard .leaderboard-header {
-  background: linear-gradient(to right, #27ae60, #2ecc71);
-}
 
 .tetris-leaderboard .leaderboard-header {
   background: linear-gradient(to right, #2980b9, #3498db);
@@ -1709,7 +1685,7 @@ body #games-selection .games-header h2,
 }
 
 /* 确保暂停层完全居中 */
-#tetris-pause-layer, #snake-pause-layer {
+#tetris-pause-layer {
   position: absolute !important;
   top: 50% !important;
   left: 50% !important;
@@ -1891,19 +1867,7 @@ body #games-selection .games-header h2,
   color: inherit;
 }
 
-/* 添加血量显示样式 */
-.health-display {
-  display: flex;
-  justify-content: flex-start;
-  padding: 8px 0;
-  width: 100%;
-}
 
-.health-display img {
-  width: 30px;
-  height: 30px;
-  margin: 0 2px;
-}
 
 /* 增强back-btn样式优先级，确保始终固定在视口 */
 button.back-btn,
