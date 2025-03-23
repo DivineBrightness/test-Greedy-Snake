@@ -27,7 +27,7 @@ const treasureBox = {
           <div class="treasure-body">
             <p>恭喜你发现了隐藏的小宝箱！</p>
             <div class="treasure-image" id="treasure-image"></div>
-            <p class="treasure-hint">点击宝箱查看心动瞬间记录</p>
+            <p class="treasure-hint"></p>
           </div>
         </div>
       `;
