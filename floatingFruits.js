@@ -312,7 +312,7 @@ addDragEvents(fruit) {
   }
   
   // 开始拖拽 - 修改计算方式以在触摸设备上更准确
-startDragging(fruit, clientX, clientY) {
+  startDragging(fruit, clientX, clientY) {
     fruit.isDragging = true;
     
     // 保存水果初始位置和点击/触摸点的位置
@@ -320,6 +320,8 @@ startDragging(fruit, clientX, clientY) {
     fruit.dragStartY = fruit.y;
     fruit.dragStartClientX = clientX;
     fruit.dragStartClientY = clientY;
+    // 记录拖动开始时间
+    fruit.dragStartTime = Date.now();
     
     // 暂停该水果的自动移动
     fruit.originalSpeedX = fruit.speedX;
@@ -457,22 +459,48 @@ toggleFreeze() {
     }
   }
   // 优化停止拖拽函数
-stopDragging(fruit) {
+  stopDragging(fruit) {
     fruit.isDragging = false;
     
-    // 恢复原有速度，添加随机性使其平滑并增加变化
-    if (fruit.originalSpeedX && fruit.originalSpeedY) {
-      // 若速度接近于0，给一个小的随机初速度
-      if (Math.abs(fruit.originalSpeedX) < 0.1 && Math.abs(fruit.originalSpeedY) < 0.1) {
-        fruit.speedX = (Math.random() - 0.5) * 0.6;
-        fruit.speedY = (Math.random() - 0.5) * 0.6;
+    // 计算拖动的最终速度和方向
+    if (fruit.dragStartClientX !== undefined && fruit.dragStartClientY !== undefined) {
+      // 计算移动距离和时间
+      const dx = fruit.x - fruit.dragStartX;
+      const dy = fruit.y - fruit.dragStartY;
+      const dragDuration = Date.now() - fruit.dragStartTime;
+      
+      // 计算拖动速度（像素/秒）并转换为适合游戏的速度单位
+      if (dragDuration > 0) {
+        // 计算速度向量，值越大移动越快
+        let velX = (dx / dragDuration) * 20; 
+        let velY = (dy / dragDuration) * 20;
+        
+        // 限制最大速度
+        const maxSpeed = 3;
+        const speed = Math.sqrt(velX * velX + velY * velY);
+        if (speed > maxSpeed) {
+          const scale = maxSpeed / speed;
+          velX *= scale;
+          velY *= scale;
+        }
+        
+        // 应用拖动方向的速度，只有当速度足够大时才应用
+        if (speed > 0.3) {
+          fruit.speedX = velX;
+          fruit.speedY = velY;
+          console.log(`水果朝拖动方向移动，速度: ${speed.toFixed(2)}`);
+        } else {
+          // 速度太小，使用随机速度
+          fruit.speedX = (Math.random() - 0.5) * 0.8;
+          fruit.speedY = (Math.random() - 0.5) * 0.8;
+        }
       } else {
-        // 正常恢复速度
-        fruit.speedX = fruit.originalSpeedX * (0.8 + Math.random() * 0.4);
-        fruit.speedY = fruit.originalSpeedY * (0.8 + Math.random() * 0.4);
+        // 极短拖动，给一个随机速度
+        fruit.speedX = (Math.random() - 0.5) * 0.8;
+        fruit.speedY = (Math.random() - 0.5) * 0.8;
       }
     } else {
-      // 如果没有原始速度记录，给一个新的随机速度
+      // 如果没有记录拖动起始位置，使用随机速度
       fruit.speedX = (Math.random() - 0.5) * 0.8;
       fruit.speedY = (Math.random() - 0.5) * 0.8;
     }
