@@ -1503,17 +1503,17 @@ body.winter .seasonal-decoration {
   }
 }
 
-/* 修改飞心动画容器样式，强制限制尺寸 */
+/* 飞心动画 - 设置最高层级 */
 .flying-heart-animation {
   position: fixed;
   top: 20px;
   left: 20px;
-  width: 150px !important; /* 强制使用固定宽度 */
-  height: 150px !important; /* 强制使用固定高度 */
-  max-width: 150px !important; /* 添加最大宽度限制 */
-  max-height: 150px !important; /* 添加最大高度限制 */
-  overflow: hidden !important; /* 隐藏溢出内容 */
-  z-index: 1000;
+  width: 150px !important;
+  height: 150px !important;
+  max-width: 150px !important;
+  max-height: 150px !important;
+  overflow: hidden !important;
+  z-index: 1020; /* 提高到最高层级 */
   cursor: move;
   pointer-events: auto;
   touch-action: none;
@@ -1797,15 +1797,15 @@ body #games-selection .games-header h2,
 
 
 
-/* 浮动水果样式 - 调整z-index使其位于内容之下 */
+/* 浮动水果 - 中间层级 */
 .floating-fruits {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: -1; /* 修改为-1，确保在所有内容下方 */
-  pointer-events: none; /* 确保水果不会阻挡用户交互 */
+  z-index: 1010; /* 设为中间层级，高于按钮 */
+  pointer-events: none;
   overflow: hidden;
 }
 
@@ -1816,9 +1816,55 @@ body #games-selection .games-header h2,
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-  will-change: transform; /* 提高动画性能 */
+  will-change: transform;
   transition: opacity 0.3s ease;
   filter: drop-shadow(0 2px 3px rgba(0,0,0,0.1));
+  pointer-events: auto;
+  cursor: move; /* 保持十字箭头一致 */
+  touch-action: none !important;
+  user-select: none;
+  -webkit-user-drag: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.fruit.dragging {
+  cursor: move;
+  z-index: 1015 !important; /* 拖动时略高于普通水果 */
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.4));
+  transition: none;
+}
+
+/* 页面按钮和主要元素 - 最低层级 */
+.container, 
+.back-btn, 
+.play-pause-btn.fixed-btn, 
+#snake-game, 
+#tetris-game,
+#games-selection {
+  position: relative;
+  z-index: 1000; /* 降低到最低层级 */
+}
+
+/* 拖动碰撞动画样式 */
+.fruit.collision {
+  z-index: 1012 !important; /* 确保碰撞的水果显示在前面 */
+  filter: drop-shadow(0 6px 12px rgba(255,255,255,0.6)) !important;
+}
+
+/* 碰撞波纹效果 */
+@keyframes collision-ripple {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.6);
+    transform: scale(1);
+  }
+  70% {
+    box-shadow: 0 0 0 15px rgba(255, 255, 255, 0);
+    transform: scale(1.1);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+    transform: scale(1);
+  }
 }
 
 /* 奖牌图标样式 */
