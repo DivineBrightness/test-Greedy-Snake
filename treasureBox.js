@@ -61,27 +61,12 @@ const treasureBox = {
       }, 100);
     },
     
-    // 打开心动瞬间记录
+    // 打开心动瞬间记录 - 添加密钥验证
     openHeartMoments: function() {
-      // 隐藏宝箱界面
-      const treasureBox = document.getElementById('treasure-box');
-      if (treasureBox) {
-        treasureBox.classList.remove('open');
-        
-        setTimeout(() => {
-          treasureBox.remove();
-          this.isOpen = false;
-          
-          // 显示心动瞬间页面
-          if (window.heartMoments) {
-            window.heartMoments.show();
-          } else {
-            console.error('心动瞬间模块未加载');
-          }
-        }, 300);
-      }
+      // 创建密钥验证对话框
+      this.createKeyVerificationDialog();
     },
-    
+
     // 隐藏宝箱页面
 hide: function() {
     const treasureBox = document.getElementById('treasure-box');
@@ -239,6 +224,234 @@ hide: function() {
           document.head.appendChild(animationStyle);
         }
       }
+    },
+
+    // 添加新方法：创建密钥验证对话框
+    createKeyVerificationDialog: function() {
+      // 创建对话框元素
+      const dialog = document.createElement('div');
+      dialog.className = 'key-verification-dialog';
+      dialog.innerHTML = `
+        <div class="key-verification-content">
+          <h3>请输入宝箱钥匙</h3>
+          <input type="password" id="treasure-key-input" placeholder="请输入密钥..." maxlength="20">
+          <div class="key-verification-buttons">
+            <button id="verify-key-btn">确认</button>
+            <button id="cancel-key-btn">取消</button>
+          </div>
+          <div id="key-error-message" class="key-error" style="display: none;">密钥不正确，请重试</div>
+        </div>
+      `;
+      
+      // 添加到文档
+      document.body.appendChild(dialog);
+      
+      // 添加样式
+      this.applyKeyVerificationStyles();
+      
+      // 显示对话框并添加事件监听
+      setTimeout(() => {
+        dialog.classList.add('open');
+        
+        // 获取输入框并聚焦
+        const input = document.getElementById('treasure-key-input');
+        input.focus();
+        
+        // 确认按钮点击事件
+        document.getElementById('verify-key-btn').addEventListener('click', () => {
+          this.verifyKey(input.value, dialog);
+        });
+        
+        // 取消按钮点击事件
+        document.getElementById('cancel-key-btn').addEventListener('click', () => {
+          dialog.classList.remove('open');
+          setTimeout(() => {
+            dialog.remove();
+          }, 300);
+        });
+        
+        // 回车键提交
+        input.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            this.verifyKey(input.value, dialog);
+          }
+        });
+      }, 10);
+    },
+
+    // 添加新方法：验证密钥
+    verifyKey: function(key, dialog) {
+      if (!key.trim()) {
+        // 显示错误信息
+        const errorMsg = document.getElementById('key-error-message');
+        errorMsg.textContent = '请输入密钥';
+        errorMsg.style.display = 'block';
+        return;
+      }
+      
+      // 显示加载状态
+      const verifyBtn = document.getElementById('verify-key-btn');
+      const originalText = verifyBtn.textContent;
+      verifyBtn.textContent = '验证中...';
+      verifyBtn.disabled = true;
+      
+      // 调用API验证密钥
+      fetch('https://331600.xyz/verify-treasure-key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: key })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // 密钥正确，关闭对话框并打开心动瞬间
+          dialog.classList.remove('open');
+          setTimeout(() => {
+            dialog.remove();
+            this.openHeartMomentsAfterVerification();
+          }, 300);
+        } else {
+          // 密钥错误，显示错误信息
+          const errorMsg = document.getElementById('key-error-message');
+          errorMsg.textContent = data.message || '密钥不正确，请重试';
+          errorMsg.style.display = 'block';
+          
+          // 重置按钮状态
+          verifyBtn.textContent = originalText;
+          verifyBtn.disabled = false;
+        }
+      })
+      .catch(error => {
+        console.error('验证密钥出错:', error);
+        // 显示错误信息
+        const errorMsg = document.getElementById('key-error-message');
+        errorMsg.textContent = '验证过程出错，请稍后再试';
+        errorMsg.style.display = 'block';
+        
+        // 重置按钮状态
+        verifyBtn.textContent = originalText;
+        verifyBtn.disabled = false;
+      });
+    },
+
+    // 添加新方法：验证成功后打开心动瞬间
+    openHeartMomentsAfterVerification: function() {
+      // 隐藏宝箱界面
+      const treasureBox = document.getElementById('treasure-box');
+      if (treasureBox) {
+        treasureBox.classList.remove('open');
+        
+        setTimeout(() => {
+          treasureBox.remove();
+          this.isOpen = false;
+          
+          // 显示心动瞬间页面
+          if (window.heartMoments) {
+            window.heartMoments.show();
+          } else {
+            console.error('心动瞬间模块未加载');
+          }
+        }, 300);
+      }
+    },
+
+    // 添加新方法：应用密钥验证样式
+    applyKeyVerificationStyles: function() {
+      // 如果已经添加过样式则不重复添加
+      if (document.getElementById('key-verification-styles')) return;
+      
+      const styleElement = document.createElement('style');
+      styleElement.id = 'key-verification-styles';
+      styleElement.textContent = `
+        .key-verification-dialog {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.7);
+          z-index: 10000;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+        
+        .key-verification-dialog.open {
+          opacity: 1;
+        }
+        
+        .key-verification-content {
+          background: #fff;
+          padding: 30px;
+          border-radius: 12px;
+          width: 90%;
+          max-width: 400px;
+          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+          text-align: center;
+        }
+        
+        .key-verification-content h3 {
+          color: #8B4513;
+          margin-top: 0;
+          margin-bottom: 20px;
+          font-size: 22px;
+        }
+        
+        #treasure-key-input {
+          width: 100%;
+          padding: 12px;
+          border: 1px solid #ddd;
+          border-radius: 6px;
+          font-size: 16px;
+          margin-bottom: 20px;
+          box-sizing: border-box;
+        }
+        
+        .key-verification-buttons {
+          display: flex;
+          justify-content: center;
+          gap: 15px;
+        }
+        
+        .key-verification-buttons button {
+          padding: 10px 20px;
+          border: none;
+          border-radius: 6px;
+          font-size: 16px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        
+        #verify-key-btn {
+          background: linear-gradient(145deg, #ffc458, #ffd700);
+          color: #8B4513;
+          font-weight: bold;
+        }
+        
+        #cancel-key-btn {
+          background: #f1f1f1;
+          color: #666;
+        }
+        
+        #verify-key-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 3px 8px rgba(255, 200, 0, 0.3);
+        }
+        
+        #cancel-key-btn:hover {
+          background: #e5e5e5;
+        }
+        
+        .key-error {
+          color: #e53935;
+          margin-top: 15px;
+          font-size: 14px;
+        }
+      `;
+      
+      document.head.appendChild(styleElement);
     }
   };
   

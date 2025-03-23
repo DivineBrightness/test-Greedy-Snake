@@ -10,7 +10,51 @@ const heartMoments = {
     // 从本地存储加载已保存的心动瞬间
     this.loadFromLocalStorage();
   },
+  // 在heartMoments对象中添加同步方法
+syncWithCloud: function() {
+  // 检查是否需要同步
+  if (!this.moments || this.moments.length === 0) return;
   
+  console.log('同步心动瞬间到云端...');
+  
+  // 获取本地记录但未云同步的记录
+  const unsyncedMoments = this.moments.filter(moment => !moment.synced);
+  
+  if (unsyncedMoments.length === 0) {
+    console.log('没有需要同步的记录');
+    return;
+  }
+  
+  // 对于每条未同步的记录进行同步
+  unsyncedMoments.forEach((moment, index) => {
+    // 发送到服务器，使用密钥验证
+    fetch('https://331600.xyz/heart-moments', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        content: moment.content,
+        key: '123456', // 使用与验证相同的密钥
+        user_name: localStorage.getItem('preferred_name') || 'anonymous'
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // 标记为已同步
+        this.moments[this.moments.indexOf(moment)].synced = true;
+        this.saveToLocalStorage();
+        console.log(`已同步记录 ${index + 1}/${unsyncedMoments.length}`);
+      } else {
+        console.error('同步失败:', data.error);
+      }
+    })
+    .catch(error => {
+      console.error('同步错误:', error);
+    });
+  });
+},
   // 显示心动瞬间页面
   show: function() {
     console.log('显示心动瞬间页面');
@@ -55,6 +99,8 @@ const heartMoments = {
       
       // 添加事件监听器
       this.attachEventListeners();
+      // 尝试同步到云端
+    this.syncWithCloud();
     }, 100);
   },
   
@@ -113,13 +159,16 @@ hide: function() {
     
     // 保存到本地存储
     this.saveToLocalStorage();
-    
+    // 添加同步标志
+  newMoment.synced = false;
     // 更新显示
     const momentsContainer = document.getElementById('moments-container');
     if (momentsContainer) {
       momentsContainer.innerHTML = this.renderMoments();
       this.attachDeleteListeners();
     }
+    // 尝试同步到云端
+  this.syncWithCloud();
   },
   
   // 删除心动瞬间
