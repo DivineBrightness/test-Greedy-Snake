@@ -1,13 +1,13 @@
 // snakeGame.js
 class SnakeGame {
     constructor() {
-      this.isPlaying = false; // 添加游戏状态标记
+      this.isPlaying = false;
       this.canvas = document.getElementById('game-canvas');
       this.ctx = this.canvas.getContext('2d');
       if (!this.ctx) console.error('Canvas 上下文未初始化');
       this.width = this.canvas.width;
       this.height = this.canvas.height;
-      this.blockSize = 20;
+      this.blockSize = 10;
       this.widthInBlocks = this.width / this.blockSize;
       this.heightInBlocks = this.height / this.blockSize;
       this.score = 0;
@@ -15,16 +15,16 @@ class SnakeGame {
       this.gameOver = false;
       this.paused = false;
       this.intervalId = null;
-      this.snake = [{x: 6, y: 10}, {x: 5, y: 10}, {x: 4, y: 10}];
+      this.snake = [{x: 12, y: 20}, {x: 11, y: 20}, {x: 10, y: 20}, {x: 9, y: 20}, {x: 8, y: 20}];
       this.direction = 'right';
       this.nextDirection = 'right';
-      this.pausedDirection = null; // 暂停时记录的方向
-      this.pausedNextDirection = null; // 暂停时记录的下一个方向
+      this.pausedDirection = null;
+      this.pausedNextDirection = null;
       this.food = this.createFood();
       this.scoreElement = document.getElementById('score');
       this.highScoreElement = document.getElementById('high-score');
       this.highScoreElement.textContent = this.highScore;
-      this.keyDownHandler = this.handleKeyDown.bind(this); // 保存引用以便后续移除
+      this.keyDownHandler = this.handleKeyDown.bind(this);
       this.initEventListeners();
       loadLeaderboard("snake", "snake-leaderboard-content");
     }
@@ -134,18 +134,28 @@ handleKeyDown(e) {
   
     createFood() {
       let newFood;
+      let attempts = 0;
+      const maxAttempts = 50;
       do {
+        attempts++;
         newFood = {
           x: Math.floor(Math.random() * this.widthInBlocks),
           y: Math.floor(Math.random() * this.heightInBlocks)
         };
-      } while (this.snake.some(segment => segment.x === newFood.x && segment.y === newFood.y));
+        const minDistance = 2;
+        const tooClose = this.snake.some(segment => {
+          return Math.abs(segment.x - newFood.x) < minDistance && 
+                 Math.abs(segment.y - newFood.y) < minDistance;
+        });
+        if (!tooClose) break;
+      } while (attempts < maxAttempts && this.snake.some(segment => segment.x === newFood.x && segment.y === newFood.y));
       return newFood;
     }
   
     drawBlock(x, y, color) {
       this.ctx.fillStyle = color;
       this.ctx.fillRect(x * this.blockSize, y * this.blockSize, this.blockSize, this.blockSize);
+      this.ctx.lineWidth = 0.5;
       this.ctx.strokeStyle = '#FFF';
       this.ctx.strokeRect(x * this.blockSize, y * this.blockSize, this.blockSize, this.blockSize);
     }
@@ -161,13 +171,99 @@ handleKeyDown(e) {
   
     draw() {
       this.ctx.clearRect(0, 0, this.width, this.height);
+      this.drawGrid();
       this.snake.forEach((segment, index) => {
-        const color = index === 0 ? '#4CAF50' : '#8BC34A';
+        const ratio = index / this.snake.length;
+        const green = Math.floor(140 - ratio * 40);
+        const color = index === 0 
+          ? '#4CAF50'
+          : `rgb(76, ${green + 55}, 80)`;
         this.drawBlock(segment.x, segment.y, color);
+        if (index === 0) {
+          this.drawSnakeEyes(segment);
+        }
       });
       this.drawBlock(this.food.x, this.food.y, '#FF5722');
     }
   
+
+// 在 SnakeGame 类中添加 drawGrid 方法
+drawGrid() {
+  // 使用非常淡的颜色绘制网格线
+  this.ctx.strokeStyle = 'rgba(200, 200, 200, 0.1)';
+  this.ctx.lineWidth = 0.2;
+  
+  // 绘制垂直线
+  for (let x = 0; x <= this.width; x += this.blockSize) {
+    this.ctx.beginPath();
+    this.ctx.moveTo(x, 0);
+    this.ctx.lineTo(x, this.height);
+    this.ctx.stroke();
+  }
+  
+  // 绘制水平线
+  for (let y = 0; y <= this.height; y += this.blockSize) {
+    this.ctx.beginPath();
+    this.ctx.moveTo(0, y);
+    this.ctx.lineTo(this.width, y);
+    this.ctx.stroke();
+  }
+}
+
+// 添加蛇眼睛的绘制函数
+drawSnakeEyes(head) {
+  const eyeSize = this.blockSize / 4;
+  const eyeOffset = this.blockSize / 3;
+  
+  // 绘制白色眼球
+  this.ctx.fillStyle = 'white';
+  
+  switch(this.direction) {
+    case 'up':
+      // 向上移动时的眼睛位置
+      this.ctx.fillRect(head.x * this.blockSize + eyeOffset, head.y * this.blockSize + eyeOffset, eyeSize, eyeSize);
+      this.ctx.fillRect(head.x * this.blockSize + this.blockSize - eyeOffset - eyeSize, head.y * this.blockSize + eyeOffset, eyeSize, eyeSize);
+      break;
+    case 'down':
+      // 向下移动时的眼睛位置
+      this.ctx.fillRect(head.x * this.blockSize + eyeOffset, head.y * this.blockSize + this.blockSize - eyeOffset - eyeSize, eyeSize, eyeSize);
+      this.ctx.fillRect(head.x * this.blockSize + this.blockSize - eyeOffset - eyeSize, head.y * this.blockSize + this.blockSize - eyeOffset - eyeSize, eyeSize, eyeSize);
+      break;
+    case 'left':
+      // 向左移动时的眼睛位置
+      this.ctx.fillRect(head.x * this.blockSize + eyeOffset, head.y * this.blockSize + eyeOffset, eyeSize, eyeSize);
+      this.ctx.fillRect(head.x * this.blockSize + eyeOffset, head.y * this.blockSize + this.blockSize - eyeOffset - eyeSize, eyeSize, eyeSize);
+      break;
+    case 'right':
+      // 向右移动时的眼睛位置
+      this.ctx.fillRect(head.x * this.blockSize + this.blockSize - eyeOffset - eyeSize, head.y * this.blockSize + eyeOffset, eyeSize, eyeSize);
+      this.ctx.fillRect(head.x * this.blockSize + this.blockSize - eyeOffset - eyeSize, head.y * this.blockSize + this.blockSize - eyeOffset - eyeSize, eyeSize, eyeSize);
+      break;
+  }
+  
+  // 添加黑色瞳孔
+  this.ctx.fillStyle = 'black';
+  const pupilSize = eyeSize / 2;
+  
+  switch(this.direction) {
+    case 'up':
+      this.ctx.fillRect(head.x * this.blockSize + eyeOffset + eyeSize/4, head.y * this.blockSize + eyeOffset, pupilSize, pupilSize);
+      this.ctx.fillRect(head.x * this.blockSize + this.blockSize - eyeOffset - eyeSize + eyeSize/4, head.y * this.blockSize + eyeOffset, pupilSize, pupilSize);
+      break;
+    case 'down':
+      this.ctx.fillRect(head.x * this.blockSize + eyeOffset + eyeSize/4, head.y * this.blockSize + this.blockSize - eyeOffset - eyeSize, pupilSize, pupilSize);
+      this.ctx.fillRect(head.x * this.blockSize + this.blockSize - eyeOffset - eyeSize + eyeSize/4, head.y * this.blockSize + this.blockSize - eyeOffset - eyeSize, pupilSize, pupilSize);
+      break;
+    case 'left':
+      this.ctx.fillRect(head.x * this.blockSize + eyeOffset, head.y * this.blockSize + eyeOffset + eyeSize/4, pupilSize, pupilSize);
+      this.ctx.fillRect(head.x * this.blockSize + eyeOffset, head.y * this.blockSize + this.blockSize - eyeOffset - eyeSize + eyeSize/4, pupilSize, pupilSize);
+      break;
+    case 'right':
+      this.ctx.fillRect(head.x * this.blockSize + this.blockSize - eyeOffset - eyeSize, head.y * this.blockSize + eyeOffset + eyeSize/4, pupilSize, pupilSize);
+      this.ctx.fillRect(head.x * this.blockSize + this.blockSize - eyeOffset - eyeSize, head.y * this.blockSize + this.blockSize - eyeOffset - eyeSize + eyeSize/4, pupilSize, pupilSize);
+      break;
+  }
+}
 // 修改 drawGameOver 方法，在显示模态框时禁用键盘事件
 
 drawGameOver() {
@@ -347,19 +443,17 @@ start() {
   }
   
   this.paused = false;
-  this.isPlaying = true; // 设置游戏正在进行标记
+  this.isPlaying = true;
   
   console.log('游戏开始运行');
   
-  // 添加时间追踪
   this.lastUpdateTime = Date.now();
-  this.updateInterval = 150; // 保持原游戏速度
+  this.updateInterval = 100;
   
   const gameLoop = () => {
-    // 游戏结束或暂停时不再继续动画循环
     if (this.gameOver || this.paused) {
       console.log('游戏循环停止，原因：', this.gameOver ? '游戏结束' : '游戏暂停');
-      this.animationFrameId = null; // 确保标志被正确重置
+      this.animationFrameId = null;
       return;
     }
     
@@ -369,11 +463,9 @@ start() {
       this.lastUpdateTime = now;
     }
     
-    // 保存动画帧ID，以便后续取消
     this.animationFrameId = requestAnimationFrame(gameLoop);
   };
   
-  // 启动游戏循环
   this.animationFrameId = requestAnimationFrame(gameLoop);
 }
   
@@ -385,40 +477,31 @@ togglePause() {
   const playPauseIcon = document.getElementById('snake-play-pause-icon');
   
   if (this.paused) {
-    // 在暂停时记录当前方向，以便恢复时保持原来的方向
     this.pausedDirection = this.direction;
     this.pausedNextDirection = this.nextDirection;
     
-    // 更新按钮图标为开始图标
     if (playPauseIcon) playPauseIcon.src = './image/start.svg';
     
-    // 取消动画帧
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
     }
     
-    // 使用DOM元素显示暂停状态，而不是在Canvas上绘制
     this.showStaticPauseScreen();
     
     console.log('游戏已暂停');
   } else {
-    // 恢复原来的方向
     if (this.pausedDirection && this.pausedNextDirection) {
       this.direction = this.pausedDirection;
       this.nextDirection = this.pausedNextDirection;
     }
     
-    // 更新按钮图标为暂停图标
     if (playPauseIcon) playPauseIcon.src = './image/pause.svg';
     
-    // 移除暂停层
     this.removeStaticPauseScreen();
     
-    // 重绘游戏画面
     this.draw();
     
-    // 确保不会重复启动动画
     if (!this.animationFrameId) {
       this.start();
     }
@@ -428,14 +511,11 @@ togglePause() {
   
 // 添加专门处理暂停屏幕绘制的方法
 drawPauseScreen() {
-  // 首先绘制当前游戏状态
   this.draw();
   
-  // 添加半透明遮罩
   this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
   this.ctx.fillRect(0, 0, this.width, this.height);
   
-  // 添加暂停文字
   this.ctx.font = '30px Arial';
   this.ctx.fillStyle = '#333';
   this.ctx.textAlign = 'center';
@@ -445,23 +525,21 @@ drawPauseScreen() {
 reset() {
   console.log('重置游戏');
   
-  // 取消可能存在的动画帧
   if (this.animationFrameId) {
     cancelAnimationFrame(this.animationFrameId);
     this.animationFrameId = null;
   }
   
-  this.snake = [{x: 6, y: 10}, {x: 5, y: 10}, {x: 4, y: 10}];
+  this.snake = [{x: 12, y: 20}, {x: 11, y: 20}, {x: 10, y: 20}, {x: 9, y: 20}, {x: 8, y: 20}];
   this.direction = 'right';
   this.nextDirection = 'right';
-  this.pausedDirection = null; // 重置暂停方向记录
-  this.pausedNextDirection = null; // 重置暂停下一方向记录
+  this.pausedDirection = null;
+  this.pausedNextDirection = null;
   this.food = this.createFood();
   this.score = 0;
   this.gameOver = false;
   this.paused = false;
   
-  // 更新界面元素
   const playPauseIcon = document.getElementById('snake-play-pause-icon');
   if (playPauseIcon) playPauseIcon.src = './image/start.svg';
   
@@ -471,34 +549,27 @@ reset() {
 
   // 修改 destroy 方法，确保清理暂停层
 destroy() {
-  // 清除游戏循环
   if (this.intervalId) {
     clearInterval(this.intervalId);
     this.intervalId = null;
   }
   
-  // 取消动画帧
   if (this.animationFrameId) {
     cancelAnimationFrame(this.animationFrameId);
     this.animationFrameId = null;
   }
   
-  // 移除事件监听器
   document.removeEventListener('keydown', this.keyDownHandler);
   
-  // 移除控制按钮的事件处理器
   document.getElementById('snake-play-pause-btn')?.removeEventListener('click', this.playPauseBtnHandler);
   
-  // 移除方向按钮的事件处理器
   document.getElementById('up-btn')?.removeEventListener('click', this.upBtnHandler);
   document.getElementById('left-btn')?.removeEventListener('click', this.leftBtnHandler);
   document.getElementById('right-btn')?.removeEventListener('click', this.rightBtnHandler);
   document.getElementById('down-btn')?.removeEventListener('click', this.downBtnHandler);
   
-  // 移除暂停层
   this.removeStaticPauseScreen();
   
-  // 重置游戏状态
   this.gameOver = true;
   this.paused = true;
   
@@ -507,7 +578,6 @@ destroy() {
 
 // 更改 saveGameState 方法，确保所有必要状态都被保存
 saveGameState() {
-  // 确保游戏正在运行才保存状态
   if (this.gameOver || (!this.animationFrameId && !this.paused)) {
     console.log('游戏未在运行中，不保存状态');
     return null;
@@ -515,14 +585,14 @@ saveGameState() {
   
   console.log('保存贪吃蛇游戏状态');
   return {
-    snake: JSON.parse(JSON.stringify(this.snake)), // 深拷贝蛇身数组
+    snake: JSON.parse(JSON.stringify(this.snake)),
     direction: this.direction,
     nextDirection: this.nextDirection,
-    food: JSON.parse(JSON.stringify(this.food)), // 深拷贝食物对象
+    food: JSON.parse(JSON.stringify(this.food)),
     score: this.score,
     highScore: this.highScore,
     gameInProgress: true,
-    isPlaying: true // 添加这个关键标记
+    isPlaying: true
   };
 }
 
@@ -535,7 +605,6 @@ restoreGameState(state) {
   
   console.log('恢复贪吃蛇游戏状态');
   
-  // 恢复游戏数据
   this.snake = state.snake;
   this.direction = state.direction;
   this.nextDirection = state.nextDirection;
@@ -543,19 +612,15 @@ restoreGameState(state) {
   this.score = state.score;
   this.highScore = state.highScore || this.highScore;
   this.gameOver = false;
-  this.paused = true; // 恢复时先暂停
-  this.isPlaying = true; // 关键：标记游戏已经开始
+  this.paused = true;
+  this.isPlaying = true;
   
-  // 更新分数显示
   this.scoreElement.textContent = this.score;
   this.highScoreElement.textContent = this.highScore;
   
-  // 绘制当前状态
   this.draw();
-  // 使用DOM元素显示暂停状态，而不是在Canvas上绘制
   this.showStaticPauseScreen();
   
-  // 更新暂停按钮图标
   const playPauseIcon = document.getElementById('snake-play-pause-icon');
   if (playPauseIcon) playPauseIcon.src = './image/start.svg';
   
@@ -564,30 +629,24 @@ restoreGameState(state) {
 }
 // 修改 SnakeGame 类中的 showStaticPauseScreen 方法
 showStaticPauseScreen() {
-  // 检查是否已存在暂停层，避免创建多个
   let pauseLayer = document.getElementById('snake-pause-layer');
   if (!pauseLayer) {
     pauseLayer = document.createElement('div');
     pauseLayer.id = 'snake-pause-layer';
     
-    // 精确计算画布中心位置
     const canvasRect = this.canvas.getBoundingClientRect();
     const pauseWidth = 120;
     const pauseHeight = 60;
     
-    // 将暂停层添加到Canvas的父元素
     const canvasContainer = this.canvas.parentElement;
     
     if (canvasContainer) {
-      // 确保父容器支持定位
       if (getComputedStyle(canvasContainer).position === 'static') {
         canvasContainer.style.position = 'relative';
       }
       
-      // 插入到Canvas之后
       this.canvas.insertAdjacentElement('afterend', pauseLayer);
       
-      // 调整样式，确保绝对居中
       pauseLayer.style.position = 'absolute';
       pauseLayer.style.top = '50%';
       pauseLayer.style.left = '50%';
@@ -614,10 +673,8 @@ showStaticPauseScreen() {
 removeStaticPauseScreen() {
   const pauseLayer = document.getElementById('snake-pause-layer');
   if (pauseLayer) {
-    // 先隐藏
     pauseLayer.style.display = 'none';
     
-    // 完全移除元素
     setTimeout(() => {
       if (pauseLayer.parentNode) {
         pauseLayer.parentNode.removeChild(pauseLayer);
@@ -625,4 +682,4 @@ removeStaticPauseScreen() {
     }, 50);
   }
 }
-  }
+}
