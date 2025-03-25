@@ -15,12 +15,178 @@ const daily = {
     { text: "学而不思则罔，思而不学则殆。", source: "《论语》" }
   ],
   joke: null, // 用于存储获取的笑话
+  pokemon: null, // 用于存储获取的宝可梦数据
   
   // 初始化函数
   init: function() {
     console.log('初始化每日一话功能');
   },
-  
+  // 获取随机宝可梦
+  fetchPokemon: async function() {
+    try {
+      // 生成1-898之间的随机ID (全国图鉴编号范围)
+      const randomId = Math.floor(Math.random() * 898) + 1;
+      const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${randomId}`);
+      
+      if (!response.ok) {
+        throw new Error('获取宝可梦数据失败');
+      }
+      
+      const pokemonData = await response.json();
+      
+      // 处理并保存宝可梦数据
+      this.pokemon = {
+        id: pokemonData.id,
+        name: pokemonData.name,
+        // 使用官方图片
+        image: pokemonData.sprites.other['official-artwork'].front_default || pokemonData.sprites.front_default,
+        types: pokemonData.types.map(type => type.type.name),
+        height: pokemonData.height / 10, // 转换为米
+        weight: pokemonData.weight / 10, // 转换为千克
+        abilities: pokemonData.abilities.map(ability => ability.ability.name),
+        stats: pokemonData.stats.map(stat => ({
+          name: stat.stat.name,
+          value: stat.base_stat
+        }))
+      };
+      
+      console.log('获取到宝可梦数据:', this.pokemon);
+      
+    } catch (error) {
+      console.error('获取宝可梦失败:', error);
+      this.pokemon = null;
+    }
+  },
+  // 显示宝可梦信息弹窗
+  showPokemonModal: function() {
+    if (!this.pokemon) {
+      alert('宝可梦数据加载中，请稍后再试');
+      return;
+    }
+    
+    // 创建弹窗元素
+    const modalElement = document.createElement('div');
+    modalElement.id = 'pokemon-modal';
+    modalElement.className = 'pokemon-modal';
+    
+    // 获取宝可梦类型的中文名称
+    const getTypeChineseName = (type) => {
+      const typeMap = {
+        normal: '一般', fire: '火', water: '水', electric: '电', grass: '草',
+        ice: '冰', fighting: '格斗', poison: '毒', ground: '地面', flying: '飞行',
+        psychic: '超能力', bug: '虫', rock: '岩石', ghost: '幽灵', dragon: '龙',
+        dark: '恶', steel: '钢', fairy: '妖精'
+      };
+      return typeMap[type] || type;
+    };
+    
+    // 获取宝可梦能力的中文名称
+    const getAbilityChineseName = (ability) => {
+      // 这里只是一个简单的示例，实际上可能需要更多的映射
+      const abilityMap = {
+        overgrow: '茂盛', blaze: '猛火', torrent: '激流', 
+        shield_dust: '鳞粉', 'sand-veil': '沙隐', 'static': '静电',
+        'lightning-rod': '避雷针', 'storm-drain': '引水',
+        'water-absorb': '吸水', 'flash-fire': '引火',
+        'flame-body': '火焰之躯', 'wonder-skin': '神奇皮肤'
+      };
+      return abilityMap[ability] || ability;
+    };
+    
+    // 获取能力值的中文名称
+    const getStatChineseName = (stat) => {
+      const statMap = {
+        hp: '生命值', attack: '攻击', defense: '防御',
+        'special-attack': '特攻', 'special-defense': '特防', speed: '速度'
+      };
+      return statMap[stat] || stat;
+    };
+    
+    // 大写首字母
+    const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
+    
+    // 设置弹窗内容
+    modalElement.innerHTML = `
+      <div class="pokemon-modal-content">
+        <button class="modal-close-btn"><span>×</span></button>
+        <div class="pokemon-header">
+          <h3>#${this.pokemon.id} ${capitalize(this.pokemon.name)}</h3>
+        </div>
+        <div class="pokemon-image">
+          <img src="${this.pokemon.image}" alt="${this.pokemon.name}">
+        </div>
+        <div class="pokemon-types">
+          ${this.pokemon.types.map(type => 
+            `<span class="pokemon-type ${type}">${getTypeChineseName(type)}</span>`
+          ).join('')}
+        </div>
+        <div class="pokemon-info">
+          <div class="info-item">
+            <span class="info-label">身高:</span>
+            <span>${this.pokemon.height} m</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">体重:</span>
+            <span>${this.pokemon.weight} kg</span>
+          </div>
+        </div>
+        <div class="pokemon-abilities">
+          <h4>特性</h4>
+          <div class="abilities-list">
+            ${this.pokemon.abilities.map(ability => 
+              `<span class="pokemon-ability">${getAbilityChineseName(ability)}</span>`
+            ).join('')}
+          </div>
+        </div>
+        <div class="pokemon-stats">
+          <h4>能力值</h4>
+          ${this.pokemon.stats.map(stat => `
+            <div class="stat-item">
+              <span class="stat-name">${getStatChineseName(stat.name)}</span>
+              <div class="stat-bar-container">
+                <div class="stat-bar" style="width: ${Math.min(stat.value, 100)}%"></div>
+              </div>
+              <span class="stat-value">${stat.value}</span>
+            </div>
+          `).join('')}
+        </div>
+        <button class="catch-another-btn">捕捉另一个</button>
+      </div>
+    `;
+    
+    // 添加到文档
+    document.querySelector('.daily-content').appendChild(modalElement);
+    
+    // 添加弹窗出现动画
+    setTimeout(() => {
+      modalElement.classList.add('open');
+    }, 10);
+    
+    // 添加关闭按钮事件
+    const closeBtn = modalElement.querySelector('.modal-close-btn');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        modalElement.classList.remove('open');
+        setTimeout(() => {
+          modalElement.remove();
+        }, 300);
+      });
+    }
+    
+    // 添加捕捉另一个按钮事件
+    const catchAnotherBtn = modalElement.querySelector('.catch-another-btn');
+    if (catchAnotherBtn) {
+      catchAnotherBtn.addEventListener('click', async () => {
+        modalElement.classList.remove('open');
+        setTimeout(() => {
+          modalElement.remove();
+          this.fetchPokemon().then(() => {
+            this.showPokemonModal();
+          });
+        }, 300);
+      });
+    }
+  },
   // 获取笑话
   fetchJoke: async function() {
     try {
@@ -71,101 +237,122 @@ const daily = {
     }
   },
   
-  // 显示每日一话页面
-  show: function() {
-    // 如果页面已经打开，不重复操作
-    if (this.isOpen) return;
-    
-    console.log('显示每日一话页面');
-    
-    // 获取笑话
-    this.fetchJoke();
-    
-    // 获取今天的日期作为随机种子
-    const today = new Date();
-    const dateString = `${today.getFullYear()}${today.getMonth() + 1}${today.getDate()}`;
-    const randomSeed = parseInt(dateString);
-    
-    // 使用日期作为种子生成伪随机数，使每天显示固定的一句话
-    const randomIndex = randomSeed % this.quotes.length;
-    const todayQuote = this.quotes[randomIndex];
-    
-    // 创建每日一话页面元素
-    const dailyElement = document.createElement('div');
-    dailyElement.id = 'daily-page';
-    dailyElement.className = 'daily-container';
-    
-    // 设置页面内容 - 简化版，只保留格言和笑话
-    dailyElement.innerHTML = `
-      <div class="daily-content">
-        <button class="back-btn" id="daily-back-btn"></button>
-        <div class="daily-header">
-          <h2>每日一话</h2>
-          <div class="daily-shine"></div>
-        </div>
-        
-        <div class="daily-body">
-          <div class="daily-date">
-            ${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日
-          </div>
-          
-          <div class="daily-flex-container">
-            <div class="daily-quote-container">
-              <div class="daily-quote">
-                <p class="quote-text">${todayQuote.text}</p>
-                <p class="quote-source">${todayQuote.source}</p>
-              </div>
-            </div>
-            
-            <div class="daily-joke">
-              <h3>今日一笑</h3>
-              <div class="joke-container">
-                <div class="daily-joke-content">
-                  <p>正在加载笑话...</p>
-                </div>
-                <button class="refresh-joke-btn">换一个</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-    
-    // 添加到文档
-    document.querySelector('.container').appendChild(dailyElement);
-    
-    // 设置页面样式
-    this.applyStyles();
-    
-    // 显示页面
-    setTimeout(() => {
-      dailyElement.classList.add('open');
-      this.isOpen = true;
+    // 修改 show 方法，添加隐藏水果篮的代码
+    show: function() {
+      // 如果页面已经打开，不重复操作
+      if (this.isOpen) return;
       
-      // 添加返回按钮事件
-      document.getElementById('daily-back-btn').addEventListener('click', () => {
-        this.hide();
-      });
+      console.log('显示每日一话页面');
       
-      // 添加刷新笑话按钮事件
-      const refreshJokeBtn = document.querySelector('.refresh-joke-btn');
-      if (refreshJokeBtn) {
-        refreshJokeBtn.addEventListener('click', () => {
-          refreshJokeBtn.textContent = '加载中...';
-          refreshJokeBtn.disabled = true;
-          this.fetchJoke().then(() => {
-            refreshJokeBtn.textContent = '换一个';
-            refreshJokeBtn.disabled = false;
-          });
-        });
+      // 隐藏浮动水果和水果篮
+      if (window.floatingFruits) {
+        window.floatingFruits.hide();
+        console.log('已隐藏水果篮');
       }
       
-      // 添加页面出现动画
-      this.playEntranceAnimation();
-    }, 100);
-  },
-  
+      // 获取笑话
+      this.fetchJoke();
+      
+      // 预加载宝可梦数据
+      this.fetchPokemon();
+      
+      // 获取今天的日期作为随机种子
+      const today = new Date();
+      const dateString = `${today.getFullYear()}${today.getMonth() + 1}${today.getDate()}`;
+      const randomSeed = parseInt(dateString);
+      
+      // 使用日期作为种子生成伪随机数，使每天显示固定的一句话
+      const randomIndex = randomSeed % this.quotes.length;
+      const todayQuote = this.quotes[randomIndex];
+      
+      // 创建每日一话页面元素
+      const dailyElement = document.createElement('div');
+      dailyElement.id = 'daily-page';
+      dailyElement.className = 'daily-container';
+      
+      // 设置页面内容 - 添加宝可梦按钮
+      dailyElement.innerHTML = `
+        <div class="daily-content">
+          <button class="back-btn" id="daily-back-btn"></button>
+          <button class="pokemon-btn" id="pokemon-catch-btn">
+            <img src="./image/精灵球.svg" alt="精灵球">
+          </button>
+          <div class="daily-header">
+            <h2>每日一话</h2>
+            <div class="daily-shine"></div>
+          </div>
+          
+          <div class="daily-body">
+            <div class="daily-date">
+              ${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日
+            </div>
+            
+            <div class="daily-flex-container">
+              <div class="daily-quote-container">
+                <div class="daily-quote">
+                  <p class="quote-text">${todayQuote.text}</p>
+                  <p class="quote-source">${todayQuote.source}</p>
+                </div>
+              </div>
+              
+              <div class="daily-joke">
+                <h3>今日一笑</h3>
+                <div class="joke-container">
+                  <div class="daily-joke-content">
+                    <p>正在加载笑话...</p>
+                  </div>
+                  <button class="refresh-joke-btn">换一个</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // 添加到文档
+      document.querySelector('.container').appendChild(dailyElement);
+      
+      // 设置页面样式
+      this.applyStyles();
+      
+      // 显示页面
+      setTimeout(() => {
+        dailyElement.classList.add('open');
+        this.isOpen = true;
+        
+        // 添加返回按钮事件
+        document.getElementById('daily-back-btn').addEventListener('click', () => {
+          this.hide();
+        });
+        
+        // 添加刷新笑话按钮事件
+        const refreshJokeBtn = document.querySelector('.refresh-joke-btn');
+        if (refreshJokeBtn) {
+          refreshJokeBtn.addEventListener('click', () => {
+            refreshJokeBtn.textContent = '加载中...';
+            refreshJokeBtn.disabled = true;
+            this.fetchJoke().then(() => {
+              refreshJokeBtn.textContent = '换一个';
+              refreshJokeBtn.disabled = false;
+            });
+          });
+        }
+        
+        // 添加宝可梦按钮事件
+        const pokemonBtn = document.getElementById('pokemon-catch-btn');
+        if (pokemonBtn) {
+          pokemonBtn.addEventListener('click', () => {
+            this.showPokemonModal();
+          });
+        }
+        
+        // 添加页面出现动画
+        this.playEntranceAnimation();
+      }, 100);
+    },
+    
   // 隐藏每日一话页面
+  // 修改 hide 方法，添加显示水果篮的代码
   hide: function() {
     const dailyElement = document.getElementById('daily-page');
     if (!dailyElement) return;
@@ -188,6 +375,21 @@ const daily = {
       if (pageTitle) {
         pageTitle.style.display = 'block';
       }
+      
+      // 恢复显示浮动水果和水果篮
+      // 使用延迟确保先完成其他UI恢复，再显示水果
+      setTimeout(() => {
+        // 检查是否在主页 - 只有在返回主页时才重新显示水果
+        const isHomePage = 
+          document.getElementById('games-selection').style.display === 'none' && 
+          document.getElementById('snake-game').style.display === 'none' && 
+          document.getElementById('tetris-game').style.display === 'none';
+        
+        if (isHomePage && window.floatingFruits) {
+          window.floatingFruits.show();
+          console.log('已恢复显示水果篮');
+        }
+      }, 200);
     }, 300);
   },
   
