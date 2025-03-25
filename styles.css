@@ -661,28 +661,32 @@ button:focus {
 
 /* 2. 修改各季节背景的动画应用 */
 body.spring .seasonal-decoration {
-  background-image: url('./image/flower\ \(1\).svg');
+  /* background-image: url('./image/flower\ \(1\).svg'); */
+  background-image: url('./image/四季/butterfly.svg');
   background-size: 40%;
   /* animation: float 0s ease-in-out infinite; */
   transform-origin: center;
 }
 
 body.summer .seasonal-decoration {
-  background-image: url('./image/summer-beach.svg');
+  /* background-image: url('./image/summer-beach.svg'); */
+  background-image: url('./image/四季/summer.svg');
   background-size: 40%;
   /* animation: sway 0s ease-in-out infinite; */
   transform-origin: center;
 }
 
 body.autumn .seasonal-decoration {
-  background-image: url('./image/leaves.svg');
+  /* background-image: url('./image/leaves.svg'); */
+  background-image: url('./image/四季/autumn.svg');
   background-size: 40%;
   /* animation: fall 0s ease-in-out infinite; */
   transform-origin: center;
 }
 
 body.winter .seasonal-decoration {
-  background-image: url('./image/winter.svg');
+  /* background-image: url('./image/winter.svg'); */
+  background-image: url('./image/四季/winter1.svg');
   background-size: 40%;
   /* animation: snow 0s ease-in-out infinite; */
   transform-origin: center;

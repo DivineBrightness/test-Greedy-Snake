@@ -1,0 +1,346 @@
+/* 春秋页面样式 */
+
+.cq-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.cq-container.open {
+  opacity: 1;
+}
+
+.cq-content {
+  position: relative;
+  background: linear-gradient(145deg, #f5f5dc, #e8e8c0);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  text-align: center;
+  font-family: "SimSun", "宋体", serif;
+}
+
+.cq-header {
+  position: relative;
+  margin: 30px 0 25px;
+}
+
+.cq-header h2 {
+  color: #8b4513;
+  font-size: 36px;
+  margin: 0;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+  font-weight: normal;
+}
+
+.cq-shine {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  width: 60px;
+  height: 60px;
+  background: radial-gradient(circle, rgba(139, 69, 19, 0.3) 0%, rgba(139, 69, 19, 0) 70%);
+  transform: translateX(-50%);
+  animation: shine 3s infinite;
+}
+
+.cq-body {
+  margin: 0 auto;
+  width: 90%;
+  max-width: 800px;
+  text-align: center;
+  padding-bottom: 50px;
+}
+
+.cq-intro {
+  margin-bottom: 30px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.cq-intro.animated {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.cq-intro p {
+  color: #5d4037;
+  font-size: 18px;
+  line-height: 1.6;
+  margin-bottom: 15px;
+}
+
+.cq-quote-container {
+  margin: 40px 0;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.cq-quote-container.animated {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.cq-quote {
+  background: rgba(255, 255, 255, 0.7);
+  padding: 25px;
+  border-radius: 10px;
+  position: relative;
+  border-left: 4px solid #8b4513;
+}
+
+.quote-text {
+  color: #5d4037;
+  font-size: 20px;
+  line-height: 1.8;
+  margin-bottom: 15px;
+  font-style: italic;
+}
+
+.quote-source {
+  color: #8b4513;
+  font-style: normal;
+  text-align: right;
+  font-size: 16px;
+}
+
+.cq-history {
+  margin: 40px 0;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.cq-history.animated {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.cq-history h3 {
+  color: #8b4513;
+  font-size: 24px;
+  margin-bottom: 20px;
+  font-weight: normal;
+}
+
+.history-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.timeline-item {
+  display: flex;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 4px solid #8b4513;
+}
+
+.year {
+  width: 150px;
+  color: #8b4513;
+  font-weight: bold;
+  text-align: right;
+  padding-right: 20px;
+}
+
+.event {
+  flex: 1;
+  text-align: left;
+  color: #5d4037;
+}
+
+.cq-wisdom {
+  margin: 40px 0;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.cq-wisdom.animated {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.cq-wisdom h3 {
+  color: #8b4513;
+  font-size: 24px;
+  margin-bottom: 20px;
+  font-weight: normal;
+}
+
+.wisdom-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+}
+
+.wisdom-card {
+  background: rgba(255, 255, 255, 0.7);
+  width: 120px;
+  height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.wisdom-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.wisdom-card h4 {
+  color: #8b4513;
+  font-size: 28px;
+  margin: 0 0 10px 0;
+}
+
+.wisdom-card p {
+  color: #5d4037;
+  font-size: 16px;
+  margin: 0;
+}
+
+/* 修复返回按钮样式 */
+#cq-page .back-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 40px;
+  height: 40px;
+  background-image: none;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  z-index: 10;
+}
+
+#cq-page .back-btn:hover {
+  opacity: 1;
+}
+
+#cq-page .back-btn:before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  border-left: 3px solid #8b4513;
+  border-bottom: 3px solid #8b4513;
+  transform: translate(-25%, -50%) rotate(45deg);
+}
+
+/* 修复返回按钮样式 - 提高选择器优先级覆盖全局样式 */
+html body #cq-page .back-btn {
+  position: absolute !important; /* 使用absolute而非fixed */
+  top: 20px !important;
+  left: 20px !important;
+  width: 40px !important;
+  height: 40px !important;
+  background-image: none !important;
+  background-color: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  opacity: 0.7 !important;
+  transition: opacity 0.2s !important;
+  z-index: 10 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  display: block !important; /* 覆盖flex显示 */
+}
+
+html body #cq-page .back-btn:hover {
+  opacity: 1 !important;
+  transform: none !important; /* 覆盖全局hover效果 */
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* 完全覆盖全局的背景图像 */
+html body #cq-page .back-btn::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  width: 20px !important;
+  height: 20px !important;
+  border-left: 3px solid #8b4513 !important;
+  border-bottom: 3px solid #8b4513 !important;
+  transform: translate(-25%, -50%) rotate(45deg) !important;
+  background-image: none !important;
+  background-size: auto !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+}
+
+@keyframes shine {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+
+/* 移动设备适配 */
+@media (max-width: 768px) {
+  .cq-body {
+    width: 95%;
+  }
+  
+  .cq-intro p {
+    font-size: 16px;
+  }
+  
+  .quote-text {
+    font-size: 18px;
+  }
+  
+  .history-timeline {
+    gap: 10px;
+  }
+  
+  .timeline-item {
+    flex-direction: column;
+  }
+  
+  .year {
+    width: 100%;
+    text-align: center;
+    padding-right: 0;
+    margin-bottom: 5px;
+  }
+  
+  .event {
+    text-align: center;
+  }
+  
+  .wisdom-cards {
+    gap: 10px;
+  }
+  
+  .wisdom-card {
+    width: 100px;
+    height: 100px;
+  }
+}

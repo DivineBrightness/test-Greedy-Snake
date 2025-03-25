@@ -11,6 +11,8 @@ const tianGangCharacters = [
 
 // 添加序列检测功能
 const secretSequence = ['summer', 'winter', 'spring', 'autumn', 'summer', 'winter'];
+// 添加新的"春秋夏冬春秋"序列
+const cqSequence = ['spring', 'autumn', 'summer', 'winter', 'spring', 'autumn'];
 let currentSequence = [];
 let sequenceTimer = null;
 
@@ -69,6 +71,7 @@ function changeSeason(season) {
 }
 
 // 检测秘密序列
+// 修改 checkSecretSequence 函数，添加对新序列的检测
 function checkSecretSequence(season) {
   // 清除之前的定时器
   if (sequenceTimer) {
@@ -78,28 +81,67 @@ function checkSecretSequence(season) {
   // 添加当前季节到序列
   currentSequence.push(season);
   
-  // 如果序列长度超过秘密序列，删除最老的点击
-  if (currentSequence.length > secretSequence.length) {
+  // 如果序列长度超过最长序列，删除最老的点击
+  const maxLength = Math.max(secretSequence.length, cqSequence.length);
+  if (currentSequence.length > maxLength) {
     currentSequence.shift();
   }
   
-  // 检查是否匹配秘密序列
-  if (currentSequence.length === secretSequence.length) {
-    let match = true;
+  // 检查是否匹配宝箱秘密序列
+  if (currentSequence.length >= secretSequence.length) {
+    // 获取与宝箱序列长度匹配的最近点击
+    const treasureCheck = currentSequence.slice(-secretSequence.length);
+    
+    let treasureMatch = true;
     for (let i = 0; i < secretSequence.length; i++) {
-      if (secretSequence[i] !== currentSequence[i]) {
-        match = false;
+      if (secretSequence[i] !== treasureCheck[i]) {
+        treasureMatch = false;
         break;
       }
     }
     
     // 如果匹配成功，打开宝箱
-    if (match && window.treasureBox) {
-      console.log('秘密序列匹配成功！');
+    if (treasureMatch && window.treasureBox) {
+      console.log('宝箱秘密序列匹配成功！');
       window.treasureBox.show();
       
       // 重置序列
       currentSequence = [];
+      return; // 提前返回，避免同时触发多个效果
+    }
+  }
+  
+  // 检查是否匹配春秋秘密序列
+  if (currentSequence.length >= cqSequence.length) {
+    // 获取与春秋序列长度匹配的最近点击
+    const cqCheck = currentSequence.slice(-cqSequence.length);
+    
+    let cqMatch = true;
+    for (let i = 0; i < cqSequence.length; i++) {
+      if (cqSequence[i] !== cqCheck[i]) {
+        cqMatch = false;
+        break;
+      }
+    }
+    
+    // 如果匹配成功，显示春秋页面
+    if (cqMatch && window.cq) {
+      console.log('春秋秘密序列匹配成功！');
+      
+      // 隐藏主页面元素
+      document.querySelector('.season-controls').style.display = 'none';
+      document.getElementById('games-btn').style.display = 'none';
+      const pageTitle = document.getElementById('page-title') || document.querySelector('.container h1');
+      if (pageTitle) {
+        pageTitle.style.display = 'none';
+      }
+      
+      // 显示春秋页面
+      window.cq.show();
+      
+      // 重置序列
+      currentSequence = [];
+      return;
     }
   }
   
