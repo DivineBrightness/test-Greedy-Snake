@@ -29,6 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
         container.style.overflow = 'hidden';
         container.style.display = 'block';
         container.style.visibility = 'visible';
+        // 设置随机位置
+        setRandomHeartPosition(container);
         
         // 确保Lottie库可用
         if (typeof lottie === 'undefined') {
@@ -107,7 +109,31 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         document.head.appendChild(style);
     }
-
+    // 设置飞心随机位置
+    function setRandomHeartPosition(element) {
+        if (!element) return;
+        
+        // 获取窗口尺寸
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        
+        // 飞心容器大小
+        const heartSize = 150;
+        
+        // 计算有效范围（确保飞心至少有一半在屏幕内）
+        const maxX = windowWidth - heartSize/2;
+        const maxY = windowHeight - heartSize/2;
+        
+        // 生成随机位置，保留20px边距
+        const randomX = Math.max(20, Math.random() * maxX);
+        const randomY = Math.max(20, Math.random() * maxY);
+        
+        // 应用随机位置
+        element.style.left = `${randomX}px`;
+        element.style.top = `${randomY}px`;
+        
+        console.log(`飞心位置已设置为 X:${randomX.toFixed(0)}, Y:${randomY.toFixed(0)}`);
+    }
     // 添加拖拽功能
     function makeDraggable(element) {
         let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;

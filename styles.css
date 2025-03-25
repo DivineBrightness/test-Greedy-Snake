@@ -1482,8 +1482,8 @@ body.winter .seasonal-decoration {
 /* 飞心动画 - 设置最高层级 */
 .flying-heart-animation {
   position: fixed;
-  top: -77px;
-  left: 64.034px;
+  /* top: -77px;
+  left: 64.034px; */
   width: 150px !important;
   height: 150px !important;
   max-width: 150px !important;
