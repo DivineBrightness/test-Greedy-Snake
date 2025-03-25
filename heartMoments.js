@@ -78,17 +78,17 @@ syncWithCloud: function() {
       <div class="heart-moments-content">
         <button class="back-btn" id="heart-moments-back-btn"></button>
         <div class="heart-moments-header">
-          <h2>心动瞬间</h2>
+          <h2>Heart Moments</h2>
           <div class="heart-shine"></div>
         </div>
         
         <div class="heart-moments-form">
-          <textarea id="new-moment" placeholder="记录一个心动瞬间..." maxlength="200"></textarea>
+          <textarea id="new-moment" placeholder="记录一个moment..." maxlength="200"></textarea>
           <button id="save-moment-btn">保存</button>
         </div>
         
         <div class="heart-moments-list">
-          <h3>我的心动记录</h3>
+          <h3></h3>
           <div id="moments-container">
             ${this.renderMoments()}
           </div>
@@ -141,7 +141,7 @@ hide: function() {
   // 渲染所有心动瞬间
   renderMoments: function() {
     if (this.moments.length === 0) {
-      return '<div class="empty-moments">暂无记录，开始记录你的心动瞬间吧！</div>';
+      return '<div class="empty-moments">暂无记录，开始记录吧！</div>';
     }
     
     return this.moments.map((moment, index) => `
@@ -272,7 +272,6 @@ hide: function() {
       .replace(/'/g, '&#039;');
   },
   
-  // 应用样式
   applyStyles: function() {
     // 如果已经添加过样式则不重复添加
     if (document.getElementById('heart-moments-styles')) return;
@@ -301,28 +300,25 @@ hide: function() {
       
       .heart-moments-content {
         position: relative;
-        background: linear-gradient(145deg, #ffecef, #ffd1d7);
-        padding: 30px;
-        border-radius: 15px;
-        width: 90%;
-        max-width: 600px;
-        max-height: 80vh;
-        box-shadow: 0 10px 30px rgba(255, 105, 180, 0.3), 0 0 50px rgba(255, 182, 193, 0.2);
-        text-align: center;
+        background: linear-gradient(145deg, #fff5f7, #ffeaee);
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
         overflow-y: auto;
-        border: 2px solid #ff6b8b;
+        text-align: center;
       }
       
       .heart-moments-header {
         position: relative;
-        margin-bottom: 25px;
+        margin: 30px 0 25px;
       }
       
       .heart-moments-header h2 {
-        color: #e75480;
+        color: #e78599;
         font-size: 28px;
         margin: 0;
-        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.05);
       }
       
       .heart-shine {
@@ -331,13 +327,15 @@ hide: function() {
         left: 50%;
         width: 40px;
         height: 40px;
-        background: radial-gradient(circle, rgba(255,105,180,0.7) 0%, rgba(255,105,180,0) 70%);
+        background: radial-gradient(circle, rgba(255,150,180,0.4) 0%, rgba(255,150,180,0) 70%);
         transform: translateX(-50%);
         animation: pulse 2s infinite;
       }
       
       .heart-moments-form {
-        margin-bottom: 30px;
+        margin: 0 auto 30px;
+        width: 90%;
+        max-width: 600px;
       }
       
       #new-moment {
@@ -345,15 +343,15 @@ hide: function() {
         height: 80px;
         padding: 10px;
         border-radius: 10px;
-        border: 1px solid #ffb6c1;
+        border: 1px solid #ffd0d8;
         resize: none;
         font-size: 16px;
         margin-bottom: 10px;
-        background-color: rgba(255, 255, 255, 0.9);
+        background-color: rgba(255, 255, 255, 0.95);
       }
       
       #save-moment-btn {
-        background: linear-gradient(to right, #ff758c, #ff7eb3);
+        background: linear-gradient(to right, #ff9bac, #ffaec2);
         border: none;
         color: white;
         padding: 8px 20px;
@@ -366,27 +364,32 @@ hide: function() {
       
       #save-moment-btn:hover {
         transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(255, 105, 180, 0.4);
+        box-shadow: 0 5px 15px rgba(255, 155, 180, 0.3);
       }
       
       .heart-moments-list {
         text-align: left;
+        margin: 0 auto;
+        width: 90%;
+        max-width: 600px;
+        flex: 1;
+        padding-bottom: 50px;
       }
       
       .heart-moments-list h3 {
-        color: #e75480;
+        color: #e78599;
         margin-bottom: 15px;
         text-align: center;
         font-size: 20px;
       }
       
       .moment-item {
-        background-color: rgba(255, 255, 255, 0.9);
+        background-color: rgba(255, 255, 255, 0.95);
         padding: 15px;
         border-radius: 10px;
         margin-bottom: 15px;
         position: relative;
-        border-left: 4px solid #ff6b8b;
+        border-left: 4px solid #ffb5c5;
       }
       
       .moment-content {
@@ -397,7 +400,7 @@ hide: function() {
       
       .moment-time {
         font-size: 12px;
-        color: #888;
+        color: #aaa;
         text-align: right;
       }
       
@@ -407,7 +410,7 @@ hide: function() {
         right: 10px;
         background: none;
         border: none;
-        color: #ff5c8d;
+        color: #ffaab9;
         cursor: pointer;
         font-size: 14px;
         opacity: 0.6;
@@ -420,15 +423,35 @@ hide: function() {
       
       .empty-moments {
         text-align: center;
-        color: #888;
+        color: #aaa;
         font-style: italic;
         padding: 20px;
       }
       
       @keyframes pulse {
-        0% { transform: translateX(-50%) scale(1); opacity: 0.5; }
-        50% { transform: translateX(-50%) scale(1.2); opacity: 0.7; }
-        100% { transform: translateX(-50%) scale(1); opacity: 0.5; }
+        0% { transform: translateX(-50%) scale(1); opacity: 0.3; }
+        50% { transform: translateX(-50%) scale(1.2); opacity: 0.5; }
+        100% { transform: translateX(-50%) scale(1); opacity: 0.3; }
+      }
+      
+      /* 修复返回按钮样式，移除背景图像 */
+      #heart-moments .back-btn {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        width: 40px;
+        height: 40px;
+        background-image: none;
+        background-color: transparent;
+        border: none;
+        cursor: pointer;
+        opacity: 0.7;
+        transition: opacity 0.2s;
+        z-index: 10;
+      }
+      
+      #heart-moments .back-btn:hover {
+        opacity: 1;
       }
     `;
     

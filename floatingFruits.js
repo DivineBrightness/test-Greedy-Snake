@@ -75,15 +75,11 @@ initializeFruitsInBasket() {
     this.updateBasketDisplay();
   }
   
-  // 新增方法：更新果篮显示
+  // 修改 updateBasketDisplay 方法，移除文本更新部分
   updateBasketDisplay() {
     if (!this.fruitBasket) return;
     
-    // 更新果篮文本标签
-    const basketLabel = this.fruitBasket.querySelector('div');
-    if (basketLabel) {
-      basketLabel.textContent = `点击释放水果 (${this.collectedFruits.length})`;
-    }
+    // 移除更新文本标签的部分
     
     // 如果果篮中有水果，添加一个视觉提示
     if (this.collectedFruits.length > 0) {
@@ -179,21 +175,22 @@ releaseRandomFruit() {
     this.animateBasket();
   }
     
+    // 修改 createContainer 方法，移除文本标签
     createContainer() {
-        // 检查容器是否已存在
-        this.fruitContainer = document.getElementById('floating-fruits');
-        
-        if (!this.fruitContainer) {
-          // 创建容器
-          this.fruitContainer = document.createElement('div');
-          this.fruitContainer.id = 'floating-fruits';
-          this.fruitContainer.className = 'floating-fruits';
-          document.body.appendChild(this.fruitContainer);
-        }
-        
-        // 添加果篮 - 检查是否已存在
-        this.fruitBasket = document.getElementById('fruit-basket');
-        if (!this.fruitBasket) {
+      // 检查容器是否已存在
+      this.fruitContainer = document.getElementById('floating-fruits');
+      
+      if (!this.fruitContainer) {
+        // 创建容器
+        this.fruitContainer = document.createElement('div');
+        this.fruitContainer.id = 'floating-fruits';
+        this.fruitContainer.className = 'floating-fruits';
+        document.body.appendChild(this.fruitContainer);
+      }
+      
+      // 添加果篮 - 检查是否已存在
+      this.fruitBasket = document.getElementById('fruit-basket');
+      if (!this.fruitBasket) {
         this.fruitBasket = document.createElement('div');
         this.fruitBasket.id = 'fruit-basket';
         this.fruitBasket.className = 'fruit-basket';
@@ -212,31 +209,25 @@ releaseRandomFruit() {
         this.fruitBasket.style.cursor = 'pointer';
         this.fruitBasket.style.transition = 'transform 0.2s, filter 0.3s';
         
-        // 添加提示文本
-        const basketLabel = document.createElement('div');
-        basketLabel.style.fontSize = '12px';
-        basketLabel.style.textAlign = 'center';
-        basketLabel.style.marginTop = '5px';
-        basketLabel.style.color = '#555';
-        this.fruitBasket.appendChild(basketLabel);
+        // 移除文本标签创建部分
         
         // 添加鼠标悬停效果
         this.fruitBasket.addEventListener('mouseenter', () => {
-            if (this.collectedFruits.length > 0) {
+          if (this.collectedFruits.length > 0) {
             this.fruitBasket.style.transform = 'scale(1.05)';
-            }
+          }
         });
         
         this.fruitBasket.addEventListener('mouseleave', () => {
-            this.fruitBasket.style.transform = 'scale(1)';
+          this.fruitBasket.style.transform = 'scale(1)';
         });
         
         // 添加点击事件，点击时放出一个收集的水果
         this.fruitBasket.addEventListener('click', () => this.releaseRandomFruit());
         
         document.body.appendChild(this.fruitBasket);
-        }
       }
+    }
     // 添加重置水果位置的方法
 resetFruitsPosition() {
   console.log('重置水果位置');

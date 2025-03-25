@@ -175,6 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // 修改飞心点击处理
+// 修改飞心点击处理
 function dragEnd(e) {
     // 停止拖动
     isDragging = false;
@@ -185,7 +186,8 @@ function dragEnd(e) {
     document.removeEventListener('touchmove', dragMove);
     document.removeEventListener('touchend', dragEnd);
     
-    // 防止拖出视口
+    // 移除防止拖出视口的代码
+    /* 删除以下边界限制代码
     const rect = element.getBoundingClientRect();
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
@@ -194,6 +196,7 @@ function dragEnd(e) {
     if (rect.top < 0) element.style.top = "0px";
     if (rect.right > windowWidth) element.style.left = (windowWidth - rect.width) + "px";
     if (rect.bottom > windowHeight) element.style.top = (windowHeight - rect.height) + "px";
+    */
     
     // 判断是点击还是拖动
     const endTime = Date.now();
@@ -204,22 +207,22 @@ function dragEnd(e) {
       console.log('检测到点击飞心');
       
       // 模拟点击事件
-  setTimeout(() => {
-    // 重新播放飞心动画
-    if (flyingHeartAnimation) {
-      flyingHeartAnimation.goToAndPlay(0, true);
-      console.log('触发飞心动画');
-    }
-    
-    // 切换水果状态：点击一次冻结，点击一次恢复移动
-    if (window.floatingFruits) {
-      window.floatingFruits.toggleFreeze();
-    }
-  }, 10);
+      setTimeout(() => {
+        // 重新播放飞心动画
+        if (flyingHeartAnimation) {
+          flyingHeartAnimation.goToAndPlay(0, true);
+          console.log('触发飞心动画');
+        }
+        
+        // 切换水果状态：点击一次冻结，点击一次恢复移动
+        if (window.floatingFruits) {
+          window.floatingFruits.toggleFreeze();
+        }
+      }, 10);
     }
     
     console.log('结束拖动飞心');
-  }
+}
     }
 
     // 调用初始化函数
