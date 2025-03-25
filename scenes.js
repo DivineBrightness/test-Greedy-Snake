@@ -13,6 +13,8 @@ const tianGangCharacters = [
 const secretSequence = ['summer', 'winter', 'spring', 'autumn', 'summer', 'winter'];
 // 添加新的"春秋夏冬春秋"序列
 const cqSequence = ['spring', 'autumn', 'summer', 'winter', 'spring', 'autumn'];
+// 添加新的"春夏秋冬"序列
+const dailySequence = ['spring', 'summer', 'autumn', 'winter'];
 let currentSequence = [];
 let sequenceTimer = null;
 
@@ -71,7 +73,7 @@ function changeSeason(season) {
 }
 
 // 检测秘密序列
-// 修改 checkSecretSequence 函数，添加对新序列的检测
+// 修改 checkSecretSequence 函数，添加对每日一话序列的检测
 function checkSecretSequence(season) {
   // 清除之前的定时器
   if (sequenceTimer) {
@@ -82,7 +84,7 @@ function checkSecretSequence(season) {
   currentSequence.push(season);
   
   // 如果序列长度超过最长序列，删除最老的点击
-  const maxLength = Math.max(secretSequence.length, cqSequence.length);
+  const maxLength = Math.max(secretSequence.length, cqSequence.length, dailySequence.length);
   if (currentSequence.length > maxLength) {
     currentSequence.shift();
   }
@@ -138,6 +140,40 @@ function checkSecretSequence(season) {
       
       // 显示春秋页面
       window.cq.show();
+      
+      // 重置序列
+      currentSequence = [];
+      return;
+    }
+  }
+  
+  // 检查是否匹配每日一话序列
+  if (currentSequence.length >= dailySequence.length) {
+    // 获取与每日一话序列长度匹配的最近点击
+    const dailyCheck = currentSequence.slice(-dailySequence.length);
+    
+    let dailyMatch = true;
+    for (let i = 0; i < dailySequence.length; i++) {
+      if (dailySequence[i] !== dailyCheck[i]) {
+        dailyMatch = false;
+        break;
+      }
+    }
+    
+    // 如果匹配成功，显示每日一话页面
+    if (dailyMatch && window.daily) {
+      console.log('每日一话序列匹配成功！');
+      
+      // 隐藏主页面元素
+      document.querySelector('.season-controls').style.display = 'none';
+      document.getElementById('games-btn').style.display = 'none';
+      const pageTitle = document.getElementById('page-title') || document.querySelector('.container h1');
+      if (pageTitle) {
+        pageTitle.style.display = 'none';
+      }
+      
+      // 显示每日一话页面
+      window.daily.show();
       
       // 重置序列
       currentSequence = [];

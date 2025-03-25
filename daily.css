@@ -1,0 +1,423 @@
+/* 每日一话页面样式 */
+
+.daily-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.daily-container.open {
+  opacity: 1;
+}
+
+.daily-content {
+  position: relative;
+  background: linear-gradient(145deg, #e6f7ff, #cce6ff);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  text-align: center;
+  font-family: "STKaiti", "楷体", serif;
+}
+
+.daily-header {
+  position: relative;
+  margin: 30px 0 25px;
+}
+
+.daily-header h2 {
+  color: #0066cc;
+  font-size: 36px;
+  margin: 0;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+  font-weight: normal;
+}
+
+.daily-shine {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  width: 60px;
+  height: 60px;
+  background: radial-gradient(circle, rgba(0, 102, 204, 0.3) 0%, rgba(0, 102, 204, 0) 70%);
+  transform: translateX(-50%);
+  animation: daily-shine 3s infinite;
+}
+
+.daily-body {
+  margin: 0 auto;
+  width: 90%;
+  max-width: 800px;
+  text-align: center;
+  padding-bottom: 50px;
+}
+
+.daily-date {
+  margin-bottom: 20px;
+  font-size: 18px;
+  color: #0066cc;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.daily-date.animated {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.daily-quote-container {
+  margin: 0;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  flex: 1;
+  min-width: 300px;
+  max-width: 600px;
+}
+
+.daily-quote-container.animated {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.daily-quote {
+  background: rgba(255, 255, 255, 0.8);
+  padding: 30px;
+  border-radius: 10px;
+  position: relative;
+  border-left: 4px solid #0066cc;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.quote-text {
+  color: #333;
+  font-size: 24px;
+  line-height: 1.8;
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+.quote-source {
+  color: #0066cc;
+  font-style: normal;
+  text-align: right;
+  font-size: 18px;
+}
+
+.daily-reflection {
+  margin: 40px 0;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.daily-reflection.animated {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.daily-reflection h3 {
+  color: #0066cc;
+  font-size: 24px;
+  margin-bottom: 20px;
+  font-weight: normal;
+}
+
+.daily-reflection p {
+  color: #444;
+  font-size: 18px;
+  line-height: 1.6;
+  margin-bottom: 15px;
+}
+
+.daily-action {
+  margin: 40px 0;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.daily-action.animated {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.daily-action h3 {
+  color: #0066cc;
+  font-size: 24px;
+  margin-bottom: 20px;
+  font-weight: normal;
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
+}
+
+.action-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.action-number {
+  width: 40px;
+  height: 40px;
+  background: #0066cc;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  font-size: 20px;
+  margin-right: 20px;
+  font-weight: bold;
+}
+
+.action-text {
+  flex: 1;
+  text-align: left;
+  color: #333;
+  font-size: 18px;
+}
+
+/* 修复返回按钮样式 - 使用高优先级选择器覆盖全局样式 */
+html body #daily-page .back-btn {
+  position: absolute !important;
+  top: 20px !important;
+  left: 20px !important;
+  width: 40px !important;
+  height: 40px !important;
+  background-image: none !important;
+  background-color: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  opacity: 0.7 !important;
+  transition: opacity 0.2s !important;
+  z-index: 10 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  display: block !important;
+}
+
+html body #daily-page .back-btn:hover {
+  opacity: 1 !important;
+  transform: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+html body #daily-page .back-btn::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  width: 20px !important;
+  height: 20px !important;
+  border-left: 3px solid #0066cc !important;
+  border-bottom: 3px solid #0066cc !important;
+  transform: translate(-25%, -50%) rotate(45deg) !important;
+  background-image: none !important;
+  background-size: auto !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+}
+
+@keyframes daily-shine {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+
+/* 移动设备适配 */
+@media (max-width: 768px) {
+  .daily-body {
+    width: 95%;
+  }
+  
+  .quote-text {
+    font-size: 20px;
+  }
+  
+  .daily-reflection p {
+    font-size: 16px;
+  }
+  
+  .action-item {
+    padding: 12px;
+  }
+  
+  .action-number {
+    width: 35px;
+    height: 35px;
+    font-size: 18px;
+    margin-right: 15px;
+  }
+  
+  .action-text {
+    font-size: 16px;
+  }
+}
+
+/* 优化简化后的布局样式 */
+
+/* 调整弹性布局容器 */
+.daily-flex-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 40px;
+  margin-top: 30px;
+}
+
+/* 调整笑话容器宽度 */
+.daily-joke {
+  flex: 1;
+  min-width: 300px;
+  max-width: 500px;
+  margin: 0;
+}
+
+/* 调整笑话容器高度 */
+.joke-container {
+  min-height: 220px;
+  margin-bottom: 0;
+}
+
+/* 调整移动设备下的布局 */
+@media (max-width: 768px) {
+  .daily-flex-container {
+    gap: 30px;
+  }
+  
+  .daily-quote-container, .daily-joke {
+    width: 100%;
+    max-width: none;
+  }
+  
+  .joke-container {
+    min-height: 180px;
+  }
+}
+
+/* 添加笑话板块相关样式 */
+
+/* 弹性布局容器，用于左右两栏 */
+.daily-flex-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    margin-top: 20px;
+  }
+  
+  .daily-main-content {
+    flex: 1;
+    min-width: 300px;
+  }
+  
+  .daily-joke {
+    width: 300px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  
+  .daily-joke.animated {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  .daily-joke h3 {
+    color: #0066cc;
+    font-size: 24px;
+    margin-bottom: 20px;
+    font-weight: normal;
+  }
+  
+  .joke-container {
+    background: rgba(255, 255, 255, 0.8);
+    padding: 20px;
+    border-radius: 10px;
+    border-left: 4px solid #0066cc;
+    margin-bottom: 30px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    height: 100%;
+    max-height: 300px;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  
+  .daily-joke-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    font-size: 18px;
+    line-height: 1.6;
+    color: #333;
+    margin-bottom: 20px;
+  }
+  
+  .joke-setup {
+    margin-bottom: 20px;
+    font-weight: bold;
+  }
+  
+  .refresh-joke-btn {
+    background: linear-gradient(to right, #0066cc, #0099ff);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 16px;
+    align-self: center;
+  }
+  
+  .refresh-joke-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 102, 204, 0.3);
+  }
+  
+  .refresh-joke-btn:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+  
+  /* 为移动设备调整布局 */
+  @media (max-width: 768px) {
+    .daily-flex-container {
+      flex-direction: column;
+    }
+    
+    .daily-joke {
+      width: 100%;
+    }
+    
+    .joke-container {
+      min-height: 150px;
+    }
+  }
