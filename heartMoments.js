@@ -420,30 +420,181 @@ showCloudMomentsModal: function(cloudMoments) {
   
   // 添加云端记录删除按钮事件
   this.attachCloudDeleteListeners();
-  
+  // 添加云端记录编辑按钮事件
+  this.attachCloudEditListeners();
   // 添加弹窗出现动画
   setTimeout(() => {
     modalElement.classList.add('open');
   }, 10);
 },
+
+// 新增 showEditModal 和 updateCloudMoment 函数
+
+showEditModal: function(id, content) {
+  // 创建编辑弹窗
+  const editModalElement = document.createElement('div');
+  editModalElement.id = 'edit-moment-modal';
+  editModalElement.className = 'moments-modal edit-modal';
   
-  // 修改 renderCloudMoments 函数，为所有记录添加删除按钮
-  renderCloudMoments: function(cloudMoments) {
-    if (!cloudMoments || cloudMoments.length === 0) {
-      return '<div class="empty-moments">云端暂无记录</div>';
-    }
-    
-    return cloudMoments.map(moment => `
-      <div class="moment-item cloud-moment" data-id="${moment.id}">
-        <div class="moment-content">${this.escapeHTML(moment.content)}</div>
-        <div class="moment-meta">
-          <span class="moment-user">${this.escapeHTML(moment.user_name || 'anonymous')}</span>
-          <span class="moment-time">${moment.created_at || '未知时间'}</span>
+  // 弹窗内容
+  editModalElement.innerHTML = `
+    <div class="moments-modal-content">
+      <button class="modal-close-btn"><img src="./image/x-circle.svg" alt="关闭" class="close-icon"></button>
+      <div class="modal-header">
+        <h2>编辑记录</h2>
+      </div>
+      <div class="modal-body">
+        <textarea id="edit-moment-content" maxlength="200">${content}</textarea>
+        <div class="modal-actions">
+          <button id="update-moment-btn" data-id="${id}">保存</button>
+          <button id="cancel-edit-btn">取消</button>
         </div>
+      </div>
+    </div>
+  `;
+  
+  // 添加到文档
+  document.body.appendChild(editModalElement);
+  
+  // 添加关闭按钮事件
+  const closeBtn = editModalElement.querySelector('.modal-close-btn');
+  const cancelBtn = editModalElement.querySelector('#cancel-edit-btn');
+  
+  const closeModal = () => {
+    editModalElement.classList.add('closing');
+    setTimeout(() => {
+      if (editModalElement.parentNode) {
+        editModalElement.parentNode.removeChild(editModalElement);
+      }
+    }, 300);
+  };
+  
+  if (closeBtn) {
+    closeBtn.addEventListener('click', closeModal);
+  }
+  
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', closeModal);
+  }
+  
+  // 添加保存按钮事件
+  const updateBtn = editModalElement.querySelector('#update-moment-btn');
+  if (updateBtn) {
+    updateBtn.addEventListener('click', () => {
+      const newContent = document.getElementById('edit-moment-content').value;
+      this.updateCloudMoment(id, newContent, closeModal);
+    });
+  }
+  
+  // 添加弹窗出现动画
+  setTimeout(() => {
+    editModalElement.classList.add('open');
+    // 聚焦到文本框
+    document.getElementById('edit-moment-content').focus();
+  }, 10);
+},
+
+updateCloudMoment: function(id, content, callback) {
+  if (!id || !content.trim()) {
+    alert('内容不能为空');
+    return;
+  }
+  
+  console.log('正在更新云端记录:', id);
+  
+  // 获取已验证的密钥
+  const verifiedKey = sessionStorage.getItem('verified_treasure_key');
+  
+  // 如果没有验证过的密钥，则无法更新
+  if (!verifiedKey) {
+    console.error('无法更新云端记录：未找到有效的已验证密钥');
+    return;
+  }
+  
+  // 使用POST请求，但在请求体中指明是更新操作
+  fetch('https://331600.xyz/heart-moments', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + verifiedKey
+    },
+    body: JSON.stringify({
+      action: 'update',  // 标识这是更新操作
+      id: id,
+      content: content.trim(),
+      key: verifiedKey
+    })
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('服务器返回状态码: ' + response.status);
+    }
+    return response.json();
+  })
+  .then(data => {
+    if (data.success) {
+      console.log('云端记录更新成功');
+      
+      // 更新页面上的记录内容
+      const recordElement = document.querySelector(`.cloud-moment[data-id="${id}"] .moment-content`);
+      if (recordElement) {
+        recordElement.textContent = content.trim();
+      }
+      
+      // 更新按钮的data-content属性，以便下次编辑
+      const editBtn = document.querySelector(`.edit-cloud-moment-btn[data-id="${id}"]`);
+      if (editBtn) {
+        editBtn.setAttribute('data-content', content.trim());
+      }
+      
+      // 关闭编辑弹窗
+      if (callback) callback();
+      
+      // 显示成功提示
+      alert('记录已更新');
+    } else {
+      console.error('更新云端记录失败:', data.error);
+      alert('更新失败: ' + data.error);
+    }
+  })
+  .catch(error => {
+    console.error('更新云端记录出错:', error);
+    alert('更新出错: ' + error.message);
+  });
+},
+// 修改 renderCloudMoments 函数，添加编辑按钮
+
+renderCloudMoments: function(cloudMoments) {
+  if (!cloudMoments || cloudMoments.length === 0) {
+    return '<div class="empty-moments">云端暂无记录</div>';
+  }
+  
+  return cloudMoments.map(moment => `
+    <div class="moment-item cloud-moment" data-id="${moment.id}">
+      <div class="moment-content">${this.escapeHTML(moment.content)}</div>
+      <div class="moment-meta">
+        <span class="moment-user">${this.escapeHTML(moment.user_name || 'anonymous')}</span>
+        <span class="moment-time">${moment.created_at || '未知时间'}</span>
+      </div>
+      <div class="moment-actions">
+        <button class="edit-cloud-moment-btn" data-id="${moment.id}" data-content="${this.escapeHTML(moment.content)}">编辑</button>
         <button class="delete-cloud-moment-btn" data-id="${moment.id}">删除</button>
       </div>
-    `).join('');
-  },
+    </div>
+  `).join('');
+},
+// 新增 attachCloudEditListeners 函数
+
+attachCloudEditListeners: function() {
+  const editButtons = document.querySelectorAll('.edit-cloud-moment-btn');
+  editButtons.forEach(button => {
+    button.addEventListener('click', (e) => {
+      const id = e.target.getAttribute('data-id');
+      const content = e.target.getAttribute('data-content');
+      this.showEditModal(id, content);
+    });
+  });
+},
  // 修改 deleteCloudMoment 函数，使用POST请求
   deleteCloudMoment: function(id) {
     if (!id) {

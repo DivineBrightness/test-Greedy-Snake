@@ -353,7 +353,7 @@
 
 /* 删除云端记录按钮样式 */
 .delete-cloud-moment-btn {
-  position: absolute;
+  position: static;
   top: 10px;
   right: 10px;
   background: none;
@@ -366,5 +366,82 @@
 }
 
 .delete-cloud-moment-btn:hover {
+  opacity: 1;
+}
+
+/* 编辑弹窗样式 */
+.edit-modal .modal-body {
+  padding: 15px;
+}
+
+#edit-moment-content {
+  width: 100%;
+  height: 120px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ffd0d8;
+  resize: none;
+  font-size: 16px;
+  margin-bottom: 15px;
+  background-color: rgba(255, 255, 255, 0.95);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+#update-moment-btn, #cancel-edit-btn {
+  padding: 8px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+#update-moment-btn {
+  background: linear-gradient(to right, #ff9bac, #ffaec2);
+  color: white;
+}
+
+#cancel-edit-btn {
+  background: #f1f1f1;
+  color: #666;
+}
+
+#update-moment-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 155, 180, 0.3);
+}
+
+#cancel-edit-btn:hover {
+  background: #e5e5e5;
+}
+
+/* 编辑和删除按钮容器 */
+.moment-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 8px;
+}
+
+/* 编辑按钮样式 */
+.edit-cloud-moment-btn {
+  background: none;
+  border: none;
+  color: #b5c5ff;
+  cursor: pointer;
+  font-size: 14px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.edit-cloud-moment-btn:hover {
   opacity: 1;
 }
