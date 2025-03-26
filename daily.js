@@ -16,10 +16,103 @@ const daily = {
   ],
   joke: null, // 用于存储获取的笑话
   pokemon: null, // 用于存储获取的宝可梦数据
-  
+  catFact: null, // 用于存储获取的猫咪事实
+
   // 初始化函数
   init: function() {
     console.log('初始化每日一话功能');
+  },
+  // 获取猫咪事实
+  fetchCatFact: async function() {
+    try {
+      const response = await fetch('https://catfact.ninja/fact');
+      if (!response.ok) {
+        throw new Error('获取猫咪事实失败');
+      }
+      
+      const data = await response.json();
+      this.catFact = data.fact;
+      console.log('获取到猫咪事实:', this.catFact);
+      return this.catFact;
+      
+    } catch (error) {
+      console.error('获取猫咪事实失败:', error);
+      this.catFact = "猫咪每天大约要睡16-18小时。";
+      return this.catFact;
+    }
+  },
+  // 显示猫咪事实弹窗
+  showCatFactModal: async function() {
+    // 如果没有事先加载猫咪事实，先获取一个
+    if (!this.catFact) {
+      await this.fetchCatFact();
+    }
+    
+    // 创建弹窗元素
+    const modalElement = document.createElement('div');
+    modalElement.id = 'cat-fact-modal';
+    modalElement.className = 'cat-fact-modal';
+    
+    // 设置弹窗内容
+    modalElement.innerHTML = `
+      <div class="cat-fact-modal-content">
+        <button class="modal-close-btn"><span>×</span></button>
+        <div class="cat-fact-header">
+          <h3>猫咪说</h3>
+        </div>
+        <div class="cat-fact-image">
+          <img src="./image/cat.svg" alt="猫咪">
+        </div>
+        <div class="cat-fact-content">
+          <p class="fact-text">"${this.catFact}"</p>
+        </div>
+        <button class="get-another-fact-btn">再来一条</button>
+      </div>
+    `;
+    
+    // 添加到文档
+    document.querySelector('.daily-content').appendChild(modalElement);
+    
+    // 添加弹窗出现动画
+    setTimeout(() => {
+      modalElement.classList.add('open');
+    }, 10);
+    
+    // 添加关闭按钮事件
+    const closeBtn = modalElement.querySelector('.modal-close-btn');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        modalElement.classList.remove('open');
+        setTimeout(() => {
+          modalElement.remove();
+        }, 300);
+      });
+    }
+    
+    // 添加再来一条按钮事件
+    const getAnotherBtn = modalElement.querySelector('.get-another-fact-btn');
+    if (getAnotherBtn) {
+      getAnotherBtn.addEventListener('click', async () => {
+        getAnotherBtn.textContent = '加载中...';
+        getAnotherBtn.disabled = true;
+        
+        await this.fetchCatFact();
+        
+        const factText = modalElement.querySelector('.fact-text');
+        if (factText) {
+          factText.textContent = `"${this.catFact}"`;
+          
+          // 添加一点动画效果
+          factText.classList.add('fact-refresh');
+          setTimeout(() => {
+            factText.classList.remove('fact-refresh');
+          }, 500);
+        }
+        
+        getAnotherBtn.textContent = '再来一条';
+        getAnotherBtn.disabled = false;
+      });
+    }
   },
   // 获取随机宝可梦
   fetchPokemon: async function() {
@@ -237,119 +330,135 @@ const daily = {
     }
   },
   
-    // 修改 show 方法，添加隐藏水果篮的代码
-    show: function() {
-      // 如果页面已经打开，不重复操作
-      if (this.isOpen) return;
-      
-      console.log('显示每日一话页面');
-      
-      // 隐藏浮动水果和水果篮
-      if (window.floatingFruits) {
-        window.floatingFruits.hide();
-        console.log('已隐藏水果篮');
-      }
-      
-      // 获取笑话
-      this.fetchJoke();
-      
-      // 预加载宝可梦数据
-      this.fetchPokemon();
-      
-      // 获取今天的日期作为随机种子
-      const today = new Date();
-      const dateString = `${today.getFullYear()}${today.getMonth() + 1}${today.getDate()}`;
-      const randomSeed = parseInt(dateString);
-      
-      // 使用日期作为种子生成伪随机数，使每天显示固定的一句话
-      const randomIndex = randomSeed % this.quotes.length;
-      const todayQuote = this.quotes[randomIndex];
-      
-      // 创建每日一话页面元素
-      const dailyElement = document.createElement('div');
-      dailyElement.id = 'daily-page';
-      dailyElement.className = 'daily-container';
-      
-      // 设置页面内容 - 添加宝可梦按钮
-      dailyElement.innerHTML = `
-        <div class="daily-content">
-          <button class="back-btn" id="daily-back-btn"></button>
+  // 修改 show 方法，添加猫咪按钮
+  show: function() {
+    // 如果页面已经打开，不重复操作
+    if (this.isOpen) return;
+    
+    console.log('显示每日一话页面');
+    
+    // 隐藏浮动水果和水果篮
+    if (window.floatingFruits) {
+      window.floatingFruits.hide();
+      console.log('已隐藏水果篮');
+    }
+    
+    // 获取笑话
+    this.fetchJoke();
+    
+    // 预加载宝可梦数据
+    this.fetchPokemon();
+    
+    // 预加载猫咪事实
+    this.fetchCatFact();
+    
+    // 获取今天的日期作为随机种子
+    const today = new Date();
+    const dateString = `${today.getFullYear()}${today.getMonth() + 1}${today.getDate()}`;
+    const randomSeed = parseInt(dateString);
+    
+    // 使用日期作为种子生成伪随机数，使每天显示固定的一句话
+    const randomIndex = randomSeed % this.quotes.length;
+    const todayQuote = this.quotes[randomIndex];
+    
+    // 创建每日一话页面元素
+    const dailyElement = document.createElement('div');
+    dailyElement.id = 'daily-page';
+    dailyElement.className = 'daily-container';
+    
+    // 设置页面内容 - 添加宝可梦按钮和猫咪按钮
+    dailyElement.innerHTML = `
+      <div class="daily-content">
+        <button class="back-btn" id="daily-back-btn"></button>
+        <div class="daily-buttons">
           <button class="pokemon-btn" id="pokemon-catch-btn">
             <img src="./image/精灵球.svg" alt="精灵球">
           </button>
-          <div class="daily-header">
-            <h2>每日一话</h2>
-            <div class="daily-shine"></div>
+          <button class="cat-btn" id="cat-fact-btn">
+            <img src="./image/cat.svg" alt="猫咪">
+          </button>
+        </div>
+        <div class="daily-header">
+          <h2>每日一话</h2>
+          <div class="daily-shine"></div>
+        </div>
+        
+        <div class="daily-body">
+          <div class="daily-date">
+            ${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日
           </div>
           
-          <div class="daily-body">
-            <div class="daily-date">
-              ${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日
+          <div class="daily-flex-container">
+            <div class="daily-quote-container">
+              <div class="daily-quote">
+                <p class="quote-text">${todayQuote.text}</p>
+                <p class="quote-source">${todayQuote.source}</p>
+              </div>
             </div>
             
-            <div class="daily-flex-container">
-              <div class="daily-quote-container">
-                <div class="daily-quote">
-                  <p class="quote-text">${todayQuote.text}</p>
-                  <p class="quote-source">${todayQuote.source}</p>
+            <div class="daily-joke">
+              <h3>今日一笑</h3>
+              <div class="joke-container">
+                <div class="daily-joke-content">
+                  <p>正在加载笑话...</p>
                 </div>
-              </div>
-              
-              <div class="daily-joke">
-                <h3>今日一笑</h3>
-                <div class="joke-container">
-                  <div class="daily-joke-content">
-                    <p>正在加载笑话...</p>
-                  </div>
-                  <button class="refresh-joke-btn">换一个</button>
-                </div>
+                <button class="refresh-joke-btn">换一个</button>
               </div>
             </div>
           </div>
         </div>
-      `;
+      </div>
+    `;
+    
+    // 添加到文档
+    document.querySelector('.container').appendChild(dailyElement);
+    
+    // 设置页面样式
+    this.applyStyles();
+    
+    // 显示页面
+    setTimeout(() => {
+      dailyElement.classList.add('open');
+      this.isOpen = true;
       
-      // 添加到文档
-      document.querySelector('.container').appendChild(dailyElement);
+      // 添加返回按钮事件
+      document.getElementById('daily-back-btn').addEventListener('click', () => {
+        this.hide();
+      });
       
-      // 设置页面样式
-      this.applyStyles();
-      
-      // 显示页面
-      setTimeout(() => {
-        dailyElement.classList.add('open');
-        this.isOpen = true;
-        
-        // 添加返回按钮事件
-        document.getElementById('daily-back-btn').addEventListener('click', () => {
-          this.hide();
+      // 添加刷新笑话按钮事件
+      const refreshJokeBtn = document.querySelector('.refresh-joke-btn');
+      if (refreshJokeBtn) {
+        refreshJokeBtn.addEventListener('click', () => {
+          refreshJokeBtn.textContent = '加载中...';
+          refreshJokeBtn.disabled = true;
+          this.fetchJoke().then(() => {
+            refreshJokeBtn.textContent = '换一个';
+            refreshJokeBtn.disabled = false;
+          });
         });
-        
-        // 添加刷新笑话按钮事件
-        const refreshJokeBtn = document.querySelector('.refresh-joke-btn');
-        if (refreshJokeBtn) {
-          refreshJokeBtn.addEventListener('click', () => {
-            refreshJokeBtn.textContent = '加载中...';
-            refreshJokeBtn.disabled = true;
-            this.fetchJoke().then(() => {
-              refreshJokeBtn.textContent = '换一个';
-              refreshJokeBtn.disabled = false;
-            });
-          });
-        }
-        
-        // 添加宝可梦按钮事件
-        const pokemonBtn = document.getElementById('pokemon-catch-btn');
-        if (pokemonBtn) {
-          pokemonBtn.addEventListener('click', () => {
-            this.showPokemonModal();
-          });
-        }
-        
-        // 添加页面出现动画
-        this.playEntranceAnimation();
-      }, 100);
-    },
+      }
+      
+      // 添加宝可梦按钮事件
+      const pokemonBtn = document.getElementById('pokemon-catch-btn');
+      if (pokemonBtn) {
+        pokemonBtn.addEventListener('click', () => {
+          this.showPokemonModal();
+        });
+      }
+      
+      // 添加猫咪按钮事件
+      const catBtn = document.getElementById('cat-fact-btn');
+      if (catBtn) {
+        catBtn.addEventListener('click', () => {
+          this.showCatFactModal();
+        });
+      }
+      
+      // 添加页面出现动画
+      this.playEntranceAnimation();
+    }, 100);
+  },
     
   // 隐藏每日一话页面
   // 修改 hide 方法，添加显示水果篮的代码
