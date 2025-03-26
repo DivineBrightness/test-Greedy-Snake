@@ -1488,8 +1488,8 @@ body.winter .seasonal-decoration {
   position: fixed;
   /* top: -77px;
   left: 64.034px; */
-  width: 150px !important;
-  height: 150px !important;
+  width: 100px !important;
+  height: 100px !important;
   max-width: 150px !important;
   max-height: 150px !important;
   overflow: hidden !important;
