@@ -714,32 +714,38 @@ html body #daily-page .back-btn::before {
 
 /* 添加猫咪相关样式 */
 
-/* 页面顶部按钮容器 */
-.daily-buttons {
-  position: absolute;
-  top: 30px;
-  right: 20px;
-  display: flex;
-  gap: 15px;
-  z-index: 10;
-}
 
-/* 移动宝可梦按钮到容器中 */
+
+/* 宝可梦按钮样式 */
 .pokemon-btn {
-  position: static;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 10;
+  opacity: 0.8;
+  transition: all 0.3s ease;
   animation: float 3s ease-in-out infinite;
 }
 
 /* 猫咪按钮样式 */
 .cat-btn {
+  position: absolute;
+  top: 320px;
+  right: 25px; /* 放在宝可梦按钮左侧 */
   width: 50px;
-  height: 50px;
+  height: 50px; /* 修正高度错误 */
   background: none;
   border: none;
   cursor: pointer;
   opacity: 0.8;
   transition: all 0.3s ease;
   animation: float 3.5s ease-in-out infinite 0.5s; /* 错开动画 */
+  z-index: 1020; /* 提高到最高层级 */
 }
 
 .cat-btn img {
