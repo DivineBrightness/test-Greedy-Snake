@@ -875,15 +875,53 @@ stopDragging(fruit) {
     }
   });
   
-  // 在页面加载完成后显示水果
-  document.addEventListener('DOMContentLoaded', () => {
-    // 检查是否在主页
-    const isHomePage = 
-      document.getElementById('games-selection').style.display === 'none' && 
-      document.getElementById('snake-game').style.display === 'none' && 
-      document.getElementById('tetris-game').style.display === 'none';
-    
-    if (isHomePage && window.floatingFruits) {
-      window.floatingFruits.show();
+// 替换为以下代码：
+document.addEventListener('DOMContentLoaded', () => {
+  // 初始状态检查
+  setTimeout(() => {
+    checkAndUpdateFruitVisibility();
+  }, 100);
+});
+
+// 添加这个新函数来处理水果篮显示逻辑
+function checkAndUpdateFruitVisibility() {
+  if (!window.floatingFruits) return;
+  
+  // 获取当前显示的页面
+  const isGameSelectionVisible = document.getElementById('games-selection') && 
+    document.getElementById('games-selection').style.display !== 'none';
+  const isSnakeGameVisible = document.getElementById('snake-game') && 
+    document.getElementById('snake-game').style.display !== 'none';
+  const isTetrisGameVisible = document.getElementById('tetris-game') && 
+    document.getElementById('tetris-game').style.display !== 'none';
+  const isDailyPageVisible = document.getElementById('daily-page');
+  
+  // 条件：在主页、贪吃蛇游戏页或俄罗斯方块游戏页显示水果篮
+  const shouldShowFruits = 
+    (isSnakeGameVisible || isTetrisGameVisible || (!isGameSelectionVisible && !isDailyPageVisible));
+  
+  if (shouldShowFruits) {
+    window.floatingFruits.show();
+  } else {
+    window.floatingFruits.hide();
+  }
+}
+// 监听页面变化，动态更新水果篮的显示状态
+// 添加MutationObserver监控DOM变化，特别是游戏容器的display属性
+const observer = new MutationObserver((mutations) => {
+  mutations.forEach(mutation => {
+    if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+      checkAndUpdateFruitVisibility();
+    } else if (mutation.type === 'childList') {
+      checkAndUpdateFruitVisibility();
     }
   });
+});
+
+// 监视整个文档的变化
+observer.observe(document.body, { 
+  attributes: true, 
+  childList: true, 
+  subtree: true, 
+  attributeFilter: ['style'] 
+});

@@ -27,6 +27,7 @@ function populateSelect(selectId) {
   });
 }
 
+// 在changeSeason函数中添加随机选择季节图片的功能
 function changeSeason(season) {
   console.log('切换季节到：', season);
   document.querySelectorAll('.season-btn').forEach(btn => btn.classList.remove('active'));
@@ -39,37 +40,87 @@ function changeSeason(season) {
       const decoration = document.querySelector('.seasonal-decoration');
       decoration.style.opacity = 0;
       
-      // 在 scenes.js 的 changeSeason 函数中添加冬季特殊处理
-      setTimeout(() => {
-        // 在scenes.js的changeSeason函数中修改透明度设置
-        if (document.getElementById('snake-game').style.display === 'block' ||
+      // 随机选择季节图片
+setTimeout(() => {
+    // 根据季节选择对应文件夹
+    let seasonFolder = '';
+    switch(season) {
+      case 'spring': 
+        seasonFolder = '春';
+        break;
+      case 'summer': 
+        seasonFolder = '夏';
+        break;
+      case 'autumn': 
+        seasonFolder = '秋';
+        break;
+      case 'winter': 
+        seasonFolder = '冬';
+        break;
+    }
+  
+    // 直接使用随机数选择图片，不再尝试读取index.json
+    setDefaultSeasonImage(decoration, season, seasonFolder);
+    
+    // 设置透明度
+    if (document.getElementById('snake-game').style.display === 'block' ||
         document.getElementById('tetris-game').style.display === 'block') {
-        // 游戏页面使用稍高的不透明度
-        if (season === 'winter') {
-            decoration.style.opacity = 0.60; // 从0.08增加到0.15
-        } else {
-            decoration.style.opacity = 0.65; // 从0.1增加到0.18
-        }
-        } else if (document.getElementById('games-selection').style.display === 'block') {
-        if (season === 'winter') {
-            decoration.style.opacity = 0.60; // 从0.12增加到0.20
-        } else {
-            decoration.style.opacity = 0.65; // 从0.15增加到0.25
-        }
-        } else {
-        if (season === 'winter') {
-            decoration.style.opacity = 0.85; // 从0.15增加到0.25
-        } else {
-            decoration.style.opacity = 0.80; // 从0.2增加到0.30
-        }
-        }
-      }, 300);
+      // 游戏页面使用稍高的不透明度
+      if (season === 'winter') {
+          decoration.style.opacity = 0.60;
+      } else {
+          decoration.style.opacity = 0.65;
+      }
+    } else if (document.getElementById('games-selection').style.display === 'block') {
+      if (season === 'winter') {
+          decoration.style.opacity = 0.60;
+      } else {
+          decoration.style.opacity = 0.65;
+      }
+    } else {
+      if (season === 'winter') {
+          decoration.style.opacity = 0.85;
+      } else {
+          decoration.style.opacity = 0.80;
+      }
+    }
+  }, 300);
   } else {
       console.error('未找到季节按钮：', season);
   }
   
   // 添加序列检测逻辑
   checkSecretSequence(season);
+}
+
+// 设置默认季节图片的辅助函数
+function setDefaultSeasonImage(decoration, season, seasonFolder) {
+  // 根据季节选择一个默认图片
+  let defaultImage = '';
+  switch(season) {
+    case 'spring': 
+      // 随机从春1-春8中选择
+      const springNum = Math.floor(Math.random() * 9) + 1;
+      defaultImage = `春${springNum}.svg`;
+      break;
+    case 'summer': 
+      // 随机从夏1-夏8中选择
+      const summerNum = Math.floor(Math.random() * 8) + 1;
+      defaultImage = `夏${summerNum}.svg`;
+      break;
+    case 'autumn': 
+      // 随机从秋1-秋8中选择
+      const autumnNum = Math.floor(Math.random() * 8) + 1;
+      defaultImage = `秋${autumnNum}.svg`; 
+      break;
+    case 'winter': 
+      // 随机从冬1-冬8中选择
+      const winterNum = Math.floor(Math.random() * 8) + 1;
+      defaultImage = `冬${winterNum}.svg`;
+      break;
+  }
+  
+  decoration.style.backgroundImage = `url('./image/四季/${seasonFolder}/${defaultImage}')`;
 }
 
 // 检测秘密序列

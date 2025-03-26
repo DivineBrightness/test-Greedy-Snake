@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" id="water-gun">
+  <path fill="#a0c54f" d="M54 6H38a6.962 6.962 0 0 0-4 1.26A6.962 6.962 0 0 0 30 6H14a7 7 0 1 0 0 14h16a6.962 6.962 0 0 0 4-1.26A6.962 6.962 0 0 0 38 20h16a7 7 0 1 0 0-14z"></path>
+  <path fill="#cc503d" d="M20 25h-4v-6a2 2 0 1 1 4 0v6zm31 1h-4v-7a2 2 0 1 1 4 0v7z"></path>
+  <path fill="#fcc365" d="M57 25H45l-3-2h-3v3l-2-2H9a2 2 0 0 0-2 2v1.875L1 29v4l6 1v1a2 2 0 0 0 2 2h2v1a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-1h20v2h3l3-1-4 9v2h5l-1.527 9h7.483a2.999 2.999 0 0 0 2.954-2.479L58 38h-1a6 6 0 0 0 6-6v-1a6 6 0 0 0-6-6z"></path>
+  <path fill="#e65a45" d="M17 40h-4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2z"></path>
+  <path fill="#cc503d" d="M14 31h2v2h-2zM14 35h2v2h-2z"></path>
+  <path fill="#e65a45" d="M57 38H45l-3 1h-3V23h3l3 2h12a6 6 0 0 1 6 6v1a6 6 0 0 1-6 6z"></path>
+  <path fill="#cc503d" d="m45 38-4 9v2h5l2-11z"></path>
+  <path fill="#fcc365" d="M54.5 34h-7a2.5 2.5 0 1 1 0-5h7a2.5 2.5 0 1 1 0 5z"></path>
+  <path fill="#e65a45" d="m7 34-6-1v-4l6-1.125zM37 6.078a6.964 6.964 0 0 0-3 1.182 6.964 6.964 0 0 0-3-1.182v13.844a6.964 6.964 0 0 0 3-1.182 6.964 6.964 0 0 0 3 1.182V6.078z"></path>
+  <path fill="#cc503d" d="M33.5 33H19v-3h14.5a1.5 1.5 0 0 1 0 3z"></path>
+  <path fill="#e65a45" d="M53 48h3.237l.705-4H55a2 2 0 0 0-2 2v2zm0 0h-1a2 2 0 0 0-2 2v2h5.531l.705-4H53z"></path>
+  <path fill="#91b348" d="M52 10h2v2h-2zM46 10h4v2h-4z"></path>
+</svg>

@@ -662,7 +662,7 @@ button:focus {
 /* 2. 修改各季节背景的动画应用 */
 body.spring .seasonal-decoration {
   /* background-image: url('./image/flower\ \(1\).svg'); */
-  background-image: url('./image/四季/butterfly.svg');
+  background-image: url('./image/四季/春2.svg');
   background-size: 40%;
   /* animation: float 0s ease-in-out infinite; */
   transform-origin: center;
