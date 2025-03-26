@@ -596,4 +596,17 @@ document.getElementById('tetris-back-btn').addEventListener('click', () => {
             }
         });
     }
+
+    // 添加扑克牌游戏按钮点击事件
+  document.getElementById('card-select-btn').addEventListener('click', () => {
+    console.log('进入扑克牌游戏');
+    toggleGameView(null, true);
+    
+    // 调用cardGame模块的show方法显示扑克牌游戏
+    if (window.cardGame) {
+      window.cardGame.show();
+    } else {
+      console.error('找不到cardGame模块');
+    }
+  });
   });
