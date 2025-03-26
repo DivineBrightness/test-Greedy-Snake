@@ -662,7 +662,7 @@ button:focus {
 /* 2. 修改各季节背景的动画应用 */
 body.spring .seasonal-decoration {
   /* background-image: url('./image/flower\ \(1\).svg'); */
-  background-image: url('./image/四季/春2.svg');
+  background-image: url('./image/四季/春/春2.svg');
   background-size: 40%;
   /* animation: float 0s ease-in-out infinite; */
   transform-origin: center;
@@ -670,7 +670,7 @@ body.spring .seasonal-decoration {
 
 body.summer .seasonal-decoration {
   /* background-image: url('./image/summer-beach.svg'); */
-  background-image: url('./image/四季/summer.svg');
+  background-image: url('./image/四季/夏/夏3.svg');
   background-size: 40%;
   /* animation: sway 0s ease-in-out infinite; */
   transform-origin: center;
@@ -678,7 +678,7 @@ body.summer .seasonal-decoration {
 
 body.autumn .seasonal-decoration {
   /* background-image: url('./image/leaves.svg'); */
-  background-image: url('./image/四季/autumn.svg');
+  background-image: url('./image/四季/秋/秋3.svg');
   background-size: 40%;
   /* animation: fall 0s ease-in-out infinite; */
   transform-origin: center;
@@ -686,7 +686,7 @@ body.autumn .seasonal-decoration {
 
 body.winter .seasonal-decoration {
   /* background-image: url('./image/winter.svg'); */
-  background-image: url('./image/四季/winter1.svg');
+  background-image: url('./image/四季/冬/冬3.svg');
   background-size: 40%;
   /* animation: snow 0s ease-in-out infinite; */
   transform-origin: center;
