@@ -915,3 +915,30 @@ html body #daily-page .back-btn::before {
     padding: 10px 15px;
   }
 }
+
+/* 猫咪事实原文和译文样式 */
+.original-text {
+  margin-bottom: 10px;
+  font-style: italic;
+  color: #333;
+}
+
+.translated-text {
+  font-style: normal;
+  color: #e91e63;
+  font-weight: bold;
+}
+
+/* 调整猫咪事实弹窗高度以适应两行文本 */
+.cat-fact-modal-content {
+  min-height: 400px;
+}
+
+.cat-fact-image {
+  margin: 15px auto;
+}
+
+.cat-fact-content {
+  margin: 15px 0;
+  min-height: 100px;
+}

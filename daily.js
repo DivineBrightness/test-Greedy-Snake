@@ -22,7 +22,29 @@ const daily = {
   init: function() {
     console.log('初始化每日一话功能');
   },
-  // 获取猫咪事实
+
+  // 1. 添加翻译方法
+  translateText: async function(text) {
+    try {
+      const encodedText = encodeURIComponent(text);
+      const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodedText}&langpair=en|zh-CN`);
+      
+      if (!response.ok) {
+        throw new Error('翻译请求失败');
+      }
+      
+      const data = await response.json();
+      if (data && data.responseData && data.responseData.translatedText) {
+        return data.responseData.translatedText;
+      } else {
+        throw new Error('无法获取翻译结果');
+      }
+    } catch (error) {
+      console.error('翻译失败:', error);
+      return null;
+    }
+  },
+  // 2. 修改获取猫咪事实方法，增加翻译功能
   fetchCatFact: async function() {
     try {
       const response = await fetch('https://catfact.ninja/fact');
@@ -31,17 +53,31 @@ const daily = {
       }
       
       const data = await response.json();
-      this.catFact = data.fact;
+      this.catFact = {
+        original: data.fact,
+        translated: null
+      };
+      
+      // 获取翻译
+      const translation = await this.translateText(data.fact);
+      if (translation) {
+        this.catFact.translated = translation;
+      }
+      
       console.log('获取到猫咪事实:', this.catFact);
       return this.catFact;
       
     } catch (error) {
       console.error('获取猫咪事实失败:', error);
-      this.catFact = "猫咪每天大约要睡16-18小时。";
+      this.catFact = {
+        original: "猫咪每天大约要睡16-18小时。",
+        translated: "猫每天睡16-18个小时。"
+      };
       return this.catFact;
     }
   },
-  // 显示猫咪事实弹窗
+
+  // 3. 修改显示猫咪事实弹窗方法，同时显示原文和译文
   showCatFactModal: async function() {
     // 如果没有事先加载猫咪事实，先获取一个
     if (!this.catFact) {
@@ -53,7 +89,7 @@ const daily = {
     modalElement.id = 'cat-fact-modal';
     modalElement.className = 'cat-fact-modal';
     
-    // 设置弹窗内容
+    // 设置弹窗内容 - 添加原文和译文
     modalElement.innerHTML = `
       <div class="cat-fact-modal-content">
         <button class="modal-close-btn"><span>×</span></button>
@@ -61,17 +97,18 @@ const daily = {
           <h3>猫咪说</h3>
         </div>
         <div class="cat-fact-image">
-          <img src="./image/cat.svg" alt="猫咪">
+          <img src="./image/cat.svg" alt="猫咪" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><path d=%22M30,20 C35,10 45,10 50,15 C55,10 65,10 70,20 C80,30 90,40 90,60 C90,70 80,80 60,85 L60,90 L40,90 L40,85 C20,80 10,70 10,60 C10,40 20,30 30,20 Z M40,75 C40,85 60,85 60,75%22 fill=%22%23444%22 stroke=%22%23222%22 stroke-width=%222%22/><circle cx=%2235%22 cy=%2240%22 r=%225%22 fill=%22%23fff%22/><circle cx=%2265%22 cy=%2240%22 r=%225%22 fill=%22%23fff%22/></svg>'">
         </div>
         <div class="cat-fact-content">
-          <p class="fact-text">"${this.catFact}"</p>
+          <p class="fact-text original-text">"${this.catFact.original}"</p>
+          ${this.catFact.translated ? `<p class="fact-text translated-text">『${this.catFact.translated}』</p>` : ''}
         </div>
         <button class="get-another-fact-btn">再来一条</button>
       </div>
     `;
     
     // 添加到文档
-    document.querySelector('.daily-content').appendChild(modalElement);
+    document.body.appendChild(modalElement);
     
     // 添加弹窗出现动画
     setTimeout(() => {
@@ -98,15 +135,38 @@ const daily = {
         
         await this.fetchCatFact();
         
-        const factText = modalElement.querySelector('.fact-text');
-        if (factText) {
-          factText.textContent = `"${this.catFact}"`;
-          
-          // 添加一点动画效果
-          factText.classList.add('fact-refresh');
+        const originalTextElem = modalElement.querySelector('.original-text');
+        let translatedTextElem = modalElement.querySelector('.translated-text');
+        
+        if (originalTextElem) {
+          originalTextElem.textContent = `"${this.catFact.original}"`;
+          originalTextElem.classList.add('fact-refresh');
           setTimeout(() => {
-            factText.classList.remove('fact-refresh');
+            originalTextElem.classList.remove('fact-refresh');
           }, 500);
+        }
+        
+        if (this.catFact.translated) {
+          if (translatedTextElem) {
+            translatedTextElem.textContent = `『${this.catFact.translated}』`;
+            translatedTextElem.classList.add('fact-refresh');
+            setTimeout(() => {
+              translatedTextElem.classList.remove('fact-refresh');
+            }, 500);
+          } else {
+            // 如果之前没有翻译元素，创建一个
+            const factContent = modalElement.querySelector('.cat-fact-content');
+            if (factContent) {
+              translatedTextElem = document.createElement('p');
+              translatedTextElem.className = 'fact-text translated-text fact-refresh';
+              translatedTextElem.textContent = `『${this.catFact.translated}』`;
+              factContent.appendChild(translatedTextElem);
+              
+              setTimeout(() => {
+                translatedTextElem.classList.remove('fact-refresh');
+              }, 500);
+            }
+          }
         }
         
         getAnotherBtn.textContent = '再来一条';
