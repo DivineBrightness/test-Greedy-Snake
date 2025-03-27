@@ -1,0 +1,10 @@
+# 忽略特定文件夹
+未用资源/
+unused-resources/
+
+# 忽略特定类型的文件
+*.log
+*.tmp
+
+# 忽略特定文件
+config.local.js
