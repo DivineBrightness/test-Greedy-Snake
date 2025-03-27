@@ -100,7 +100,7 @@ function setDefaultSeasonImage(decoration, season, seasonFolder) {
   switch(season) {
     case 'spring': 
       // 随机从春1-春8中选择
-      const springNum = Math.floor(Math.random() * 9) + 1;
+      const springNum = Math.floor(Math.random() * 8) + 1;
       defaultImage = `春${springNum}.svg`;
       break;
     case 'summer': 
