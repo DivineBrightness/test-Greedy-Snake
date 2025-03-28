@@ -496,7 +496,34 @@ button:focus {
   align-items: center;
   padding-bottom: 20px;
 }
+/* 添加扑克牌游戏选择按钮样式 */
+#card-select-btn {
+  background: url('./image/poker-cards.svg');
+  background-color: #ff9e6d;
+  background-size: 60%;
+  background-repeat: no-repeat;
+  background-position: center 30%;
+  position: relative;
+}
 
+/* 添加扑克牌按钮底部渐变效果 */
+#card-select-btn::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.3));
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+  z-index: 1;
+}
+
+#card-select-btn span {
+  position: relative;
+  z-index: 2;
+}
 #snake-select-btn {
   background: url('./image/snake.svg');
   background-color: #81f381;

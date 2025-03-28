@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" id="poker-cards">
+  <path fill="#eee3ca" d="M29,13H58a4,4,0,0,1,4,4V58a4,4,0,0,1-4,4H32a4,4,0,0,1-4-4V56Z"></path>
+  <path fill="#e6d3b1" d="M59.64,13.36A3.961,3.961,0,0,1,60,15V58a2,2,0,0,1-2,2H30a3.961,3.961,0,0,1-1.64-.36A3.994,3.994,0,0,0,32,62H58a4,4,0,0,0,4-4V17A3.994,3.994,0,0,0,59.64,13.36Z"></path>
+  <path fill="#eee3ca" d="M36,51v1a4,4,0,0,1-4,4H6a4,4,0,0,1-4-4V11A4,4,0,0,1,6,7H36Z"></path>
+  <path fill="#ea5353" d="M14 34.7a2.041 2.041 0 01-2.515-.315L11 34l-.485.389a2.04 2.04 0 01-2.912 0h0a2.1 2.1 0 010-2.949L11 28l3 3.038zM14 12.3a2.041 2.041 0 00-2.515.315L11 13l-.485-.389a2.04 2.04 0 00-2.912 0h0a2.1 2.1 0 000 2.949L11 19l3-3.038zM14 47.038L11 44 7.6 47.44a2.1 2.1 0 000 2.949h0a2.04 2.04 0 002.912 0L11 50l.485.389a2.04 2.04 0 002.912 0h0a2.082 2.082 0 00.51-.853z"></path>
+  <path fill="#eee3ca" d="M35.859,53H28.07L28,56h4A3.992,3.992,0,0,0,35.859,53Z"></path>
+  <path fill="#ea5353" d="M48,44l6.04-6.263a6.89,6.89,0,0,0,0-9.626h0A6.7,6.7,0,0,0,48,26.118Z"></path>
+  <path d="M36,13V7H12V47a6.006,6.006,0,0,0,6,6H44a6.006,6.006,0,0,0,6-6V13Z" opacity=".05"></path>
+  <rect width="2" height="7" x="26" y="49" opacity=".05"></rect>
+  <rect width="34" height="49" x="14" y="2" fill="#eee3ca" rx="4"></rect>
+  <path fill="#e6d3b1" d="M45.64,2.36A3.961,3.961,0,0,1,46,4V47a2,2,0,0,1-2,2H16a3.961,3.961,0,0,1-1.64-.36A3.994,3.994,0,0,0,18,51H44a4,4,0,0,0,4-4V6A3.994,3.994,0,0,0,45.64,2.36Z"></path>
+  <polygon fill="#ea5353" points="38.5 36 35 41.5 38.5 47 42 41.5 38.5 36"></polygon>
+  <polygon fill="#ea5353" points="38.5 21 35 26.5 38.5 32 42 26.5 38.5 21"></polygon>
+  <polygon fill="#ea5353" points="38.5 6 35 11.5 38.5 17 42 11.5 38.5 6"></polygon>
+  <polygon fill="#ea5353" points="23.5 36 20 41.5 23.5 47 27 41.5 23.5 36"></polygon>
+  <polygon fill="#ea5353" points="23.5 21 20 26.5 23.5 32 27 26.5 23.5 21"></polygon>
+  <polygon fill="#ea5353" points="23.5 6 20 11.5 23.5 17 27 11.5 23.5 6"></polygon>
+  <path fill="#ea5353" d="M53,50l-3.4,3.44a2.1,2.1,0,0,0,0,2.949h0a2.04,2.04,0,0,0,2.912,0L53,56l.485.389a2.04,2.04,0,0,0,2.912,0h0a2.1,2.1,0,0,0,0-2.949Z"></path>
+  <path fill="#fff" d="M32,6.5A26.686,26.686,0,0,0,31.612,2H18a4,4,0,0,0-4,4V7H6a4,4,0,0,0-4,4V32.763A26.764,26.764,0,0,0,5.5,33,26.5,26.5,0,0,0,32,6.5Z" opacity=".15"></path>
+  <rect width="3" height="5" x="3" y="14" fill="#fff" rx="1.5"></rect>
+  <rect width="3" height="11" x="3" y="20" fill="#fff" rx="1.5"></rect>
+  <rect width="3" height="5" x="15" y="4" fill="#fff" rx="1.5"></rect>
+  <rect width="3" height="11" x="15" y="10" fill="#fff" rx="1.5"></rect>
+  <ellipse cx="8.667" cy="33.561" fill="#fff" rx=".764" ry="1" transform="rotate(-60 8.667 33.56)"></ellipse>
+  <ellipse cx="50.667" cy="55.561" fill="#fff" rx=".764" ry="1" transform="rotate(-60 50.667 55.561)"></ellipse>
+  <ellipse cx="8.667" cy="49.561" fill="#fff" rx=".764" ry="1" transform="rotate(-60 8.667 49.56)"></ellipse>
+  <ellipse cx="36.542" cy="11.5" fill="#fff" rx=".764" ry="1"></ellipse>
+  <ellipse cx="36.542" cy="26.5" fill="#fff" rx=".764" ry="1"></ellipse>
+  <ellipse cx="36.542" cy="41.5" fill="#fff" rx=".764" ry="1"></ellipse>
+  <ellipse cx="21.542" cy="41.5" fill="#fff" rx=".764" ry="1"></ellipse>
+  <ellipse cx="21.542" cy="26.5" fill="#fff" rx=".764" ry="1"></ellipse>
+  <ellipse cx="21.542" cy="11.5" fill="#fff" rx=".764" ry="1"></ellipse>
+  <ellipse cx="8.556" cy="13.458" fill="#fff" rx="1" ry=".764" transform="rotate(-38.475 8.555 13.459)"></ellipse>
+</svg>
