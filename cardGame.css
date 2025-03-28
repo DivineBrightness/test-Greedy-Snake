@@ -307,30 +307,28 @@
     text-align: center;
   }
   
-  /* 玩家位置 - 底部中央 */
-  .player-position-0 {
-    bottom: 5%;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-  
-  /* 电脑玩家位置 - 顺时针分布 */
-  .player-position-1 {
-    top: 50%;
-    right: 5%;
-    transform: translateY(-50%);
-  }
-  .player-position-2 {
-    top: 5%;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-  
-  .player-position-3 {
-    top: 50%;
-    left: 5%;
-    transform: translateY(-50%);
-  }
+ /* 调整3人布局的位置 */
+
+/* 玩家位置 - 底部中央 */
+.player-position-0 {
+  bottom: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* 东方机器人位置 - 右侧 */
+.player-position-1 {
+  top: 40%;
+  right: 5%;
+  transform: translateY(-50%);
+}
+
+/* 西方机器人位置 - 左侧 */
+.player-position-2 {
+  top: 40%;
+  left: 5%;
+  transform: translateY(-50%);
+}
   
   /* 玩家区域样式 */
   .player-box {

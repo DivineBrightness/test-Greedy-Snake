@@ -13,16 +13,15 @@ const cardGame = {
     players: [
       { id: 0, name: "你", isPlayer: true, hand: [], chips: 1000, bet: 0, folded: false, allIn: false, handRank: null },
       { id: 1, name: "东方机器人", isPlayer: false, hand: [], chips: 1000, bet: 0, folded: false, allIn: false, handRank: null },
-      { id: 2, name: "南方机器人", isPlayer: false, hand: [], chips: 1000, bet: 0, folded: false, allIn: false, handRank: null },
-      { id: 3, name: "西方机器人", isPlayer: false, hand: [], chips: 1000, bet: 0, folded: false, allIn: false, handRank: null }
+      { id: 2, name: "南方机器人", isPlayer: false, hand: [], chips: 1000, bet: 0, folded: false, allIn: false, handRank: null }
     ],
     activePlayerIndex: 0,
-    dealerIndex: 3, // 从庄家右侧第一位开始行动
+    dealerIndex: 2, // 从庄家右侧第一位开始行动
     smallBlindIndex: 0,
     bigBlindIndex: 1,
     smallBlindAmount: 10,
     bigBlindAmount: 20,
-    playersInHand: 4,
+    playersInHand: 3,
     
     // 初始化函数
     init: function() {
@@ -98,7 +97,7 @@ const cardGame = {
                     <div class="cards-area" id="community-cards-area"></div>
                 </div>
                 
-                <!-- 玩家位置 - 玩家在下方，电脑玩家环绕 -->
+                <!-- 玩家位置 - 玩家在下方，电脑玩家左右两侧 -->
                 <!-- 玩家位置 -->
                 <div class="player-position player-position-0">
                     <div class="player-box" id="player-0-box">
@@ -115,7 +114,7 @@ const cardGame = {
                     </div>
                 </div>
                 
-                <!-- 电脑玩家位置 -->
+                <!-- 东方机器人位置 -->
                 <div class="player-position player-position-1">
                     <div class="player-box" id="player-1-box">
                     <div class="player-info">
@@ -131,23 +130,9 @@ const cardGame = {
                     </div>
                 </div>
                 
+                <!-- 西方机器人位置 -->
                 <div class="player-position player-position-2">
                     <div class="player-box" id="player-2-box">
-                    <div class="player-info">
-                        <div class="player-info-left">
-                        <div class="player-name">南方机器人</div>
-                        <div class="player-chips">1000 筹码</div>
-                        </div>
-                        <div class="player-info-right">
-                        <div class="player-bet">下注: 0</div>
-                        </div>
-                    </div>
-                    <div class="opponent-cards" id="opponent-2-cards"></div>
-                    </div>
-                </div>
-                
-                <div class="player-position player-position-3">
-                    <div class="player-box" id="player-3-box">
                     <div class="player-info">
                         <div class="player-info-left">
                         <div class="player-name">西方机器人</div>
@@ -157,7 +142,7 @@ const cardGame = {
                         <div class="player-bet">下注: 0</div>
                         </div>
                     </div>
-                    <div class="opponent-cards" id="opponent-3-cards"></div>
+                    <div class="opponent-cards" id="opponent-2-cards"></div>
                     </div>
                 </div>
                 </div>
@@ -370,13 +355,13 @@ const cardGame = {
       this.updatePhaseDisplay();
     },
     
-    // 轮换庄家位置
-    rotateDealerPosition: function() {
-      this.dealerIndex = (this.dealerIndex + 1) % 4;
-      this.smallBlindIndex = (this.dealerIndex + 1) % 4;
-      this.bigBlindIndex = (this.dealerIndex + 2) % 4;
-      this.activePlayerIndex = (this.dealerIndex + 3) % 4; // 从大盲注后第一个玩家开始行动
-    },
+// 修改轮换庄家位置函数
+rotateDealerPosition: function() {
+  this.dealerIndex = (this.dealerIndex + 1) % 3; // 改为3个玩家
+  this.smallBlindIndex = (this.dealerIndex + 1) % 3;
+  this.bigBlindIndex = (this.dealerIndex + 2) % 3;
+  this.activePlayerIndex = (this.dealerIndex + 3) % 3; // 从大盲注后第一个玩家开始行动
+},
     
     // 创建新的牌组
     createNewDeck: function() {
@@ -424,11 +409,11 @@ const cardGame = {
       this.showMessage(`${smallBlindPlayer.name} 下小盲注 ${this.smallBlindAmount} 筹码，${bigBlindPlayer.name} 下大盲注 ${this.bigBlindAmount} 筹码`);
     },
     
-    // 发底牌
+    // 修改发牌函数
     dealHoleCards: function() {
       return new Promise((resolve, reject) => {
-        // 为每位玩家各抽2张牌
-        fetch(`https://deckofcardsapi.com/api/deck/${this.deckId}/draw/?count=8`)
+        // 为每位玩家各抽2张牌，现在是3名玩家，所以需要6张牌
+        fetch(`https://deckofcardsapi.com/api/deck/${this.deckId}/draw/?count=6`)
           .then(response => {
             if (!response.ok) {
               throw new Error('API 请求失败');
@@ -478,37 +463,37 @@ const cardGame = {
         });
     },
     
-    // 显示电脑玩家的牌背
+    // 修改显示电脑玩家牌背函数
     showOpponentCardBacks: function() {
-        for (let i = 1; i <= 3; i++) {
-        const opponentCardsElement = document.getElementById(`opponent-${i}-cards`);
-        opponentCardsElement.innerHTML = '';
-        
-        // 每个电脑玩家有两张牌
-        for (let j = 0; j < 2; j++) {
-            const cardElement = document.createElement('div');
-            cardElement.className = 'card face-down';
-            opponentCardsElement.appendChild(cardElement);
-        }
-        }
+      for (let i = 1; i <= 2; i++) { // 改为2个对手
+      const opponentCardsElement = document.getElementById(`opponent-${i}-cards`);
+      opponentCardsElement.innerHTML = '';
+      
+      // 每个电脑玩家有两张牌
+      for (let j = 0; j < 2; j++) {
+          const cardElement = document.createElement('div');
+          cardElement.className = 'card face-down';
+          opponentCardsElement.appendChild(cardElement);
+      }
+      }
     },
     
-    // 显示电脑玩家的牌面
-    showOpponentCards: function() {
-        for (let i = 1; i <= 3; i++) {
-        if (!this.players[i].folded) {
-            const opponentCardsElement = document.getElementById(`opponent-${i}-cards`);
-            opponentCardsElement.innerHTML = '';
-            
-            this.players[i].hand.forEach(card => {
-            const cardElement = document.createElement('div');
-            cardElement.className = 'card';
-            cardElement.innerHTML = `<img src="${card.image}" alt="${card.value} of ${card.suit}">`;
-            opponentCardsElement.appendChild(cardElement);
-            });
-        }
-        }
-    },
+// 修改显示电脑玩家牌面函数
+showOpponentCards: function() {
+  for (let i = 1; i <= 2; i++) { // 改为2个对手
+  if (!this.players[i].folded) {
+      const opponentCardsElement = document.getElementById(`opponent-${i}-cards`);
+      opponentCardsElement.innerHTML = '';
+      
+      this.players[i].hand.forEach(card => {
+      const cardElement = document.createElement('div');
+      cardElement.className = 'card';
+      cardElement.innerHTML = `<img src="${card.image}" alt="${card.value} of ${card.suit}">`;
+      opponentCardsElement.appendChild(cardElement);
+      });
+  }
+  }
+},
     
     // 开始下注轮
     startBettingRound: function() {
@@ -705,7 +690,7 @@ const cardGame = {
       let initialActivePlayer = this.activePlayerIndex;
       
       do {
-        this.activePlayerIndex = (this.activePlayerIndex + 1) % 4;
+        this.activePlayerIndex = (this.activePlayerIndex + 1) % 3; // 改为3个玩家
         
         // 如果所有玩家都行动过一次，进入下一阶段
         if (this.activePlayerIndex === initialActivePlayer || this.checkRoundComplete()) {
@@ -1027,36 +1012,36 @@ const cardGame = {
       document.getElementById('pot-amount').textContent = this.pot;
     },
     
-    // 更新玩家信息
-    updatePlayerInfo: function() {
-        // 更新玩家信息
-        document.querySelector('#player-0-box .player-chips').textContent = `${this.players[0].chips} 筹码`;
-        document.querySelector('#player-0-box .player-bet').textContent = `下注: ${this.players[0].bet}`;
-        
-        // 更新电脑玩家信息
-        for (let i = 1; i <= 3; i++) {
-        document.querySelector(`#player-${i}-box .player-chips`).textContent = `${this.players[i].chips} 筹码`;
-        document.querySelector(`#player-${i}-box .player-bet`).textContent = `下注: ${this.players[i].bet}`;
-        
-        // 如果玩家已弃牌，添加弃牌标记
-        const playerBox = document.getElementById(`player-${i}-box`);
-        if (this.players[i].folded) {
-            playerBox.classList.add('folded');
-        } else {
-            playerBox.classList.remove('folded');
-        }
-        }
-        
-        // 玩家弃牌显示
-        if (this.players[0].folded) {
-        document.getElementById('player-0-box').classList.add('folded');
-        } else {
-        document.getElementById('player-0-box').classList.remove('folded');
-        }
-        
-        // 更新庄家、小盲注和大盲注标记
-        this.updatePositionMarkers();
-    },
+// 修改更新玩家信息函数
+updatePlayerInfo: function() {
+  // 更新玩家信息
+  document.querySelector('#player-0-box .player-chips').textContent = `${this.players[0].chips} 筹码`;
+  document.querySelector('#player-0-box .player-bet').textContent = `下注: ${this.players[0].bet}`;
+  
+  // 更新电脑玩家信息，只有1号和2号
+  for (let i = 1; i <= 2; i++) {
+  document.querySelector(`#player-${i}-box .player-chips`).textContent = `${this.players[i].chips} 筹码`;
+  document.querySelector(`#player-${i}-box .player-bet`).textContent = `下注: ${this.players[i].bet}`;
+  
+  // 如果玩家已弃牌，添加弃牌标记
+  const playerBox = document.getElementById(`player-${i}-box`);
+  if (this.players[i].folded) {
+      playerBox.classList.add('folded');
+  } else {
+      playerBox.classList.remove('folded');
+  }
+  }
+  
+  // 玩家弃牌显示
+  if (this.players[0].folded) {
+  document.getElementById('player-0-box').classList.add('folded');
+  } else {
+  document.getElementById('player-0-box').classList.remove('folded');
+  }
+  
+  // 更新庄家、小盲注和大盲注标记
+  this.updatePositionMarkers();
+},
 
     // 添加一个新函数来更新位置标记
     updatePositionMarkers: function() {
