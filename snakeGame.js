@@ -53,6 +53,12 @@ class SnakeGame {
 
       // 添加眩晕状态标志
       this.isStunned = false;
+      // 添加加速状态相关属性
+      this.isSpeedUp = false;
+      this.normalSpeed = 130; // 正常速度间隔
+      this.speedUpFactor = 0.5; // 加速因子，速度提高50%
+      this.speedUpDuration = 5000; // 加速持续5秒
+      this.speedUpStartTime = 0;
 
       // 添加水果系统
   this.fruitImages = [
@@ -295,19 +301,27 @@ draw() {
       (monsterBottom - monsterTop) * this.blockSize
     );
   }
-// 绘制龙的火焰效果
+// 绘制龙的火焰效果 - 确保火焰视觉效果与碰撞检测匹配
 if (this.fireBreathActive && this.fireImg.complete) {
   // 龙头位置 (左上角)
   const dragonHeadX = monsterLeft;
   const dragonHeadY = monsterTop;
   
-  // 火焰起点 (龙头左侧)
+  // 火焰起点 (龙头左侧) - 确保与碰撞检测中的坐标计算一致
   const fireOriginX = (dragonHeadX - 1) * this.blockSize;
   const fireOriginY = dragonHeadY * this.blockSize + this.blockSize;
   
+  // 可选：标记火焰起点，帮助调试
+  /*
+  this.ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+  this.ctx.beginPath();
+  this.ctx.arc(fireOriginX, fireOriginY, 3, 0, Math.PI * 2);
+  this.ctx.fill();
+  */
+  
   // 为每个火焰方向绘制火焰
   for (const direction of this.fireDirection) {
-    // 计算火焰终点 (距离为2个方块)
+    // 计算火焰终点 (距离为2个方块) - 与碰撞检测保持一致
     const fireEndX = fireOriginX + direction.x * this.blockSize * 2;
     const fireEndY = fireOriginY + direction.y * this.blockSize * 2;
     
@@ -322,8 +336,9 @@ if (this.fireBreathActive && this.fireImg.complete) {
     gradient.addColorStop(0.6, 'rgba(255, 50, 0, 0.7)');
     gradient.addColorStop(1, 'rgba(255, 0, 0, 0.3)');
     
+    // 增加线宽使火焰更容易被触碰
     this.ctx.strokeStyle = gradient;
-    this.ctx.lineWidth = this.blockSize / 2;
+    this.ctx.lineWidth = this.blockSize / 1.5; // 稍微增加火焰宽度
     this.ctx.stroke();
     
     // 在火焰终点绘制火花效果
@@ -382,6 +397,57 @@ if (this.fireBreathActive && this.fireImg.complete) {
   
   // 根据闪烁状态决定是否绘制蛇
   if (!this.isBlinking || this.blinkCount % 2 === 0) {
+
+    if (this.isSpeedUp && this.drawSpeedLines) {
+      const head = this.snake[0];
+      const headX = head.x * this.blockSize + this.blockSize / 2;
+      const headY = head.y * this.blockSize + this.blockSize / 2;
+      
+      // 根据移动方向绘制速度线
+      this.ctx.strokeStyle = 'rgba(255, 165, 0, 0.6)';
+      this.ctx.lineWidth = 1;
+      
+      const lineLength = this.blockSize * 1.5;
+      const numLines = 5;
+      
+      for (let i = 0; i < numLines; i++) {
+        this.ctx.beginPath();
+        
+        // 根据方向确定速度线的起点和终点
+        let startX, startY, endX, endY;
+        
+        switch(this.direction) {
+          case 'up':
+            startX = headX - this.blockSize/2 + (this.blockSize * i / (numLines - 1));
+            startY = headY + this.blockSize/2;
+            endX = startX;
+            endY = startY + lineLength;
+            break;
+          case 'down':
+            startX = headX - this.blockSize/2 + (this.blockSize * i / (numLines - 1));
+            startY = headY - this.blockSize/2;
+            endX = startX;
+            endY = startY - lineLength;
+            break;
+          case 'left':
+            startX = headX + this.blockSize/2;
+            startY = headY - this.blockSize/2 + (this.blockSize * i / (numLines - 1));
+            endX = startX + lineLength;
+            endY = startY;
+            break;
+          case 'right':
+            startX = headX - this.blockSize/2;
+            startY = headY - this.blockSize/2 + (this.blockSize * i / (numLines - 1));
+            endX = startX - lineLength;
+            endY = startY;
+            break;
+        }
+        
+        this.ctx.moveTo(startX, startY);
+        this.ctx.lineTo(endX, endY);
+        this.ctx.stroke();
+      }
+    }
     // 绘制蛇，添加无敌状态的更明显效果
     this.snake.forEach((segment, index) => {
       const ratio = index / this.snake.length;
@@ -619,6 +685,8 @@ move() {
   this.updateMonsterPosition();
   // 更新子弹位置
   this.updateBullets();
+  // 更新速度状态
+  this.updateSpeedState();
   
   // 保存旧的头部位置，以便在碰撞时回退
   const oldHead = {...this.snake[0]};
@@ -931,37 +999,78 @@ checkCollision(head) {
     return true; // 其他位置计算碰撞
   }
   
-  // 检查是否撞到火焰 (只有在龙喷火时才检测)
-  if (this.fireBreathActive && !this.isInvincible) {
-    const monsterSize = 3;
-    const monsterLeft = this.monsterPosition.x - Math.floor(monsterSize / 2);
-    const monsterTop = this.monsterPosition.y - Math.floor(monsterSize / 2);
+  // =============================================
+  // 火焰碰撞检测 - 使用光线投射法检查火焰路径上的每个点
+  // =============================================
+  if (this.fireBreathActive) {
+    // 获取龙头位置
+    const dragonHeadX = monsterLeft;
+    const dragonHeadY = monsterTop;
     
-    // 火焰起点 (龙头左侧)
-    const fireOriginX = monsterLeft - 1;
-    const fireOriginY = monsterTop;
+    // 火焰起点 (龙头左侧)，与绘制方法保持一致
+    const fireOriginX = dragonHeadX - 1;
+    const fireOriginY = dragonHeadY + 1;
     
-    // 检查蛇头是否在火焰区域内 (距离龙头左侧2格内的扇形区域)
-    if (Math.abs(head.x - fireOriginX) <= 2 && Math.abs(head.y - fireOriginY) <= 2) {
-      // 计算蛇头到火焰起点的向量
-      const vectorX = head.x - fireOriginX;
-      const vectorY = head.y - fireOriginY;
+    // 检查蛇头是否在任何火焰线上
+    for (const direction of this.fireDirection) {
+      // 使用布雷森汉姆算法检查火焰线上的每个点
+      // 火焰长度为2个方块
+      const fireLength = 2;
       
-      // 计算距离
-      const distance = Math.sqrt(vectorX * vectorX + vectorY * vectorY);
+      // 计算火焰终点坐标
+      const fireEndX = fireOriginX + direction.x * fireLength;
+      const fireEndY = fireOriginY + direction.y * fireLength;
       
-      // 如果距离在火焰范围内 (2格)
-      if (distance <= 2) {
-        // 计算角度 (与x轴的夹角)
-        let angle = Math.atan2(vectorY, vectorX);
-        if (angle < 0) angle += 2 * Math.PI; // 将角度转换为0-2π
+      // 调试信息
+      console.log(`检查火焰线 - 起点: (${fireOriginX}, ${fireOriginY}), 终点: (${fireEndX}, ${fireEndY})`);
+      
+      // 线段上的每个点进行检查 (使用光线投射算法)
+      // 先计算两点之间的差值
+      let dx = Math.abs(fireEndX - fireOriginX);
+      let dy = Math.abs(fireEndY - fireOriginY);
+      
+      // 确定x和y的增长方向
+      const sx = fireOriginX < fireEndX ? 1 : -1;
+      const sy = fireOriginY < fireEndY ? 1 : -1;
+      
+      // 初始化误差值
+      let err = dx - dy;
+      
+      // 当前点坐标
+      let currentX = fireOriginX;
+      let currentY = fireOriginY;
+      
+      // 在每个点上检查蛇头是否存在
+      // 由于我们使用整数坐标，需要放宽检测范围
+      const tolerance = 0.5;
+      
+      while (true) {
+        // 如果当前点与蛇头足够接近，认为碰撞发生
+        if (Math.abs(head.x - currentX) <= tolerance && 
+            Math.abs(head.y - currentY) <= tolerance) {
+          console.log(`火焰碰撞检测: 蛇头(${head.x},${head.y}) 接触到火焰点(${currentX},${currentY})`);
+          this.startSpeedUp();
+          return false; // 触发加速效果但不算作碰撞
+        }
         
-        // 检查是否在喷火扇区内 (约120度，从-60度到+60度)
-        const sectorStart = -Math.PI / 3; // -60度
-        const sectorEnd = Math.PI / 3;   // +60度
+        // 如果到达终点，结束循环
+        if (Math.abs(currentX - fireEndX) < tolerance && 
+            Math.abs(currentY - fireEndY) < tolerance) {
+          break;
+        }
         
-        if (angle >= sectorStart && angle <= sectorEnd) {
-          return true; // 蛇头在火焰区域内
+        // 保存当前误差值用于比较
+        let e2 = 2 * err;
+        
+        // 根据误差值决定下一步移动方向
+        if (e2 > -dy) {
+          err -= dy;
+          currentX += sx;
+        }
+        
+        if (e2 < dx) {
+          err += dx;
+          currentY += sy;
         }
       }
     }
@@ -992,6 +1101,8 @@ start() {
   console.log('游戏开始运行');
   
   this.lastUpdateTime = Date.now();
+  this.updateInterval = this.normalSpeed; // 使用正常速度
+
   this.updateInterval = 140;
   
   const gameLoop = () => {
@@ -1099,6 +1210,17 @@ reset() {
     this.foodEatenCount = 0;
     this.specialFruit = null;
     this.monsterHit = false;
+
+      // 重置加速状态
+  this.isSpeedUp = false;
+  this.updateInterval = this.normalSpeed;
+  this.drawSpeedLines = false;
+  
+  // 移除可能存在的加速指示器
+  const speedIndicator = document.getElementById('speed-up-indicator');
+  if (speedIndicator && speedIndicator.parentNode) {
+    speedIndicator.parentNode.removeChild(speedIndicator);
+  }
   this.drawScore();
   this.draw();
 }
@@ -1341,16 +1463,15 @@ updateDragonFireBreath() {
 startFireBreath() {
   this.fireBreathActive = true;
   
-  // 生成放射状的火焰方向
+  // 生成放射状的火焰方向 - 增加火焰数量使火焰覆盖更广
   this.fireDirection = [];
-  const numDirections = 5; // 生成5个方向的火焰
+  const numDirections = 6; // 增加到6个方向的火焰
   
   for (let i = 0; i < numDirections; i++) {
-    // 生成不同角度的方向，覆盖约120度范围
-    const angle = (Math.PI / 3) * (i - (numDirections - 1) / 2);
+    // 生成不同角度的方向，覆盖约150度范围
+    const angle = (Math.PI / 2.5) * (i - (numDirections - 1) / 2);
     
     // 根据龙的位置确定火焰基准方向
-    // 假设龙头在[0,0]，则火焰从[-1,0]处发出
     const baseX = -1;
     const baseY = 0;
     
@@ -1361,5 +1482,115 @@ startFireBreath() {
       angle: angle
     });
   }
+  
+  console.log('龙喷火开始！火焰方向数:', this.fireDirection.length);
+}
+
+// 添加日志到 startSpeedUp 方法，帮助调试
+startSpeedUp() {
+  // 如果已经处于加速状态，只重置持续时间
+  if (this.isSpeedUp) {
+    this.speedUpStartTime = Date.now();
+    console.log('加速效果重置！继续持续5秒');
+    return;
+  }
+  
+  this.isSpeedUp = true;
+  this.speedUpStartTime = Date.now();
+  
+  // 记住原来的速度
+  if (!this.priorInterval) {
+    this.priorInterval = this.updateInterval;
+  }
+  
+  // 更新速度间隔
+  this.updateInterval = this.normalSpeed * this.speedUpFactor;
+  
+  // 添加视觉提示
+  this.showSpeedUpEffect();
+  
+  console.log('加速效果激活！速度提高50%，持续5秒');
+  console.log('当前速度间隔：', this.updateInterval);
+}
+// 添加处理加速状态的方法
+updateSpeedState() {
+  if (this.isSpeedUp) {
+    const now = Date.now();
+    
+    // 如果加速状态已经超过持续时间，则恢复正常速度
+    if (now - this.speedUpStartTime > this.speedUpDuration) {
+      this.isSpeedUp = false;
+      this.updateInterval = this.normalSpeed;
+      
+      // 移除视觉提示
+      this.removeSpeedUpEffect();
+      
+      console.log('加速效果结束，恢复正常速度');
+    }
+  }
+}
+
+// 添加加速视觉提示
+showSpeedUpEffect() {
+  // 创建加速效果指示器
+  let speedIndicator = document.getElementById('speed-up-indicator');
+  if (!speedIndicator) {
+    speedIndicator = document.createElement('div');
+    speedIndicator.id = 'speed-up-indicator';
+    
+    const canvasContainer = this.canvas.parentElement;
+    
+    if (canvasContainer) {
+      speedIndicator.style.position = 'absolute';
+      speedIndicator.style.top = '40px';
+      speedIndicator.style.left = '50%';
+      speedIndicator.style.transform = 'translateX(-50%)';
+      speedIndicator.style.backgroundColor = 'rgba(255, 165, 0, 0.7)';
+      speedIndicator.style.color = 'white';
+      speedIndicator.style.padding = '5px 10px';
+      speedIndicator.style.borderRadius = '15px';
+      speedIndicator.style.fontWeight = 'bold';
+      speedIndicator.style.zIndex = '100';
+      speedIndicator.style.boxShadow = '0 0 10px rgba(255, 165, 0, 0.7)';
+      speedIndicator.style.animation = 'pulsate 1s infinite';
+      speedIndicator.textContent = '加速模式!';
+      
+      // 添加脉动动画样式
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes pulsate {
+          0% { opacity: 0.7; }
+          50% { opacity: 1; }
+          100% { opacity: 0.7; }
+        }
+      `;
+      document.head.appendChild(style);
+      
+      canvasContainer.appendChild(speedIndicator);
+    }
+  } else {
+    speedIndicator.style.display = 'block';
+  }
+  
+  // 在蛇头周围添加速度线效果
+  this.drawSpeedLines = true;
+}
+
+// 移除加速视觉提示
+removeSpeedUpEffect() {
+  const speedIndicator = document.getElementById('speed-up-indicator');
+  if (speedIndicator) {
+    speedIndicator.style.display = 'none';
+    
+    // 可选：移除元素
+    setTimeout(() => {
+      if (speedIndicator.parentNode) {
+        speedIndicator.parentNode.removeChild(speedIndicator);
+      }
+    }, 300);
+  }
+  
+  // 移除蛇头周围的速度线效果
+  this.drawSpeedLines = false;
 }
 }
