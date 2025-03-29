@@ -26,7 +26,8 @@ class SnakeGame {
       
       // 添加怪物图像
       this.monsterImg = new Image();
-      this.monsterImg.src = './image/monster.svg';
+      // this.monsterImg.src = './image/monster.svg';
+      this.monsterImg.src = './image/avatar.svg';
 
       // 添加怪物位置和移动属性
       const centerX = Math.floor(this.widthInBlocks / 2);
