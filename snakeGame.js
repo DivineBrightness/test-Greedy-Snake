@@ -245,7 +245,7 @@ handleKeyDown(e) {
       }
     }
   
-// 修改 draw 方法中绘制怪物的部分
+// 修改 draw 方法中的怪物绘制，可以选择性地标记出有碰撞的区域
 draw() {
   this.ctx.clearRect(0, 0, this.width, this.height);
   this.drawGrid();
@@ -259,17 +259,38 @@ draw() {
   const monsterTop = this.monsterPosition.y - Math.floor(monsterSize / 2);
   const monsterBottom = monsterTop + monsterSize;
   
-  // 以半透明红色绘制怪物边界
-  this.ctx.strokeStyle = 'rgba(255, 50, 50, 0.5)';
-  this.ctx.lineWidth = 2;
-  this.ctx.setLineDash([3, 3]); // 设置虚线样式
-  this.ctx.strokeRect(
-    monsterLeft * this.blockSize,
-    monsterTop * this.blockSize,
-    (monsterRight - monsterLeft) * this.blockSize,
-    (monsterBottom - monsterTop) * this.blockSize
-  );
-  this.ctx.setLineDash([]); // 重置线条样式
+  // // 以半透明红色绘制怪物边界
+  // this.ctx.strokeStyle = 'rgba(255, 50, 50, 0.5)';
+  // this.ctx.lineWidth = 2;
+  // this.ctx.setLineDash([3, 3]); // 设置虚线样式
+  // this.ctx.strokeRect(
+  //   monsterLeft * this.blockSize,
+  //   monsterTop * this.blockSize,
+  //   (monsterRight - monsterLeft) * this.blockSize,
+  //   (monsterBottom - monsterTop) * this.blockSize
+  // );
+  // this.ctx.setLineDash([]); // 重置线条样式
+
+  // 可选：标记出有碰撞区域（调试用）
+  /*
+  for(let y = 0; y < monsterSize; y++) {
+    for(let x = 0; x < monsterSize; x++) {
+      // 排除左下角和右下角
+      if ((x === 0 && y === 2) || (x === 2 && y === 2)) {
+        continue;
+      }
+      
+      // 绘制碰撞点
+      this.ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+      this.ctx.fillRect(
+        (monsterLeft + x) * this.blockSize,
+        (monsterTop + y) * this.blockSize,
+        this.blockSize,
+        this.blockSize
+      );
+    }
+  }
+  */
 
   // 检查怪物是否被击中，如果是，绘制黄色闪烁效果
   if (this.monsterHit && Date.now() - this.monsterHitTime < this.monsterHitDuration) {
@@ -730,46 +751,59 @@ fireBullet() {
   });
 }
 
-// 修改 updateBullets 方法，使用更新后的怪物位置
+// 同样需要修改 updateBullets 方法中的碰撞检测
 updateBullets() {
-  // 更新子弹位置
-  for (let i = 0; i < this.bullets.length; i++) {
-    const bullet = this.bullets[i];
-    bullet.x += bullet.dirX * this.bulletSpeed;
-    bullet.y += bullet.dirY * this.bulletSpeed;
-    
-    // 检查是否击中怪物
-    const monsterSize = 3; // 怪物占用的方块数（长宽）
-    
-    // 计算怪物边界
-    const monsterLeft = this.monsterPosition.x - Math.floor(monsterSize / 2);
-    const monsterRight = monsterLeft + monsterSize;
-    const monsterTop = this.monsterPosition.y - Math.floor(monsterSize / 2);
-    const monsterBottom = monsterTop + monsterSize;
-    
-    const bulletBlockX = Math.floor(bullet.x / this.blockSize);
-    const bulletBlockY = Math.floor(bullet.y / this.blockSize);
-    
-    if (bulletBlockX >= monsterLeft && bulletBlockX < monsterRight && 
-        bulletBlockY >= monsterTop && bulletBlockY < monsterBottom) {
-      // 子弹击中怪物
-      this.monsterHit = true;
-      this.monsterHitTime = Date.now();
+    // 更新子弹位置
+    for (let i = 0; i < this.bullets.length; i++) {
+      const bullet = this.bullets[i];
+      bullet.x += bullet.dirX * this.bulletSpeed;
+      bullet.y += bullet.dirY * this.bulletSpeed;
       
-      // 移除击中的子弹
-      this.bullets.splice(i, 1);
-      i--;
-      continue;
+      // 检查是否击中怪物
+      const monsterSize = 3; // 怪物占用的方块数（长宽）
+      
+      // 计算怪物边界
+      const monsterLeft = this.monsterPosition.x - Math.floor(monsterSize / 2);
+      const monsterRight = monsterLeft + monsterSize;
+      const monsterTop = this.monsterPosition.y - Math.floor(monsterSize / 2);
+      const monsterBottom = monsterTop + monsterSize;
+      
+      const bulletBlockX = Math.floor(bullet.x / this.blockSize);
+      const bulletBlockY = Math.floor(bullet.y / this.blockSize);
+      
+      if (bulletBlockX >= monsterLeft && bulletBlockX < monsterRight && 
+          bulletBlockY >= monsterTop && bulletBlockY < monsterBottom) {
+        
+        // 进行更精确的碰撞检测，跳过左下角和右下角的区域
+        const relativeX = bulletBlockX - monsterLeft; // 0, 1, 2
+        const relativeY = bulletBlockY - monsterTop;  // 0, 1, 2
+        
+        // 排除左下角(0,2)和右下角(2,2)位置
+        if ((relativeX === 0 && relativeY === 2) || // 左下角
+            (relativeX === 2 && relativeY === 2)) { // 右下角
+          continue; // 这些位置不计算碰撞，继续移动子弹
+        }
+        
+        // 子弹击中怪物
+        this.monsterHit = true;
+        this.monsterHitTime = Date.now();
+        
+        // 移除击中的子弹
+        this.bullets.splice(i, 1);
+        i--;
+        continue;
+      }
+      
+      // 检查子弹是否超出边界
+      if (bullet.x < 0 || bullet.x > this.width || bullet.y < 0 || bullet.y > this.height) {
+        // 移除超出边界的子弹
+        this.bullets.splice(i, 1);
+        i--;
+      }
     }
-    
-    // 检查子弹是否超出边界
-    if (bullet.x < 0 || bullet.x > this.width || bullet.y < 0 || bullet.y > this.height) {
-      // 移除超出边界的子弹
-      this.bullets.splice(i, 1);
-      i--;
-    }
-  }
 }
+
+
 // 改进闪烁效果，确保蛇始终可见
 startBlinking() {
   if (this.isBlinking) return;
@@ -865,11 +899,23 @@ checkCollision(head) {
   // 判断蛇头是否在怪物区域内
   if (head.x >= monsterLeft && head.x < monsterRight && 
       head.y >= monsterTop && head.y < monsterBottom) {
-    return true;
+    
+    // 进行更精确的碰撞检测，跳过左下角(3,6,9)的区域
+    const relativeX = head.x - monsterLeft; // 0, 1, 2
+    const relativeY = head.y - monsterTop;  // 0, 1, 2
+    
+    // 排除左下角(0,2)和右下角(2,2)位置
+    if ((relativeX === 0 && relativeY === 2) || // 左下角
+        (relativeX === 2 && relativeY === 2)) { // 右下角
+      return false; // 这些位置不计算碰撞
+    }
+    
+    return true; // 其他位置计算碰撞
   }
   
   return false;
 }
+
   
 // 修改 start 方法，优化动画帧处理
 start() {
