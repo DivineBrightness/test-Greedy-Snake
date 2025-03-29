@@ -39,6 +39,18 @@ class SnakeGame {
       this.monsterMoveOptions = ['up', 'down', 'left', 'right'];
     
 
+      // 添加龙吐火效果相关属性
+      this.fireBreathActive = false;
+      this.fireBreathTimer = 0;
+      this.fireBreathInterval = 3000; // 每3秒喷火一次
+      this.fireBreathDuration = 1000; // 火焰持续1秒
+      this.fireBreathLastTime = 0;
+      this.fireDirection = []; // 火焰方向数组
+      
+      // 加载火焰图像
+      this.fireImg = new Image();
+      this.fireImg.src = './image/fire.svg'; // 确保有这个图像资源
+
       // 添加眩晕状态标志
       this.isStunned = false;
 
@@ -258,39 +270,6 @@ draw() {
   const monsterRight = monsterLeft + monsterSize;
   const monsterTop = this.monsterPosition.y - Math.floor(monsterSize / 2);
   const monsterBottom = monsterTop + monsterSize;
-  
-  // // 以半透明红色绘制怪物边界
-  // this.ctx.strokeStyle = 'rgba(255, 50, 50, 0.5)';
-  // this.ctx.lineWidth = 2;
-  // this.ctx.setLineDash([3, 3]); // 设置虚线样式
-  // this.ctx.strokeRect(
-  //   monsterLeft * this.blockSize,
-  //   monsterTop * this.blockSize,
-  //   (monsterRight - monsterLeft) * this.blockSize,
-  //   (monsterBottom - monsterTop) * this.blockSize
-  // );
-  // this.ctx.setLineDash([]); // 重置线条样式
-
-  // 可选：标记出有碰撞区域（调试用）
-  /*
-  for(let y = 0; y < monsterSize; y++) {
-    for(let x = 0; x < monsterSize; x++) {
-      // 排除左下角和右下角
-      if ((x === 0 && y === 2) || (x === 2 && y === 2)) {
-        continue;
-      }
-      
-      // 绘制碰撞点
-      this.ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
-      this.ctx.fillRect(
-        (monsterLeft + x) * this.blockSize,
-        (monsterTop + y) * this.blockSize,
-        this.blockSize,
-        this.blockSize
-      );
-    }
-  }
-  */
 
   // 检查怪物是否被击中，如果是，绘制黄色闪烁效果
   if (this.monsterHit && Date.now() - this.monsterHitTime < this.monsterHitDuration) {
@@ -316,7 +295,44 @@ draw() {
       (monsterBottom - monsterTop) * this.blockSize
     );
   }
-
+// 绘制龙的火焰效果
+if (this.fireBreathActive && this.fireImg.complete) {
+  // 龙头位置 (左上角)
+  const dragonHeadX = monsterLeft;
+  const dragonHeadY = monsterTop;
+  
+  // 火焰起点 (龙头左侧)
+  const fireOriginX = (dragonHeadX - 1) * this.blockSize;
+  const fireOriginY = dragonHeadY * this.blockSize + this.blockSize;
+  
+  // 为每个火焰方向绘制火焰
+  for (const direction of this.fireDirection) {
+    // 计算火焰终点 (距离为2个方块)
+    const fireEndX = fireOriginX + direction.x * this.blockSize * 2;
+    const fireEndY = fireOriginY + direction.y * this.blockSize * 2;
+    
+    // 绘制火焰线
+    this.ctx.beginPath();
+    this.ctx.moveTo(fireOriginX, fireOriginY);
+    this.ctx.lineTo(fireEndX, fireEndY);
+    
+    // 创建渐变色火焰
+    const gradient = this.ctx.createLinearGradient(fireOriginX, fireOriginY, fireEndX, fireEndY);
+    gradient.addColorStop(0, 'rgba(255, 100, 0, 0.9)');
+    gradient.addColorStop(0.6, 'rgba(255, 50, 0, 0.7)');
+    gradient.addColorStop(1, 'rgba(255, 0, 0, 0.3)');
+    
+    this.ctx.strokeStyle = gradient;
+    this.ctx.lineWidth = this.blockSize / 2;
+    this.ctx.stroke();
+    
+    // 在火焰终点绘制火花效果
+    this.ctx.beginPath();
+    this.ctx.arc(fireEndX, fireEndY, this.blockSize / 3, 0, Math.PI * 2);
+    this.ctx.fillStyle = 'rgba(255, 200, 0, 0.5)';
+    this.ctx.fill();
+  }
+}
   // 绘制子弹
   this.ctx.fillStyle = 'rgba(255, 0, 0, 0.8)';
   for (const bullet of this.bullets) {
@@ -597,6 +613,8 @@ move() {
     }
     return;
   }
+  // 更新龙的喷火效果
+  this.updateDragonFireBreath();
   // 更新怪物位置
   this.updateMonsterPosition();
   // 更新子弹位置
@@ -913,6 +931,42 @@ checkCollision(head) {
     return true; // 其他位置计算碰撞
   }
   
+  // 检查是否撞到火焰 (只有在龙喷火时才检测)
+  if (this.fireBreathActive && !this.isInvincible) {
+    const monsterSize = 3;
+    const monsterLeft = this.monsterPosition.x - Math.floor(monsterSize / 2);
+    const monsterTop = this.monsterPosition.y - Math.floor(monsterSize / 2);
+    
+    // 火焰起点 (龙头左侧)
+    const fireOriginX = monsterLeft - 1;
+    const fireOriginY = monsterTop;
+    
+    // 检查蛇头是否在火焰区域内 (距离龙头左侧2格内的扇形区域)
+    if (Math.abs(head.x - fireOriginX) <= 2 && Math.abs(head.y - fireOriginY) <= 2) {
+      // 计算蛇头到火焰起点的向量
+      const vectorX = head.x - fireOriginX;
+      const vectorY = head.y - fireOriginY;
+      
+      // 计算距离
+      const distance = Math.sqrt(vectorX * vectorX + vectorY * vectorY);
+      
+      // 如果距离在火焰范围内 (2格)
+      if (distance <= 2) {
+        // 计算角度 (与x轴的夹角)
+        let angle = Math.atan2(vectorY, vectorX);
+        if (angle < 0) angle += 2 * Math.PI; // 将角度转换为0-2π
+        
+        // 检查是否在喷火扇区内 (约120度，从-60度到+60度)
+        const sectorStart = -Math.PI / 3; // -60度
+        const sectorEnd = Math.PI / 3;   // +60度
+        
+        if (angle >= sectorStart && angle <= sectorEnd) {
+          return true; // 蛇头在火焰区域内
+        }
+      }
+    }
+  }
+  
   return false;
 }
 
@@ -938,7 +992,7 @@ start() {
   console.log('游戏开始运行');
   
   this.lastUpdateTime = Date.now();
-  this.updateInterval = 130;
+  this.updateInterval = 140;
   
   const gameLoop = () => {
     if (this.gameOver || this.paused) {
@@ -1265,5 +1319,47 @@ updateMonsterPosition() {
   // 更新怪物位置
   this.monsterPosition.x = newX;
   this.monsterPosition.y = newY;
+}
+
+// 添加龙吐火的方法
+updateDragonFireBreath() {
+  const now = Date.now();
+  
+  // 检查是否应该开始喷火
+  if (!this.fireBreathActive && now - this.fireBreathLastTime > this.fireBreathInterval) {
+    this.startFireBreath();
+    this.fireBreathLastTime = now;
+  }
+  
+  // 检查是否应该停止喷火
+  if (this.fireBreathActive && now - this.fireBreathLastTime > this.fireBreathDuration) {
+    this.fireBreathActive = false;
+  }
+}
+
+// 开始喷火效果
+startFireBreath() {
+  this.fireBreathActive = true;
+  
+  // 生成放射状的火焰方向
+  this.fireDirection = [];
+  const numDirections = 5; // 生成5个方向的火焰
+  
+  for (let i = 0; i < numDirections; i++) {
+    // 生成不同角度的方向，覆盖约120度范围
+    const angle = (Math.PI / 3) * (i - (numDirections - 1) / 2);
+    
+    // 根据龙的位置确定火焰基准方向
+    // 假设龙头在[0,0]，则火焰从[-1,0]处发出
+    const baseX = -1;
+    const baseY = 0;
+    
+    // 计算火焰方向
+    this.fireDirection.push({
+      x: Math.cos(angle) + baseX,
+      y: Math.sin(angle) + baseY,
+      angle: angle
+    });
+  }
 }
 }
