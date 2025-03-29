@@ -27,6 +27,17 @@ class SnakeGame {
       // 添加怪物图像
       this.monsterImg = new Image();
       this.monsterImg.src = './image/monster.svg';
+
+      // 添加怪物位置和移动属性
+      const centerX = Math.floor(this.widthInBlocks / 2);
+      const centerY = Math.floor(this.heightInBlocks / 2);
+      this.monsterPosition = { x: centerX, y: centerY };
+      this.monsterMoveCounter = 0;
+      this.monsterMoveInterval = 10; // 每10帧移动一次
+      this.monsterDirection = 'right'; // 初始移动方向
+      this.monsterMoveOptions = ['up', 'down', 'left', 'right'];
+    
+
       // 添加眩晕状态标志
       this.isStunned = false;
 
@@ -233,20 +244,19 @@ handleKeyDown(e) {
       }
     }
   
-// 在 draw 方法中添加绘制怪物的代码
+// 修改 draw 方法中绘制怪物的部分
 draw() {
   this.ctx.clearRect(0, 0, this.width, this.height);
   this.drawGrid();
   
-  // 绘制怪物和边界
-  const centerX = Math.floor(this.widthInBlocks / 2);
-  const centerY = Math.floor(this.heightInBlocks / 2);
+  // 使用怪物位置绘制怪物和边界
+  const monsterSize = 3; // 怪物占用的方块数（长宽）
   
-  // 先绘制怪物边界区域
-  const monsterLeft = centerX - 1;
-  const monsterRight = centerX + 2;
-  const monsterTop = centerY - 1;
-  const monsterBottom = centerY + 2;
+  // 计算怪物边界
+  const monsterLeft = this.monsterPosition.x - Math.floor(monsterSize / 2);
+  const monsterRight = monsterLeft + monsterSize;
+  const monsterTop = this.monsterPosition.y - Math.floor(monsterSize / 2);
+  const monsterBottom = monsterTop + monsterSize;
   
   // 以半透明红色绘制怪物边界
   this.ctx.strokeStyle = 'rgba(255, 50, 50, 0.5)';
@@ -273,7 +283,6 @@ draw() {
     );
     this.ctx.globalAlpha = 1.0;
   }
-  
   
   // 绘制怪物图像
   if (this.monsterImg.complete) {
@@ -566,7 +575,8 @@ move() {
     }
     return;
   }
-  
+  // 更新怪物位置
+  this.updateMonsterPosition();
   // 更新子弹位置
   this.updateBullets();
   
@@ -719,7 +729,7 @@ fireBullet() {
   });
 }
 
-// 更新子弹位置和碰撞检测
+// 修改 updateBullets 方法，使用更新后的怪物位置
 updateBullets() {
   // 更新子弹位置
   for (let i = 0; i < this.bullets.length; i++) {
@@ -728,12 +738,13 @@ updateBullets() {
     bullet.y += bullet.dirY * this.bulletSpeed;
     
     // 检查是否击中怪物
-    const centerX = Math.floor(this.widthInBlocks / 2);
-    const centerY = Math.floor(this.heightInBlocks / 2);
-    const monsterLeft = centerX - 1;
-    const monsterRight = centerX + 2;
-    const monsterTop = centerY - 1;
-    const monsterBottom = centerY + 2;
+    const monsterSize = 3; // 怪物占用的方块数（长宽）
+    
+    // 计算怪物边界
+    const monsterLeft = this.monsterPosition.x - Math.floor(monsterSize / 2);
+    const monsterRight = monsterLeft + monsterSize;
+    const monsterTop = this.monsterPosition.y - Math.floor(monsterSize / 2);
+    const monsterBottom = monsterTop + monsterSize;
     
     const bulletBlockX = Math.floor(bullet.x / this.blockSize);
     const bulletBlockY = Math.floor(bullet.y / this.blockSize);
@@ -826,7 +837,7 @@ drawHealth() {
     healthDisplay.appendChild(heartImg);
   }
 }
-// 修改 checkCollision 方法，添加无敌状态检查
+// 修改 checkCollision 方法中检测与怪物碰撞的部分
 checkCollision(head) {
   // 无敌状态下不检测碰撞
   if (this.isInvincible) {
@@ -842,14 +853,13 @@ checkCollision(head) {
     return true;
     
   // 检查是否撞到怪物
-  const centerX = Math.floor(this.widthInBlocks / 2);
-  const centerY = Math.floor(this.heightInBlocks / 2);
+  const monsterSize = 3; // 怪物占用的方块数（长宽）
   
-  // 怪物占据的区域是中心点周围的4x4方块
-  const monsterLeft = centerX - 1;
-  const monsterRight = centerX + 2;
-  const monsterTop = centerY - 1;
-  const monsterBottom = centerY + 2;
+  // 计算怪物边界
+  const monsterLeft = this.monsterPosition.x - Math.floor(monsterSize / 2);
+  const monsterRight = monsterLeft + monsterSize;
+  const monsterTop = this.monsterPosition.y - Math.floor(monsterSize / 2);
+  const monsterBottom = monsterTop + monsterSize;
   
   // 判断蛇头是否在怪物区域内
   if (head.x >= monsterLeft && head.x < monsterRight && 
@@ -1126,5 +1136,87 @@ removeStaticPauseScreen() {
       }
     }, 50);
   }
+}
+
+// 添加更新怪物位置的方法
+updateMonsterPosition() {
+  // 如果怪物被击中，暂时不移动
+  if (this.monsterHit && Date.now() - this.monsterHitTime < this.monsterHitDuration) {
+    return;
+  }
+  
+  // 每隔一定帧数移动怪物
+  this.monsterMoveCounter++;
+  if (this.monsterMoveCounter < this.monsterMoveInterval) {
+    return;
+  }
+  
+  // 重置计数器
+  this.monsterMoveCounter = 0;
+  
+  // 获取地图中心位置
+  const centerX = Math.floor(this.widthInBlocks / 2);
+  const centerY = Math.floor(this.heightInBlocks / 2);
+  
+  // 计算怪物可移动的范围（保持在地图中心区域附近）
+  const moveRange = 5; // 怪物可以在中心点周围5格范围内移动
+  const minX = centerX - moveRange;
+  const maxX = centerX + moveRange;
+  const minY = centerY - moveRange;
+  const maxY = centerY + moveRange;
+  
+  // 有20%的几率改变方向
+  if (Math.random() < 0.2) {
+    this.monsterDirection = this.monsterMoveOptions[Math.floor(Math.random() * this.monsterMoveOptions.length)];
+  }
+  
+  // 根据当前方向移动怪物
+  let newX = this.monsterPosition.x;
+  let newY = this.monsterPosition.y;
+  
+  switch(this.monsterDirection) {
+    case 'up': newY -= 1; break;
+    case 'down': newY += 1; break;
+    case 'left': newX -= 1; break;
+    case 'right': newX += 1; break;
+  }
+  
+  // 如果新位置超出范围，改变方向
+  if (newX < minX || newX > maxX || newY < minY || newY > maxY) {
+    // 选择一个新的、不会导致越界的方向
+    let validDirections = this.monsterMoveOptions.filter(dir => {
+      let testX = this.monsterPosition.x;
+      let testY = this.monsterPosition.y;
+      
+      switch(dir) {
+        case 'up': testY -= 1; break;
+        case 'down': testY += 1; break;
+        case 'left': testX -= 1; break;
+        case 'right': testX += 1; break;
+      }
+      
+      return testX >= minX && testX <= maxX && testY >= minY && testY <= maxY;
+    });
+    
+    if (validDirections.length > 0) {
+      this.monsterDirection = validDirections[Math.floor(Math.random() * validDirections.length)];
+      
+      // 根据新方向再次计算位置
+      switch(this.monsterDirection) {
+        case 'up': newY = this.monsterPosition.y - 1; break;
+        case 'down': newY = this.monsterPosition.y + 1; break;
+        case 'left': newX = this.monsterPosition.x - 1; break;
+        case 'right': newX = this.monsterPosition.x + 1; break;
+      }
+    } else {
+      // 如果没有有效方向，保持原位置
+      newX = this.monsterPosition.x;
+      newY = this.monsterPosition.y;
+    }
+  }
+  
+  // 更新怪物位置
+  this.monsterPosition.x = newX;
+  this.monsterPosition.y = newY;
 }
 }
