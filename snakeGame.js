@@ -881,7 +881,7 @@ start() {
   console.log('游戏开始运行');
   
   this.lastUpdateTime = Date.now();
-  this.updateInterval = 100;
+  this.updateInterval = 130;
   
   const gameLoop = () => {
     if (this.gameOver || this.paused) {
