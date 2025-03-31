@@ -2,132 +2,300 @@
 
 const cq = {
   isOpen: false,
-
+  
+  // 角色图片数据
+  characterImages: {
+    'frieren': ['./image/cq/fu1.jpg', './image/cq/fu2.jpg', './image/cq/fu3.jpg', './image/cq/fu4.jpg', './image/cq/fu5.jpg', './image/cq/fu6.jpg', './image/cq/fu7.jpg'],
+    'himmel': ['./image/cq/xin1.jpg', './image/cq/xin2.jpg', './image/cq/xin3.jpg'],
+    'fern': ['./image/cq/fei1.jpg','./image/cq/fei2.jpg', './image/cq/fei3.jpg'],
+    'stark': ['./image/cq/xiu1.jpg', './image/cq/xiu2.jpg', './image/cq/xiu3.jpg'],
+  },
   // 初始化函数
   init: function () {
     console.log('初始化春秋页面功能');
     // 在这里可以加载任何需要的数据或设置
   },
 
-  // 显示春秋页面
-  show: function () {
-    // 如果页面已经打开，不重复操作
-    if (this.isOpen) return;
+// 显示春秋页面
+show: function () {
+  // 如果页面已经打开，不重复操作
+  if (this.isOpen) return;
 
-    console.log('显示春秋页面');
+  console.log('显示春秋页面');
 
-    // 创建春秋页面元素
-    const cqElement = document.createElement('div');
-    cqElement.id = 'cq-page';
-    cqElement.className = 'cq-container';
+  // 创建春秋页面元素
+  const cqElement = document.createElement('div');
+  cqElement.id = 'cq-page';
+  cqElement.className = 'cq-container';
 
-    // 设置页面内容
-    cqElement.innerHTML = `
-      <div class="cq-content">
-        <button class="back-btn" id="cq-back-btn"></button>
-        <div class="cq-header">
-          <h2>葬送的芙莉莲</h2>
-          <div class="cq-shine"></div>
+  // 设置页面内容
+  cqElement.innerHTML = `
+    <div class="cq-content">
+      <button class="back-btn" id="cq-back-btn"></button>
+      <div class="cq-header">
+        <h2>葬送的芙莉莲</h2>
+        <div class="cq-shine"></div>
+      </div>
+
+      <div class="cq-body">
+        <div class="cq-intro">
+          <p>
+            《葬送的芙莉莲》（日语：葬送のフリーレン）
+          </p>
+          <p>
+            讲述了精灵魔法使芙莉莲在结束了与同伴欣梅尔、艾泽和海塔的十年冒险之旅后，再次踏上旅程的故事。
+          </p>
         </div>
 
-        <div class="cq-body">
-          <div class="cq-intro">
-            <p>
-              《葬送的芙莉莲》（日语：葬送のフリーレン，赫本：Sōsō no Furīren）是由山田钟人编剧、阿部司绘画的日本漫画。
+        <!-- 添加GIF视频区域 -->
+        <div class="cq-video-container">
+          <div class="cq-video-placeholder" id="cq-video-placeholder">
+            <div class="cq-play-button"></div>
+          </div>
+        </div>
+
+        <div class="cq-quote-container">
+          <div class="cq-quote">
+            <p class="quote-text">
+              那等下次，五十年后，我知道一个地方，流星雨看起来会更美，我带你们去。"
             </p>
-            <p>
-              故事讲述了精灵魔法使芙莉莲在结束了与同伴欣梅尔、艾泽和海塔的十年冒险之旅后，再次踏上旅程的故事。
-            </p>
+            <p class="quote-source">—— 芙莉莲</p>
           </div>
+        </div>
 
-          <!-- 添加GIF视频区域 -->
-          <div class="cq-video-container">
-            <div class="cq-video-placeholder" id="cq-video-placeholder">
-              <div class="cq-play-button"></div>
+
+        <div class="cq-wisdom">
+          <h3>角色介绍</h3>
+          <div class="wisdom-cards">
+            <div class="wisdom-card" data-character="frieren">
+              <h4>芙莉莲</h4>
+              <p>精灵魔法使</p>
             </div>
-          </div>
-
-          <div class="cq-quote-container">
-            <div class="cq-quote">
-              <p class="quote-text">
-                “对我来说，这才是稍微值得高兴的事。下次再一起去吧。再稍微认真地探索一下。”
-              </p>
-              <p class="quote-source">—— 芙莉莲</p>
+            <div class="wisdom-card" data-character="himmel">
+              <h4>欣梅尔</h4>
+              <p>已故的勇者</p>
             </div>
-          </div>
-
-          <div class="cq-history">
-            <h3>故事梗概</h3>
-            <div class="history-timeline">
-              <div class="timeline-item">
-                <div class="year">冒险的开始</div>
-                <div class="event">
-                  芙莉莲与欣梅尔一行人完成了长达十年的冒险，击败了魔王。
-                </div>
-              </div>
-              <div class="timeline-item">
-                <div class="year">英雄的逝去</div>
-                <div class="event">
-                  欣梅尔去世，芙莉莲开始重新审视自己的人生。
-                </div>
-              </div>
-              <div class="timeline-item">
-                <div class="year">新的旅程</div>
-                <div class="event">
-                  芙莉莲为了“理解人类”而再次踏上旅程，与新的伙伴相遇。
-                </div>
-              </div>
+            <div class="wisdom-card" data-character="fern">
+              <h4>费伦</h4>
+              <p>芙莉莲的弟子</p>
             </div>
-          </div>
-
-          <div class="cq-wisdom">
-            <h3>角色介绍</h3>
-            <div class="wisdom-cards">
-              <div class="wisdom-card">
-                <h4>芙莉莲</h4>
-                <p>精灵魔法使</p>
-              </div>
-              <div class="wisdom-card">
-                <h4>欣梅尔</h4>
-                <p>已故的勇者</p>
-              </div>
-              <div class="wisdom-card">
-                <h4>费伦</h4>
-                <p>芙莉莲的弟子</p>
-              </div>
-              <div class="wisdom-card">
-                <h4>修塔尔克</h4>
-                <p>艾泽的弟子</p>
-              </div>
+            <div class="wisdom-card" data-character="stark">
+              <h4>修塔尔克</h4>
+              <p>艾泽的弟子</p>
             </div>
           </div>
         </div>
       </div>
-    `;
+    </div>
+    
+    <!-- 角色图片弹窗 -->
+    <div class="character-modal" id="character-modal">
+      <div class="character-modal-close" id="modal-close"></div>
+      <div class="character-modal-content">
+        <div class="character-image-container" id="image-container">
+          <!-- 图片将通过JS动态添加 -->
+        </div>
+        <div class="character-modal-nav" id="modal-nav" style="display: none;">
+          <div class="modal-nav-btn modal-prev" id="modal-prev"></div>
+          <div class="modal-nav-btn modal-next" id="modal-next"></div>
+        </div>
+        <div class="modal-counter" id="modal-counter" style="display: none;"></div>
+      </div>
+    </div>
+  `;
 
-    // 添加到文档
-    document.querySelector('.container').appendChild(cqElement);
+  // 添加到文档
+  document.querySelector('.container').appendChild(cqElement);
 
-    // 设置页面样式
-    this.applyStyles();
+  // 设置页面样式
+  this.applyStyles();
 
-    // 显示页面
+  // 显示页面
+  setTimeout(() => {
+    cqElement.classList.add('open');
+    this.isOpen = true;
+
+    // 添加返回按钮事件
+    document.getElementById('cq-back-btn').addEventListener('click', () => {
+      this.hide();
+    });
+
+    // 添加播放GIF的事件处理
+    this.setupGifPlayer();
+    
+    // 添加角色卡片点击事件
+    this.setupCharacterCards();
+
+    // 添加页面出现动画
+    this.playEntranceAnimation();
+  }, 100);
+},
+
+// 设置角色卡片点击事件
+setupCharacterCards: function() {
+  const cards = document.querySelectorAll('.wisdom-card');
+  const modal = document.getElementById('character-modal');
+  const closeBtn = document.getElementById('modal-close');
+  const imageContainer = document.getElementById('image-container');
+  const prevBtn = document.getElementById('modal-prev');
+  const nextBtn = document.getElementById('modal-next');
+  const counter = document.getElementById('modal-counter');
+  const modalNav = document.getElementById('modal-nav');
+  
+  let currentCharacter = '';
+  let currentImageIndex = 0;
+  
+  // 添加卡片点击事件
+  cards.forEach(card => {
+    card.addEventListener('click', () => {
+      const character = card.getAttribute('data-character');
+      currentCharacter = character;
+      currentImageIndex = 0;
+      this.showCharacterModal(character, currentImageIndex);
+    });
+  });
+  
+  // 添加关闭按钮事件
+  closeBtn.addEventListener('click', () => {
+    modal.classList.remove('active');
+  });
+  
+  // 添加点击模态框背景关闭
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.classList.remove('active');
+    }
+  });
+  
+  // 添加前后导航按钮事件
+  prevBtn.addEventListener('click', () => {
+    const images = this.characterImages[currentCharacter];
+    currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+    this.changeImage(currentCharacter, currentImageIndex);
+  });
+  
+  nextBtn.addEventListener('click', () => {
+    const images = this.characterImages[currentCharacter];
+    currentImageIndex = (currentImageIndex + 1) % images.length;
+    this.changeImage(currentCharacter, currentImageIndex);
+  });
+  
+  // 添加键盘导航
+  document.addEventListener('keydown', (e) => {
+    if (!modal.classList.contains('active')) return;
+    
+    if (e.key === 'Escape') {
+      modal.classList.remove('active');
+    } else if (e.key === 'ArrowLeft') {
+      const images = this.characterImages[currentCharacter];
+      if (images.length > 1) {
+        currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+        this.changeImage(currentCharacter, currentImageIndex);
+      }
+    } else if (e.key === 'ArrowRight') {
+      const images = this.characterImages[currentCharacter];
+      if (images.length > 1) {
+        currentImageIndex = (currentImageIndex + 1) % images.length;
+        this.changeImage(currentCharacter, currentImageIndex);
+      }
+    }
+  });
+  
+  // 添加触摸滑动支持
+  let touchStartX = 0;
+  let touchEndX = 0;
+  
+  imageContainer.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, false);
+  
+  imageContainer.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+  }, false);
+  
+  function handleSwipe() {
+    if (touchEndX < touchStartX - 50) {
+      // 向左滑 -> 下一张
+      const images = cq.characterImages[currentCharacter];
+      if (images.length > 1) {
+        currentImageIndex = (currentImageIndex + 1) % images.length;
+        cq.changeImage(currentCharacter, currentImageIndex);
+      }
+    }
+    
+    if (touchEndX > touchStartX + 50) {
+      // 向右滑 -> 上一张
+      const images = cq.characterImages[currentCharacter];
+      if (images.length > 1) {
+        currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+        cq.changeImage(currentCharacter, currentImageIndex);
+      }
+    }
+  }
+},
+
+// 显示角色图片弹窗
+showCharacterModal: function(character, imageIndex) {
+  const modal = document.getElementById('character-modal');
+  const imageContainer = document.getElementById('image-container');
+  const modalNav = document.getElementById('modal-nav');
+  const counter = document.getElementById('modal-counter');
+  
+  // 清空现有内容
+  imageContainer.innerHTML = '';
+  
+  // 获取角色图片
+  const images = this.characterImages[character];
+  
+  // 创建和添加图片
+  const img = document.createElement('img');
+  img.src = images[imageIndex];
+  img.alt = character;
+  img.className = 'character-image';
+  imageContainer.appendChild(img);
+  
+  // 更新计数器
+  if (images.length > 1) {
+    counter.textContent = `${imageIndex + 1} / ${images.length}`;
+    counter.style.display = 'block';
+    modalNav.style.display = 'flex';
+  } else {
+    counter.style.display = 'none';
+    modalNav.style.display = 'none';
+  }
+  
+  // 显示弹窗
+  modal.classList.add('active');
+},
+
+// 切换图片
+changeImage: function(character, imageIndex) {
+  const imageContainer = document.getElementById('image-container');
+  const counter = document.getElementById('modal-counter');
+  const images = this.characterImages[character];
+  
+  // 更新图片
+  const currentImg = imageContainer.querySelector('.character-image');
+  
+  // 创建新图片并添加过渡效果
+  currentImg.classList.add('fade-out');
+  
+  setTimeout(() => {
+    // 更新图片源
+    currentImg.src = images[imageIndex];
+    currentImg.classList.remove('fade-out');
+    currentImg.classList.add('fade-in');
+    
+    // 短暂延迟后移除过渡类
     setTimeout(() => {
-      cqElement.classList.add('open');
-      this.isOpen = true;
-
-      // 添加返回按钮事件
-      document.getElementById('cq-back-btn').addEventListener('click', () => {
-        this.hide();
-      });
-
-      // 添加播放GIF的事件处理
-      this.setupGifPlayer();
-
-      // 添加页面出现动画
-      this.playEntranceAnimation();
-    }, 100);
-  },
+      currentImg.classList.remove('fade-in');
+    }, 300);
+    
+    // 更新计数器
+    counter.textContent = `${imageIndex + 1} / ${images.length}`;
+  }, 300);
+},
 
 // 设置GIF播放器功能 - 修改为使用MP4视频
 setupGifPlayer: function () {
