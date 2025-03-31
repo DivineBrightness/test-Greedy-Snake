@@ -5,10 +5,10 @@ const cq = {
   
   // 角色图片数据
   characterImages: {
-    'frieren': ['./image/cq/fu1.jpg', './image/cq/fu2.jpg', './image/cq/fu3.jpg', './image/cq/fu4.jpg', './image/cq/fu5.jpg', './image/cq/fu6.jpg', './image/cq/fu7.jpg'],
-    'himmel': ['./image/cq/xin1.jpg', './image/cq/xin2.jpg', './image/cq/xin3.jpg', './image/cq/xin4.jpg'],
-    'fern': ['./image/cq/fei1.jpg','./image/cq/fei2.jpg', './image/cq/fei3.jpg', './image/cq/fei4.jpg'],
-    'stark': ['./image/cq/xiu1.jpg', './image/cq/xiu2.jpg', './image/cq/xiu3.jpg'],
+    'frieren': ['./image/cq/fu1.jpg?v=' + new Date().getTime(), './image/cq/fu2.jpg?v=' + new Date().getTime(), './image/cq/fu3.jpg?v=' + new Date().getTime(), './image/cq/fu4.jpg?v=' + new Date().getTime(), './image/cq/fu5.jpg?v=' + new Date().getTime(), './image/cq/fu6.jpg?v=' + new Date().getTime(), './image/cq/fu7.jpg?v=' + new Date().getTime()],
+    'himmel': ['./image/cq/xin1.jpg?v=' + new Date().getTime(), './image/cq/xin2.jpg?v=' + new Date().getTime(), './image/cq/xin3.jpg?v=' + new Date().getTime(), './image/cq/xin4.jpg?v=' + new Date().getTime()],
+    'fern': ['./image/cq/fei1.jpg?v=' + new Date().getTime(), './image/cq/fei2.jpg?v=' + new Date().getTime(), './image/cq/fei3.jpg?v=' + new Date().getTime(), './image/cq/fei4.jpg?v=' + new Date().getTime()],
+    'stark': ['./image/cq/xiu1.jpg?v=' + new Date().getTime(), './image/cq/xiu2.jpg?v=' + new Date().getTime(), './image/cq/xiu3.jpg?v=' + new Date().getTime()],
   },
   // 初始化函数
   init: function () {
