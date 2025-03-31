@@ -6,8 +6,8 @@ const cq = {
   // 角色图片数据
   characterImages: {
     'frieren': ['./image/cq/fu1.jpg', './image/cq/fu2.jpg', './image/cq/fu3.jpg', './image/cq/fu4.jpg', './image/cq/fu5.jpg', './image/cq/fu6.jpg', './image/cq/fu7.jpg'],
-    'himmel': ['./image/cq/xin1.jpg', './image/cq/xin2.jpg', './image/cq/xin3.jpg'],
-    'fern': ['./image/cq/fei1.jpg','./image/cq/fei2.jpg', './image/cq/fei3.jpg'],
+    'himmel': ['./image/cq/xin1.jpg', './image/cq/xin2.jpg', './image/cq/xin3.jpg', './image/cq/xin4.jpg'],
+    'fern': ['./image/cq/fei1.jpg','./image/cq/fei2.jpg', './image/cq/fei3.jpg', './image/cq/fei4.jpg'],
     'stark': ['./image/cq/xiu1.jpg', './image/cq/xiu2.jpg', './image/cq/xiu3.jpg'],
   },
   // 初始化函数
