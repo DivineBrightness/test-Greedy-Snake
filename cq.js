@@ -129,24 +129,80 @@ const cq = {
     }, 100);
   },
 
-  // 设置GIF播放器功能
-  setupGifPlayer: function () {
-    const placeholder = document.getElementById('cq-video-placeholder');
-
-    if (placeholder) {
-      placeholder.addEventListener('click', function () {
-        // 创建GIF元素
-        const gifElement = document.createElement('img');
-        gifElement.src = './image/视频/fulilian.gif';
-        gifElement.alt = '芙莉莲';
-
-        // 替换占位元素
-        const container = document.querySelector('.cq-video-container');
-        container.innerHTML = '';
-        container.appendChild(gifElement);
+// 设置GIF播放器功能 - 修改为使用MP4视频
+setupGifPlayer: function () {
+  const placeholder = document.getElementById('cq-video-placeholder');
+  
+  if (placeholder) {
+    placeholder.addEventListener('click', function () {
+      const container = document.querySelector('.cq-video-container');
+      container.innerHTML = '';
+      
+      // 使用视频元素替代GIF图片
+      const videoElement = document.createElement('video');
+      videoElement.autoplay = true;
+      videoElement.loop = true;
+      videoElement.muted = true;
+      videoElement.playsInline = true; // 在iOS上也能自动播放
+      videoElement.controls = false; // 隐藏控制栏
+      videoElement.style.width = '100%';
+      videoElement.style.height = 'auto';
+      videoElement.style.display = 'block';
+      
+      // 添加MP4视频源
+      const sourceMP4 = document.createElement('source');
+      sourceMP4.src = './image/视频/fulilian.mp4';
+      sourceMP4.type = 'video/mp4';
+      
+      // 添加后备提示文本
+      const fallbackText = document.createTextNode('您的浏览器不支持HTML5视频');
+      
+      // 组装视频元素
+      videoElement.appendChild(sourceMP4);
+      videoElement.appendChild(fallbackText);
+      container.appendChild(videoElement);
+      
+      // 确保视频能播放（解决某些移动浏览器的自动播放限制）
+      videoElement.play().catch(e => {
+        console.log('自动播放失败:', e);
+        
+        // 创建点击播放覆盖层
+        const playOverlay = document.createElement('div');
+        playOverlay.className = 'cq-video-overlay';
+        playOverlay.innerHTML = '<span>点击播放</span>';
+        playOverlay.style.position = 'absolute';
+        playOverlay.style.top = '0';
+        playOverlay.style.left = '0';
+        playOverlay.style.width = '100%';
+        playOverlay.style.height = '100%';
+        playOverlay.style.display = 'flex';
+        playOverlay.style.alignItems = 'center';
+        playOverlay.style.justifyContent = 'center';
+        playOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.4)';
+        playOverlay.style.cursor = 'pointer';
+        playOverlay.style.zIndex = '1';
+        
+        const playText = document.createElement('span');
+        playText.textContent = '点击播放';
+        playText.style.color = 'white';
+        playText.style.fontSize = '1.2rem';
+        playText.style.padding = '10px 20px';
+        playText.style.backgroundColor = 'rgba(139, 69, 19, 0.8)';
+        playText.style.borderRadius = '20px';
+        
+        playOverlay.appendChild(playText);
+        container.style.position = 'relative';
+        container.appendChild(playOverlay);
+        
+        // 添加点击事件处理
+        playOverlay.addEventListener('click', function() {
+          videoElement.play();
+          playOverlay.remove();
+        });
       });
-    }
-  },
+    });
+  }
+},
 
   // 隐藏春秋页面
   hide: function () {
