@@ -128,6 +128,9 @@ show: function () {
 
     // 添加页面出现动画
     this.playEntranceAnimation();
+
+    // 创建花瓣飘落效果
+    this.createPetalsFall();
   }, 100);
 },
 
@@ -319,7 +322,7 @@ setupGifPlayer: function () {
       
       // 添加MP4视频源
       const sourceMP4 = document.createElement('source');
-      sourceMP4.src = './image/视频/fulilian.mp4';
+      sourceMP4.src = './image/视频/fulilian_1.mp4';
       sourceMP4.type = 'video/mp4';
       
       // 添加后备提示文本
@@ -428,6 +431,69 @@ setupGifPlayer: function () {
       }, 300 * index);
     });
   },
+
+  // 创建蓝色花瓣飘落效果
+createPetalsFall: function() {
+  // 创建花瓣容器
+  const petalsContainer = document.createElement('div');
+  petalsContainer.className = 'blue-petals-container';
+  document.getElementById('cq-page').appendChild(petalsContainer);
+  
+  // 花瓣数量 - 根据屏幕大小调整
+  const petalCount = window.innerWidth < 768 ? 15 : 25;
+  
+  // 创建花瓣元素
+  for (let i = 0; i < petalCount; i++) {
+    // 创建花瓣
+    const petal = document.createElement('div');
+    
+    // 随机花瓣类型
+    const petalType = Math.floor(Math.random() * 3) + 1;
+    petal.className = `blue-petal blue-petal-${petalType}`;
+    
+    // 随机起始位置
+    const startPosition = Math.random() * 110;
+    petal.style.left = `${startPosition}%`;
+    
+    // 随机大小变化 (80%-120%)
+    const scale = 0.8 + Math.random() * 0.4;
+    petal.style.transform = `scale(${scale})`;
+    
+    // 随机动画持续时间
+    const duration = 7 + Math.random() * 10;
+    petal.style.animationDuration = `${duration}s`;
+    
+    // 随机动画延迟
+    const delay = Math.random() * 5;
+    petal.style.animationDelay = `${delay}s`;
+    
+    // 添加到容器
+    petalsContainer.appendChild(petal);
+  }
+  
+  // 添加一些闪烁的星星点缀
+  const starCount = window.innerWidth < 768 ? 10 : 20;
+  for (let i = 0; i < starCount; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    
+    // 随机位置
+    star.style.left = `${Math.random() * 100}%`;
+    star.style.top = `${Math.random() * 100}%`;
+    
+    // 随机大小
+    const size = 1 + Math.random() * 2;
+    star.style.width = `${size}px`;
+    star.style.height = `${size}px`;
+    
+    // 随机闪烁时间和延迟
+    const duration = 3 + Math.random() * 4;
+    star.style.animationDuration = `${duration}s`;
+    star.style.animationDelay = `${Math.random() * 5}s`;
+    
+    petalsContainer.appendChild(star);
+  }
+},
 };
 
 // 导出春秋对象，供其他模块使用

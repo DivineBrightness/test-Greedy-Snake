@@ -557,3 +557,106 @@ html body #cq-page .back-btn::before {
 .character-image.fade-in {
   opacity: 1;
 }
+
+/* 蓝色花瓣飘落动画效果 */
+
+/* 花瓣容器 */
+.blue-petals-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9990;
+  pointer-events: none; /* 确保不会影响交互 */
+  overflow: hidden;
+}
+
+/* 单个花瓣样式 */
+.blue-petal {
+  position: absolute;
+  background-size: 100% 100%;
+  opacity: 0.6;
+  top: -50px;
+  z-index: 9990;
+  animation-name: floating;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+  pointer-events: none;
+}
+
+/* 花瓣1 - 小圆形花瓣 */
+.blue-petal-1 {
+  width: 20px;
+  height: 25px;
+  background-image: radial-gradient(ellipse at center, #8be9fd 10%, #6272a4 90%);
+  border-radius: 40% 70% 60% 80%;
+  filter: drop-shadow(0 0 3px rgba(139, 233, 253, 0.3));
+}
+
+/* 花瓣2 - 长椭圆形花瓣 */
+.blue-petal-2 {
+  width: 15px;
+  height: 30px;
+  background-image: radial-gradient(ellipse at center, #8be9fd 10%, #5d71cc 90%);
+  border-radius: 40% 80% 60% 90%;
+  filter: drop-shadow(0 0 3px rgba(139, 233, 253, 0.3));
+  transform: rotate(45deg);
+}
+
+/* 花瓣3 - 更小的圆形花瓣 */
+.blue-petal-3 {
+  width: 10px;
+  height: 15px;
+  background-image: radial-gradient(ellipse at center, #8be9fd 10%, #6c71c4 90%);
+  border-radius: 45% 75% 70% 80%;
+  filter: drop-shadow(0 0 2px rgba(139, 233, 253, 0.3));
+}
+
+/* 花瓣飘落动画 */
+@keyframes floating {
+  0% {
+    opacity: 0;
+    transform: translateX(10px) rotate(0deg);
+  }
+  5% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateX(-15px) rotate(90deg);
+  }
+  75% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
+    top: 110%;
+    transform: translateX(15px) rotate(180deg);
+  }
+}
+
+/* 恒星点缀效果 */
+.star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background-color: #fff;
+  border-radius: 50%;
+  opacity: 0;
+  z-index: 9990;
+  pointer-events: none;
+  animation: twinkle 5s infinite ease-in-out;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 0.8; }
+}
+
+/* 移动端优化 - 减少动画元素 */
+@media (max-width: 768px) {
+  .blue-petal:nth-child(even) {
+    display: none;
+  }
+}
