@@ -129,8 +129,8 @@ show: function () {
     // 添加页面出现动画
     this.playEntranceAnimation();
 
-    // 创建花瓣飘落效果
-    this.createPetalsFall();
+    // 创建星空背景效果（替换原来的花瓣效果）
+    this.createStarryBackground();
   }, 100);
 },
 
@@ -432,99 +432,21 @@ setupGifPlayer: function () {
     });
   },
 
-// 创建连续蓝色花瓣飘落效果
-createPetalsFall: function() {
-  // 创建花瓣容器
-  const petalsContainer = document.createElement('div');
-  petalsContainer.className = 'blue-petals-container';
-  document.getElementById('cq-page').appendChild(petalsContainer);
+// 创建星空背景效果（移除了花瓣部分）
+createStarryBackground: function() {  // 更改函数名更符合新功能
+  // 创建星星容器
+  const starsContainer = document.createElement('div');
+  starsContainer.className = 'blue-petals-container';  // 保留原容器类名便于CSS复用
+  document.getElementById('cq-page').appendChild(starsContainer);
   
-  // 基础花瓣数量 - 根据屏幕大小调整
-  const petalCount = window.innerWidth < 768 ? 30 : 60;
-  
-  // 生成花瓣元素 - 分批创建确保连续性
-  this.generatePetals(petalsContainer, petalCount, 0);
-  
-  // 每秒检查并维持花瓣数量
-  this.petalInterval = setInterval(() => {
-    // 如果页面已关闭则停止生成
-    if (!document.getElementById('cq-page')) {
-      clearInterval(this.petalInterval);
-      return;
-    }
-    
-    // 计算当前剩余的花瓣数量
-    const currentPetals = petalsContainer.querySelectorAll('.blue-petal').length;
-    const targetPetals = window.innerWidth < 768 ? 30 : 60;
-    
-    // 如果花瓣数量不足，则补充新花瓣
-    if (currentPetals < targetPetals * 0.7) {
-      const needToAdd = Math.floor((targetPetals - currentPetals) / 2);
-      this.generatePetals(petalsContainer, needToAdd, currentPetals);
-    }
-  }, 2000);
-  
-  // 添加星星背景
-  this.addStars(petalsContainer);
+  // 添加星星背景 - 直接调用，不涉及花瓣
+  this.addStars(starsContainer);
 },
 
-// 生成单批花瓣
-generatePetals: function(container, count, startIndex) {
-  for (let i = 0; i < count; i++) {
-    // 创建花瓣
-    const petal = document.createElement('div');
-    
-    // 随机花瓣类型 - 增加到4种
-    const petalType = Math.floor(Math.random() * 4) + 1;
-    petal.className = `blue-petal blue-petal-${petalType}`;
-    
-    // 随机起始位置 - 水平均匀分布
-    const horizontalSegment = 100 / count;
-    const startPosition = (i * horizontalSegment) + (Math.random() * horizontalSegment);
-    petal.style.left = `${startPosition}%`;
-    
-    // 随机初始高度 - 让花瓣起始位置更分散
-    const startHeight = Math.random() * -100;
-    petal.style.top = `${startHeight}%`;
-    
-    // 随机大小变化 (80%-120%) - 更自然的尺寸变化
-    const scale = 0.8 + Math.random() * 0.4;
-    
-    // 随机旋转角度 - 初始旋转更自然
-    const rotation = Math.random() * 360;
-    petal.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
-    
-    // 随机动画持续时间 - 更多变化
-    const duration = 10 + Math.random() * 15;
-    petal.style.animationDuration = `${duration}s`;
-    
-    // 随机动画延迟 - 错开开始时间，更连续
-    const delay = Math.random() * 10;
-    petal.style.animationDelay = `${delay}s`;
-    
-    // 为花瓣添加ID以便可能的后续清理
-    petal.id = `petal-${startIndex + i}`;
-    
-    // 添加花瓣清理功能 - 动画结束后可能清除DOM
-    petal.addEventListener('animationiteration', () => {
-      // 10%概率在动画重新开始时移除元素
-      // 这有助于防止页面中花瓣元素堆积
-      if (Math.random() < 0.1) {
-        setTimeout(() => {
-          petal.remove();
-        }, 100);
-      }
-    });
-    
-    // 添加到容器
-    container.appendChild(petal);
-  }
-},
-
-// 添加闪烁星星
+// 添加闪烁星星 - 增强版
 addStars: function(container) {
-  // 星星数量
-  const starCount = window.innerWidth < 768 ? 20 : 40;
+  // 增加星星数量
+  const starCount = window.innerWidth < 768 ? 40 : 80;
   
   for (let i = 0; i < starCount; i++) {
     const star = document.createElement('div');
@@ -534,19 +456,32 @@ addStars: function(container) {
     star.style.left = `${Math.random() * 100}%`;
     star.style.top = `${Math.random() * 100}%`;
     
-    // 随机大小
-    const size = 1 + Math.random() * 1.5;
+    // 随机大小 - 增加变化范围
+    const size = 0.8 + Math.random() * 2;
     star.style.width = `${size}px`;
     star.style.height = `${size}px`;
     
     // 随机闪烁时间和延迟
-    const duration = 3 + Math.random() * 5;
+    const duration = 2 + Math.random() * 6;
     star.style.animationDuration = `${duration}s`;
-    star.style.animationDelay = `${Math.random() * 6}s`;
+    star.style.animationDelay = `${Math.random() * 8}s`;
     
-    // 偶尔添加一个大亮星
-    if (Math.random() < 0.15) {
+    // 增加大亮星的比例
+    if (Math.random() < 0.2) {
       star.classList.add('star-large');
+    }
+    
+    // 偶尔添加超亮星星
+    if (Math.random() < 0.05) {
+      const superStar = document.createElement('div');
+      superStar.className = 'star star-super';
+      superStar.style.left = `${Math.random() * 100}%`;
+      superStar.style.top = `${Math.random() * 100}%`;
+      superStar.style.width = '4px';
+      superStar.style.height = '4px';
+      superStar.style.animationDuration = '8s';
+      superStar.style.animationDelay = `${Math.random() * 5}s`;
+      container.appendChild(superStar);
     }
     
     container.appendChild(star);
@@ -555,11 +490,6 @@ addStars: function(container) {
 
 // 在页面隐藏时清理资源
 hide: function() {
-  // 清除花瓣生成间隔
-  if (this.petalInterval) {
-    clearInterval(this.petalInterval);
-    this.petalInterval = null;
-  }
   
   // 原有的hide函数内容
   const cqElement = document.getElementById('cq-page');

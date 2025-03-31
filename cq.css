@@ -558,9 +558,7 @@ html body #cq-page .back-btn::before {
   opacity: 1;
 }
 
-/* 蓝色花瓣飘落动画效果 - 优化版 */
-
-/* 花瓣容器 */
+/* 容器类 - 保留作为星星容器 */
 .blue-petals-container {
   position: fixed;
   top: 0;
@@ -572,86 +570,7 @@ html body #cq-page .back-btn::before {
   overflow: hidden;
 }
 
-/* 单个花瓣样式 - 基础 */
-.blue-petal {
-  position: absolute;
-  opacity: 0;
-  z-index: 9;
-  pointer-events: none;
-  box-shadow: 0 0 5px rgba(139, 233, 253, 0.3);
-  filter: drop-shadow(0 0 2px rgba(139, 233, 253, 0.4));
-  animation-name: petalFloat;
-  animation-timing-function: ease-in-out;
-  animation-iteration-count: infinite;
-  will-change: transform, opacity;
-}
-
-/* 花瓣变种1 - 芙莉莲魔法符文样式 */
-.blue-petal-1 {
-  width: 15px;
-  height: 25px;
-  background: radial-gradient(ellipse at center, rgba(139, 233, 253, 0.9) 10%, rgba(98, 114, 164, 0.8) 90%);
-  border-radius: 40% 70% 60% 80%;
-  filter: drop-shadow(0 0 4px rgba(139, 233, 253, 0.6));
-}
-
-/* 花瓣变种2 - 更圆润的花瓣 */
-.blue-petal-2 {
-  width: 12px;
-  height: 20px;
-  background: radial-gradient(ellipse at center, rgba(139, 233, 253, 0.9) 5%, rgba(93, 113, 204, 0.8) 95%);
-  border-radius: 50% 80% 70% 90%;
-}
-
-/* 花瓣变种3 - 更小的碎花瓣 */
-.blue-petal-3 {
-  width: 8px;
-  height: 12px;
-  background: radial-gradient(ellipse at center, rgba(139, 233, 253, 0.9) 10%, rgba(108, 113, 196, 0.8) 90%);
-  border-radius: 45% 75% 70% 80%;
-}
-
-/* 花瓣变种4 - 更大的魔法符号 */
-.blue-petal-4 {
-  width: 20px;
-  height: 30px;
-  background: radial-gradient(ellipse at center, rgba(139, 233, 253, 0.8) 15%, rgba(108, 113, 196, 0.7) 85%);
-  border-radius: 60% 70% 60% 90%;
-  filter: drop-shadow(0 0 6px rgba(139, 233, 253, 0.5));
-}
-
-/* 花瓣主动画 - 更平滑的飘落效果 */
-@keyframes petalFloat {
-  0% {
-    opacity: 0;
-    transform: translateX(10px) rotate(0deg) scale(0.8);
-  }
-  5% {
-    opacity: 0.8;
-  }
-  30% {
-    transform: translateX(-15px) rotate(60deg) scale(1);
-    opacity: 0.9;
-  }
-  50% {
-    transform: translateX(10px) rotate(120deg) scale(0.9);
-    opacity: 0.8;
-  }
-  70% {
-    transform: translateX(-5px) rotate(180deg) scale(0.8);
-    opacity: 0.7;
-  }
-  95% {
-    opacity: 0.2;
-  }
-  100% {
-    opacity: 0;
-    top: 110%;
-    transform: translateX(15px) rotate(240deg) scale(0.7);
-  }
-}
-
-/* 星星特效 */
+/* 星星样式 - 全部保留 */
 .star {
   position: absolute;
   background-color: #fff;
@@ -663,12 +582,25 @@ html body #cq-page .back-btn::before {
   animation: twinkle 4s infinite ease-in-out;
 }
 
-/* 稀有的大星星 */
+/* 大星星样式 */
 .star-large {
   width: 3px !important;
   height: 3px !important;
   filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.9));
   animation: twinkleLarge 6s infinite ease-in-out !important;
+}
+
+/* 新增超亮星星样式 */
+.star-super {
+  width: 4px !important;
+  height: 4px !important; 
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 1));
+  animation: twinkleSuper 8s infinite ease-in-out !important;
+}
+
+@keyframes twinkleSuper {
+  0%, 100% { opacity: 0; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.5); }
 }
 
 @keyframes twinkleLarge {
@@ -679,11 +611,4 @@ html body #cq-page .back-btn::before {
 @keyframes twinkle {
   0%, 100% { opacity: 0; }
   50% { opacity: 0.7; }
-}
-
-/* 移动端优化 - 减少动画元素 */
-@media (max-width: 768px) {
-  .blue-petal:nth-child(3n+2) {
-    display: none;
-  }
 }
