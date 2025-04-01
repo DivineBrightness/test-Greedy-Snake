@@ -1,1108 +1,1014 @@
-// 德州扑克游戏功能
-
-const cardGame = {
-    isOpen: false,
-    deckId: null,
-    gamePhase: "idle", // idle, preflop, flop, turn, river, showdown
-    communityCards: [],
-    playerChips: 1000,
-    pot: 0,
-    currentBet: 0,
-    minBet: 20,
-    playerHand: [],
-    players: [
-      { id: 0, name: "你", isPlayer: true, hand: [], chips: 1000, bet: 0, folded: false, allIn: false, handRank: null },
-      { id: 1, name: "东方机器人", isPlayer: false, hand: [], chips: 1000, bet: 0, folded: false, allIn: false, handRank: null },
-      { id: 2, name: "南方机器人", isPlayer: false, hand: [], chips: 1000, bet: 0, folded: false, allIn: false, handRank: null }
-    ],
-    activePlayerIndex: 0,
-    dealerIndex: 2, // 从庄家右侧第一位开始行动
-    smallBlindIndex: 0,
-    bigBlindIndex: 1,
-    smallBlindAmount: 10,
-    bigBlindAmount: 20,
-    playersInHand: 3,
-    
-    // 初始化函数
-    init: function() {
-      console.log('初始化德州扑克游戏功能');
-    },
-    
-    // 显示德州扑克游戏页面
-    show: function() {
-        // 如果页面已经打开，不重复操作
-        if (this.isOpen) return;
-        
-        console.log('显示德州扑克游戏页面');
-        
-        // 创建德州扑克游戏页面元素
-        const cardGameElement = document.createElement('div');
-        cardGameElement.id = 'card-game-page';
-        cardGameElement.className = 'card-game-container';
-        
-        // 设置页面内容
-        cardGameElement.innerHTML = `
-        <div class="card-game-content">
-            <button class="back-btn" id="card-game-back-btn"></button>
-            <div class="card-game-header">
-            <h2>德州扑克</h2>
-            </div>
-            
-            <div class="card-game-body">
-            <div class="game-info">
-                <div class="texas-info">
-                <div class="phase-info">当前阶段: <span id="game-phase">未开始</span></div>
-                </div>
-            </div>
-            
-            <div class="card-controls">
-                <button class="card-btn primary" id="new-game-btn">新游戏</button>
-                <button class="card-btn" id="call-btn" disabled>跟注</button>
-                <button class="card-btn" id="raise-btn" disabled>加注</button>
-                <button class="card-btn secondary" id="check-btn" disabled>让牌</button>
-                <button class="card-btn secondary" id="fold-btn" disabled>弃牌</button>
-            </div>
-            
-            <div class="bet-controls" style="display: none;">
-                <div class="bet-slider-container">
-                <input type="range" id="bet-slider" min="0" max="1000" value="0">
-                </div>
-                <div class="bet-amount">
-                <span>加注金额: </span>
-                <input type="number" id="bet-amount" min="0" max="1000" value="0">
-                <button id="confirm-bet">确认</button>
-                <button id="cancel-bet">取消</button>
-                </div>
-            </div>
-            
-            <div class="game-message" id="game-message"></div>
-            
-            <!-- 圆形牌桌设计 -->
-            <div class="card-table-container">
-                <div class="table-rim"></div>
-                <div class="card-table">
-                <!-- 牌桌标识 -->
-                <div class="table-logo">
-                    <div>德州扑克</div>
-                </div>
-                
-                <!-- 底池区域 -->
-                <div class="table-pot">
-                    底池: <span id="pot-amount">0</span> 筹码
-                </div>
-                
-                <!-- 公共牌区域 -->
-                <div class="community-cards">
-                    <h3>公共牌</h3>
-                    <div class="cards-area" id="community-cards-area"></div>
-                </div>
-                
-                <!-- 玩家位置 - 玩家在下方，电脑玩家左右两侧 -->
-                <!-- 玩家位置 -->
-                <div class="player-position player-position-0">
-                    <div class="player-box" id="player-0-box">
-                    <div class="player-info">
-                        <div class="player-info-left">
-                        <div class="player-name">你</div>
-                        <div class="player-chips">1000 筹码</div>
-                        </div>
-                        <div class="player-info-right">
-                        <div class="player-bet">下注: 0</div>
-                        </div>
-                    </div>
-                    <div class="player-cards" id="player-cards"></div>
-                    </div>
-                </div>
-                
-                <!-- 东方机器人位置 -->
-                <div class="player-position player-position-1">
-                    <div class="player-box" id="player-1-box">
-                    <div class="player-info">
-                        <div class="player-info-left">
-                        <div class="player-name">东方机器人</div>
-                        <div class="player-chips">1000 筹码</div>
-                        </div>
-                        <div class="player-info-right">
-                        <div class="player-bet">下注: 0</div>
-                        </div>
-                    </div>
-                    <div class="opponent-cards" id="opponent-1-cards"></div>
-                    </div>
-                </div>
-                
-                <!-- 西方机器人位置 -->
-                <div class="player-position player-position-2">
-                    <div class="player-box" id="player-2-box">
-                    <div class="player-info">
-                        <div class="player-info-left">
-                        <div class="player-name">西方机器人</div>
-                        <div class="player-chips">1000 筹码</div>
-                        </div>
-                        <div class="player-info-right">
-                        <div class="player-bet">下注: 0</div>
-                        </div>
-                    </div>
-                    <div class="opponent-cards" id="opponent-2-cards"></div>
-                    </div>
-                </div>
-                </div>
-            </div>
-            
-            <div class="rules-panel">
-                <h3>德州扑克规则</h3>
-                <ul>
-                <li>每位玩家获得2张底牌，桌面上5张公共牌。</li>
-                <li>使用手上的2张牌和桌面上的5张牌中任意选择5张组成最佳牌型。</li>
-                <li>游戏分为四个阶段: 翻前、翻牌、转牌、河牌。</li>
-                <li>牌型从高到低: 皇家同花顺、同花顺、四条、葫芦、同花、顺子、三条、两对、一对、高牌。</li>
-                </ul>
-            </div>
-            </div>
-        </div>
-        `;
-        
-        // 添加到文档
-        document.querySelector('.container').appendChild(cardGameElement);
-        
-        // 设置页面样式
-        this.applyStyles();
-        
-        // 显示页面
-        setTimeout(() => {
-        cardGameElement.classList.add('open');
-        this.isOpen = true;
-        
-        // 添加返回按钮事件
-        document.getElementById('card-game-back-btn').addEventListener('click', () => {
-            this.hide();
-        });
-        
-        // 添加游戏相关操作的事件监听
-        this.setupEventListeners();
-        }, 100);
-    },
-    
-    // 隐藏德州扑克游戏页面
-    hide: function() {
-      const cardGameElement = document.getElementById('card-game-page');
-      if (!cardGameElement) return;
-      
-      cardGameElement.classList.remove('open');
-      
-      // 延迟移除元素
-      setTimeout(() => {
-        cardGameElement.remove();
-        this.isOpen = false;
-        console.log('关闭德州扑克游戏页面');
-        
-        // 恢复主页面显示
-        document.querySelector('.season-controls').style.display = 'flex';
-        document.getElementById('games-btn').style.display = 'inline-block';
-        document.getElementById('games-selection').style.display = 'none';
-        document.getElementById('snake-game').style.display = 'none';
-        document.getElementById('tetris-game').style.display = 'none';
-        const pageTitle = document.getElementById('page-title') || document.querySelector('.container h1');
-        if (pageTitle) {
-          pageTitle.style.display = 'block';
-        }
-      }, 300);
-    },
-    
-    // 应用德州扑克游戏页面样式
-    applyStyles: function() {
-      // 如果已经添加过样式则不重复添加
-      if (document.getElementById('card-game-styles-link')) return;
-      
-      // 创建链接元素，加载外部 CSS 文件
-      const linkElement = document.createElement('link');
-      linkElement.id = 'card-game-styles-link';
-      linkElement.rel = 'stylesheet';
-      linkElement.href = './cardGame.css?v=' + new Date().getTime(); // 添加时间戳防止缓存
-      
-      // 添加到文档头部
-      document.head.appendChild(linkElement);
-    },
-    
+const bombGame = {
+  isOpen: false,
+  deckId: null,
+  gamePhase: "idle", // idle, betting, showdown
+  playerChips: 1000,
+  pot: 0,
+  currentBet: 0,
+  minBet: 20,
+  players: [
+      { id: 0, name: "你", isPlayer: true, hand: [], chips: 1000, bet: 0, folded: false, looked: false },
+      { id: 1, name: "东方机器人", isPlayer: false, hand: [], chips: 1000, bet: 0, folded: false, looked: false },
+      { id: 2, name: "西方机器人", isPlayer: false, hand: [], chips: 1000, bet: 0, folded: false, looked: false }
+  ],
+  activePlayerIndex: 0,
+  playersInHand: 3,
+  
+  // 核心函数
+  init: function() {
+    // 创建游戏界面
+    this.createGameInterface();
+    // 应用样式
+    this.applyStyles();
     // 设置事件监听器
-    setupEventListeners: function() {
-      // 新游戏按钮
-      document.getElementById('new-game-btn').addEventListener('click', () => {
+    this.setupEventListeners();
+    // 初始化游戏状态
+    this.resetGame();
+    
+    console.log('炸金花游戏已初始化');
+  },
+  
+  show: function() {
+    const container = document.querySelector('.bomb-game-container');
+    if (container) {
+      container.style.display = 'block';
+      this.isOpen = true;
+      
+      if (this.gamePhase === "idle") {
         this.startNewGame();
-      });
-      
-      // 跟注按钮
-      document.getElementById('call-btn').addEventListener('click', () => {
-        this.playerCall();
-      });
-      
-      // 加注按钮
-      document.getElementById('raise-btn').addEventListener('click', () => {
-        this.showBetControls();
-      });
-      
-      // 让牌按钮
-      document.getElementById('check-btn').addEventListener('click', () => {
-        this.playerCheck();
-      });
-      
-      // 弃牌按钮
-      document.getElementById('fold-btn').addEventListener('click', () => {
-        this.playerFold();
-      });
-      
-      // 确认加注按钮
-      document.getElementById('confirm-bet').addEventListener('click', () => {
-        this.playerRaise(parseInt(document.getElementById('bet-amount').value));
-      });
-      
-      // 取消加注按钮
-      document.getElementById('cancel-bet').addEventListener('click', () => {
-        this.hideBetControls();
-      });
-      
-      // 加注滑块事件
-      const betSlider = document.getElementById('bet-slider');
-      const betAmount = document.getElementById('bet-amount');
-      
-      betSlider.addEventListener('input', () => {
-        betAmount.value = betSlider.value;
-      });
-      
-      betAmount.addEventListener('input', () => {
-        betSlider.value = betAmount.value;
-      });
-    },
+      }
+    }
+  },
+  
+  hide: function() {
+    const container = document.querySelector('.bomb-game-container');
+    if (container) {
+      container.style.display = 'none';
+      this.isOpen = false;
+    }
+  },
+  
+  applyStyles: function() {
+    // 在这里可以动态应用样式
+    // 例如根据屏幕尺寸调整元素大小
+    const gameContainer = document.querySelector('.bomb-game-container');
+    if (!gameContainer) return;
     
-    // 显示加注控件
-    showBetControls: function() {
-      const betControls = document.querySelector('.bet-controls');
-      betControls.style.display = 'block';
-      
-      const player = this.players[0]; // 玩家索引为0
-      const minRaise = Math.max(this.currentBet * 2, this.minBet);
-      const maxRaise = player.chips;
-      
-      const betSlider = document.getElementById('bet-slider');
-      const betAmount = document.getElementById('bet-amount');
-      
-      betSlider.min = minRaise;
-      betSlider.max = maxRaise;
-      betSlider.value = minRaise;
-      
-      betAmount.min = minRaise;
-      betAmount.max = maxRaise;
-      betAmount.value = minRaise;
-    },
+    gameContainer.style.position = 'fixed';
+    gameContainer.style.top = '0';
+    gameContainer.style.left = '0';
+    gameContainer.style.width = '100%';
+    gameContainer.style.height = '100%';
+    gameContainer.style.backgroundColor = 'rgba(0, 32, 63, 0.95)';
+    gameContainer.style.zIndex = '1000';
+    gameContainer.style.display = 'none'; // 初始隐藏
+  },
+  
+  setupEventListeners: function() {
+    // 设置游戏按钮的事件监听器
+    const lookBtn = document.getElementById('look-btn');
+    const followBtn = document.getElementById('follow-btn');
+    const raiseBtn = document.getElementById('raise-btn');
+    const foldBtn = document.getElementById('fold-btn');
+    const betSlider = document.getElementById('bet-slider');
     
-    // 隐藏加注控件
-    hideBetControls: function() {
-      const betControls = document.querySelector('.bet-controls');
-      betControls.style.display = 'none';
-    },
+    if (lookBtn) lookBtn.addEventListener('click', () => this.playerLook());
+    if (followBtn) followBtn.addEventListener('click', () => this.playerFollow());
+    if (raiseBtn) raiseBtn.addEventListener('click', () => this.playerRaise());
+    if (foldBtn) foldBtn.addEventListener('click', () => this.playerFold());
     
-    // 开始新游戏
-    startNewGame: function() {
-      // 重置游戏状态
-      this.resetGame();
-      
-      // 显示开始游戏消息
-      this.showMessage('游戏开始！正在洗牌发牌...');
-      
-      // 创建新牌组
-      this.createNewDeck().then(() => {
-        // 设置盲注
-        this.setBlinds();
-        
-        // 发底牌
-        this.dealHoleCards().then(() => {
-          // 开始第一轮下注
-          this.startBettingRound();
-        });
-      }).catch(error => {
-        console.error('启动游戏时出错:', error);
-        this.showMessage('启动游戏失败: ' + error.message);
+    if (betSlider) {
+      betSlider.addEventListener('input', (e) => {
+        const betAmount = document.getElementById('bet-amount');
+        if (betAmount) {
+          betAmount.textContent = e.target.value;
+        }
       });
-    },
+    }
+    
+    // 添加ESC键退出游戏的监听器
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.isOpen) {
+        this.hide();
+      }
+    });
+  },
+  
+  // 创建游戏界面
+  createGameInterface: function() {
+    // 检查是否已存在游戏容器
+    if (document.querySelector('.bomb-game-container')) return;
+    
+    // 创建主容器
+    const container = document.createElement('div');
+    container.className = 'bomb-game-container';
+    
+    // 创建游戏内容
+    container.innerHTML = `
+      <div class="bomb-game-content">
+        <div class="bomb-game-header">
+          <h2>炸金花</h2>
+          <div class="game-info">
+            <span>底注: ${this.minBet}</span> | 
+            <span>彩池: <span id="pot-amount">0</span></span>
+          </div>
+        </div>
+        <div class="bomb-game-body">
+          <div class="bomb-table-container">
+            <div class="bomb-table">
+              <div class="bomb-table-rim"></div>
+              <div class="table-pot" id="table-pot"></div>
+            </div>
+          </div>
+          
+          <!-- 玩家位置 -->
+          <div class="player-position player-position-0" id="player-position-0">
+            <div class="player-box" id="player-0">
+              <div class="player-info">
+                <div class="player-name">${this.players[0].name}</div>
+                <div class="player-chips">${this.players[0].chips}</div>
+                <div class="player-bet">下注: 0</div>
+              </div>
+              <div class="player-cards" id="player-cards-0"></div>
+            </div>
+          </div>
+          
+          <div class="player-position player-position-1" id="player-position-1">
+            <div class="player-box" id="player-1">
+              <div class="player-info">
+                <div class="player-name">${this.players[1].name}</div>
+                <div class="player-chips">${this.players[1].chips}</div>
+                <div class="player-bet">下注: 0</div>
+              </div>
+              <div class="player-cards" id="player-cards-1"></div>
+            </div>
+          </div>
+          
+          <div class="player-position player-position-2" id="player-position-2">
+            <div class="player-box" id="player-2">
+              <div class="player-info">
+                <div class="player-name">${this.players[2].name}</div>
+                <div class="player-chips">${this.players[2].chips}</div>
+                <div class="player-bet">下注: 0</div>
+              </div>
+              <div class="player-cards" id="player-cards-2"></div>
+            </div>
+          </div>
+          
+          <!-- 控制面板 -->
+          <div class="control-panel">
+            <div class="bomb-controls">
+              <button id="look-btn" class="bomb-btn secondary">看牌</button>
+              <button id="follow-btn" class="bomb-btn secondary">跟注</button>
+              <button id="raise-btn" class="bomb-btn primary">加注</button>
+              <button id="fold-btn" class="bomb-btn secondary">弃牌</button>
+              <div class="bet-controls">
+                <input type="range" id="bet-slider" min="${this.minBet}" max="1000" step="10" value="${this.minBet}">
+                <div class="bet-amount" id="bet-amount">${this.minBet}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(container);
+
+    // 添加返回按钮事件监听
+  const backBtn = document.getElementById('bomb-game-back-btn');
+  if (backBtn) {
+    backBtn.addEventListener('click', () => {
+      this.hide();
+      // 返回游戏选择页面
+      if (typeof toggleGameView === 'function') {
+        toggleGameView('games-selection', true);
+      }
+    });
+  }
+  },
+
+  // 游戏逻辑
+  startNewGame: function() {
+    console.log('开始新游戏');
+    this.resetGame();
+    
+    // 创建新的牌组并发牌
+    this.createNewDeck()
+      .then(() => {
+        this.dealCards()
+          .then(() => {
+            // 游戏开始后进入下注阶段
+            this.gamePhase = "betting";
+            this.updateGameInfo();
+            
+            // 设置第一个行动的玩家
+            this.activePlayerIndex = 0;
+            this.highlightActivePlayer();
+            this.enablePlayerActions();
+            
+            // 每个玩家下最小注
+            this.players.forEach(player => {
+              player.chips -= this.minBet;
+              player.bet = this.minBet;
+              this.pot += this.minBet;
+            });
+            
+            this.currentBet = this.minBet;
+            this.updatePlayerInfo();
+            this.updateGameInfo();
+          });
+      });
+  },
+  
+  resetGame: function() {
+    console.log('重置游戏');
     
     // 重置游戏状态
-    resetGame: function() {
-      this.gamePhase = "idle";
-      this.communityCards = [];
-      this.pot = 0;
-      this.currentBet = 0;
-      
-      // 重置玩家状态
-      this.players.forEach(player => {
-        player.hand = [];
-        player.bet = 0;
-        player.folded = false;
-        player.allIn = false;
-        player.handRank = null;
-      });
-      
-      // 轮换庄家位置
-      this.rotateDealerPosition();
-      
-      // 清空桌面
-      document.getElementById('community-cards-area').innerHTML = '';
-      document.getElementById('player-cards').innerHTML = '';
-      document.querySelectorAll('.opponent-cards').forEach(elem => {
-        elem.innerHTML = '';
-      });
-      
-      // 更新界面显示
-      this.updateGameInfo();
-      this.updatePhaseDisplay();
-    },
+    this.gamePhase = "idle";
+    this.pot = 0;
+    this.currentBet = 0;
     
-// 修改轮换庄家位置函数
-rotateDealerPosition: function() {
-  this.dealerIndex = (this.dealerIndex + 1) % 3; // 改为3个玩家
-  this.smallBlindIndex = (this.dealerIndex + 1) % 3;
-  this.bigBlindIndex = (this.dealerIndex + 2) % 3;
-  this.activePlayerIndex = (this.dealerIndex + 3) % 3; // 从大盲注后第一个玩家开始行动
-},
-    
-    // 创建新的牌组
-    createNewDeck: function() {
-      return new Promise((resolve, reject) => {
-        fetch('https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1')
-          .then(response => {
-            if (!response.ok) {
-              throw new Error('API 请求失败');
-            }
-            return response.json();
-          })
-          .then(data => {
-            this.deckId = data.deck_id;
-            resolve();
-          })
-          .catch(error => {
-            console.error('创建牌组时出错:', error);
-            reject(error);
-          });
-      });
-    },
-    
-    // 设置盲注
-    setBlinds: function() {
-      // 小盲注
-      const smallBlindPlayer = this.players[this.smallBlindIndex];
-      smallBlindPlayer.chips -= this.smallBlindAmount;
-      smallBlindPlayer.bet = this.smallBlindAmount;
-      
-      // 大盲注
-      const bigBlindPlayer = this.players[this.bigBlindIndex];
-      bigBlindPlayer.chips -= this.bigBlindAmount;
-      bigBlindPlayer.bet = this.bigBlindAmount;
-      
-      // 设置当前最高下注
-      this.currentBet = this.bigBlindAmount;
-      
-      // 更新底池
-      this.pot = this.smallBlindAmount + this.bigBlindAmount;
-      
-      // 更新界面
-      this.updatePlayerInfo();
-      this.updateGameInfo();
-      
-      this.showMessage(`${smallBlindPlayer.name} 下小盲注 ${this.smallBlindAmount} 筹码，${bigBlindPlayer.name} 下大盲注 ${this.bigBlindAmount} 筹码`);
-    },
-    
-    // 修改发牌函数
-    dealHoleCards: function() {
-      return new Promise((resolve, reject) => {
-        // 为每位玩家各抽2张牌，现在是3名玩家，所以需要6张牌
-        fetch(`https://deckofcardsapi.com/api/deck/${this.deckId}/draw/?count=6`)
-          .then(response => {
-            if (!response.ok) {
-              throw new Error('API 请求失败');
-            }
-            return response.json();
-          })
-          .then(data => {
-            // 分配底牌给各个玩家
-            for (let i = 0; i < this.players.length; i++) {
-              this.players[i].hand = [
-                data.cards[i * 2],
-                data.cards[i * 2 + 1]
-              ];
-            }
-            
-            // 更新游戏阶段
-            this.gamePhase = "preflop";
-            this.updatePhaseDisplay();
-            
-            // 显示玩家的底牌
-            this.showPlayerCards();
-            
-            // 显示AI玩家的底牌背面
-            this.showOpponentCardBacks();
-            
-            resolve();
-          })
-          .catch(error => {
-            console.error('发牌时出错:', error);
-            reject(error);
-          });
-      });
-    },
-    
-    // 显示玩家的底牌
-    showPlayerCards: function() {
-        const playerCardsElement = document.getElementById('player-cards');
-        playerCardsElement.innerHTML = '';
-        
-        const playerHand = this.players[0].hand;
-        
-        playerHand.forEach(card => {
-        const cardElement = document.createElement('div');
-        cardElement.className = 'card';
-        cardElement.innerHTML = `<img src="${card.image}" alt="${card.value} of ${card.suit}">`;
-        playerCardsElement.appendChild(cardElement);
-        });
-    },
-    
-    // 修改显示电脑玩家牌背函数
-    showOpponentCardBacks: function() {
-      for (let i = 1; i <= 2; i++) { // 改为2个对手
-      const opponentCardsElement = document.getElementById(`opponent-${i}-cards`);
-      opponentCardsElement.innerHTML = '';
-      
-      // 每个电脑玩家有两张牌
-      for (let j = 0; j < 2; j++) {
-          const cardElement = document.createElement('div');
-          cardElement.className = 'card face-down';
-          opponentCardsElement.appendChild(cardElement);
+    // 重置玩家状态
+    this.players.forEach(player => {
+      player.hand = [];
+      player.bet = 0;
+      player.folded = false;
+      player.looked = false;
+      // 如果玩家筹码耗尽，补充筹码
+      if (player.chips <= 0) {
+        player.chips = 1000;
       }
-      }
-    },
+    });
     
-// 修改显示电脑玩家牌面函数
-showOpponentCards: function() {
-  for (let i = 1; i <= 2; i++) { // 改为2个对手
-  if (!this.players[i].folded) {
-      const opponentCardsElement = document.getElementById(`opponent-${i}-cards`);
-      opponentCardsElement.innerHTML = '';
-      
-      this.players[i].hand.forEach(card => {
-      const cardElement = document.createElement('div');
-      cardElement.className = 'card';
-      cardElement.innerHTML = `<img src="${card.image}" alt="${card.value} of ${card.suit}">`;
-      opponentCardsElement.appendChild(cardElement);
-      });
-  }
-  }
-},
-    
-    // 开始下注轮
-    startBettingRound: function() {
-      // 更新下注轮显示
-      this.showMessage(`${this.gamePhaseNames[this.gamePhase]}阶段开始`);
-      
-      // 允许玩家操作
-      this.enablePlayerActions();
-      
-      // 如果当前不是玩家行动，则执行AI的行动
-      if (this.activePlayerIndex !== 0) {
-        this.processAIAction();
-      }
-    },
-    
-    // 处理AI行动
-    processAIAction: function() {
-      // 禁用玩家操作按钮
-      this.disablePlayerActions();
-      
-      setTimeout(() => {
-        const activePlayer = this.players[this.activePlayerIndex];
-        
-        // 如果玩家已弃牌或者全下，跳过他的行动
-        if (activePlayer.folded || activePlayer.allIn) {
-          this.nextPlayer();
-          return;
-        }
-        
-        // 简单AI逻辑
-        const action = this.getAIAction(activePlayer);
-        
-        switch (action.type) {
-          case 'fold':
-            activePlayer.folded = true;
-            this.playersInHand--;
-            this.showMessage(`${activePlayer.name} 弃牌`);
-            break;
-            
-          case 'check':
-            this.showMessage(`${activePlayer.name} 让牌`);
-            break;
-            
-          case 'call':
-            const callAmount = this.currentBet - activePlayer.bet;
-            activePlayer.chips -= callAmount;
-            this.pot += callAmount;
-            activePlayer.bet = this.currentBet;
-            this.showMessage(`${activePlayer.name} 跟注 ${callAmount} 筹码`);
-            break;
-            
-          case 'raise':
-            const raiseToAmount = action.amount;
-            const raiseAmount = raiseToAmount - activePlayer.bet;
-            activePlayer.chips -= raiseAmount;
-            this.pot += raiseAmount;
-            activePlayer.bet = raiseToAmount;
-            this.currentBet = raiseToAmount;
-            this.showMessage(`${activePlayer.name} 加注到 ${raiseToAmount} 筹码`);
-            break;
-        }
-        
-        // 更新界面
-        this.updatePlayerInfo();
-        this.updateGameInfo();
-        
-        // 转到下一个玩家
-        this.nextPlayer();
-      }, 1000);
-    },
-    
-    // 获取AI行动决策
-    getAIAction: function(player) {
-      // 实现简单的AI逻辑
-      const callAmount = this.currentBet - player.bet;
-      
-      // 如果可以让牌（没有人下注）
-      if (this.currentBet === 0 || player.bet === this.currentBet) {
-        // 70%的概率让牌，30%的概率加注
-        if (Math.random() < 0.7) {
-          return { type: 'check' };
-        } else {
-          const raiseAmount = Math.min(player.chips, this.minBet * 2);
-          return { type: 'raise', amount: this.currentBet + raiseAmount };
-        }
+    // 重置UI
+    this.players.forEach(player => {
+      const playerBox = document.getElementById(`player-${player.id}`);
+      if (playerBox) {
+        playerBox.classList.remove('active', 'folded', 'looked');
       }
       
-      // 需要跟注或弃牌的情况
-      // 简单起见，根据筹码量和随机因素决定
-      const callRatio = callAmount / this.pot;
-      
-      if (callRatio > 0.5 || Math.random() < 0.3) {
-        // 弃牌
-        return { type: 'fold' };
-      } else if (Math.random() < 0.7) {
-        // 跟注
-        return { type: 'call' };
-      } else {
-        // 加注
-        const raiseAmount = Math.min(player.chips, callAmount * 2);
-        return { type: 'raise', amount: this.currentBet + raiseAmount };
+      const cardsContainer = document.getElementById(`player-cards-${player.id}`);
+      if (cardsContainer) {
+        cardsContainer.innerHTML = '';
       }
-    },
+    });
     
-    // 玩家跟注
-    playerCall: function() {
-      const player = this.players[0];
-      const callAmount = this.currentBet - player.bet;
-      
-      if (callAmount > player.chips) {
-        // 筹码不够，全下
-        this.pot += player.chips;
-        player.bet += player.chips;
-        player.chips = 0;
-        player.allIn = true;
-        this.showMessage('你的筹码不足，自动全下');
-      } else {
-        player.chips -= callAmount;
-        this.pot += callAmount;
-        player.bet = this.currentBet;
-        this.showMessage(`你跟注 ${callAmount} 筹码`);
-      }
-      
-      // 更新界面
-      this.updatePlayerInfo();
-      this.updateGameInfo();
-      
-      // 转到下一个玩家
-      this.nextPlayer();
-    },
+    this.playersInHand = this.players.length;
+    this.updatePlayerInfo();
+    this.updateGameInfo();
     
-    // 玩家让牌
-    playerCheck: function() {
-      this.showMessage('你让牌');
-      
-      // 转到下一个玩家
-      this.nextPlayer();
-    },
-    
-    // 玩家加注
-    playerRaise: function(amount) {
-      const player = this.players[0];
-      const raiseAmount = amount - player.bet;
-      
-      if (amount < this.currentBet * 2) {
-        this.showMessage('加注金额必须至少是当前注码的两倍');
-        return;
-      }
-      
-      if (raiseAmount > player.chips) {
-        this.showMessage('你的筹码不足');
-        return;
-      }
-      
-      player.chips -= raiseAmount;
-      this.pot += raiseAmount;
-      player.bet = amount;
-      this.currentBet = amount;
-      
-      this.showMessage(`你加注到 ${amount} 筹码`);
-      
-      // 隐藏加注控件
-      this.hideBetControls();
-      
-      // 更新界面
-      this.updatePlayerInfo();
-      this.updateGameInfo();
-      
-      // 转到下一个玩家
-      this.nextPlayer();
-    },
-    
-    // 玩家弃牌
-    playerFold: function() {
-      this.players[0].folded = true;
-      this.playersInHand--;
-      this.showMessage('你弃牌了');
-      
-      // 更新界面
-      this.updatePlayerInfo();
-      
-      // 如果只有一名玩家未弃牌，结束游戏
-      if (this.playersInHand === 1) {
-        this.endHand();
-        return;
-      }
-      
-      // 转到下一个玩家
-      this.nextPlayer();
-    },
-    
-    // 转到下一个玩家
-    nextPlayer: function() {
-      let initialActivePlayer = this.activePlayerIndex;
-      
-      do {
-        this.activePlayerIndex = (this.activePlayerIndex + 1) % 3; // 改为3个玩家
-        
-        // 如果所有玩家都行动过一次，进入下一阶段
-        if (this.activePlayerIndex === initialActivePlayer || this.checkRoundComplete()) {
-          this.nextGamePhase();
-          return;
-        }
-        
-        // 跳过已弃牌或全下的玩家
-        if (this.players[this.activePlayerIndex].folded || this.players[this.activePlayerIndex].allIn) {
-          continue;
-        }
-        
-        break;
-      } while (true);
-      
-      // 高亮显示当前行动玩家
-      this.highlightActivePlayer();
-      
-      // 如果是玩家行动，启用操作按钮
-      if (this.activePlayerIndex === 0) {
-        this.enablePlayerActions();
-      } else {
-        // 如果是AI行动，处理AI行动
-        this.processAIAction();
-      }
-    },
-    
-    // 检查当前下注轮是否完成
-    checkRoundComplete: function() {
-      let highestBet = 0;
-      let allSameBet = true;
-      
-      // 找出最高下注
-      for (let player of this.players) {
-        if (!player.folded && !player.allIn) {
-          highestBet = Math.max(highestBet, player.bet);
-        }
-      }
-      
-      // 检查所有未弃牌的玩家是否都下了相同的注码
-      for (let player of this.players) {
-        if (!player.folded && !player.allIn && player.bet !== highestBet) {
-          allSameBet = false;
-          break;
-        }
-      }
-      
-      return allSameBet;
-    },
-    
-    // 进入下一游戏阶段
-    nextGamePhase: function() {
-      // 重置玩家下注
-      this.players.forEach(player => {
-        player.bet = 0;
-      });
-      this.currentBet = 0;
-      
-      // 根据当前阶段确定下一阶段
-      switch (this.gamePhase) {
-        case "preflop":
-          this.gamePhase = "flop";
-          this.dealFlop();
-          break;
-          
-        case "flop":
-          this.gamePhase = "turn";
-          this.dealTurn();
-          break;
-          
-        case "turn":
-          this.gamePhase = "river";
-          this.dealRiver();
-          break;
-          
-        case "river":
-          this.gamePhase = "showdown";
-          this.showdown();
-          break;
-      }
-    },
-    
-    // 发翻牌
-    dealFlop: function() {
-      fetch(`https://deckofcardsapi.com/api/deck/${this.deckId}/draw/?count=3`)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('API 请求失败');
-          }
-          return response.json();
-        })
-        .then(data => {
-          this.communityCards = [...data.cards];
-          this.showCommunityCards();
-          this.updatePhaseDisplay();
-          
-          // 开始新一轮下注
-          this.activePlayerIndex = this.smallBlindIndex;
-          this.startBettingRound();
-        })
-        .catch(error => {
-          console.error('发翻牌时出错:', error);
-          this.showMessage('发翻牌失败：' + error.message);
-        });
-    },
-    
-    // 发转牌
-    dealTurn: function() {
-      fetch(`https://deckofcardsapi.com/api/deck/${this.deckId}/draw/?count=1`)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('API 请求失败');
-          }
-          return response.json();
-        })
-        .then(data => {
-          this.communityCards.push(data.cards[0]);
-          this.showCommunityCards();
-          this.updatePhaseDisplay();
-          
-          // 开始新一轮下注
-          this.activePlayerIndex = this.smallBlindIndex;
-          this.startBettingRound();
-        })
-        .catch(error => {
-          console.error('发转牌时出错:', error);
-          this.showMessage('发转牌失败：' + error.message);
-        });
-    },
-    
-    // 发河牌
-    dealRiver: function() {
-      fetch(`https://deckofcardsapi.com/api/deck/${this.deckId}/draw/?count=1`)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('API 请求失败');
-          }
-          return response.json();
-        })
-        .then(data => {
-          this.communityCards.push(data.cards[0]);
-          this.showCommunityCards();
-          this.updatePhaseDisplay();
-          
-          // 开始新一轮下注
-          this.activePlayerIndex = this.smallBlindIndex;
-          this.startBettingRound();
-        })
-        .catch(error => {
-          console.error('发河牌时出错:', error);
-          this.showMessage('发河牌失败：' + error.message);
-        });
-    },
-    
-    // 摊牌阶段
-    showdown: function() {
-      this.updatePhaseDisplay();
-      this.showMessage('摊牌！');
-      
-      // 显示所有未弃牌玩家的底牌
-      this.showOpponentCards();
-      
-      // 计算每个未弃牌玩家的最佳牌型
-      this.evaluateHands();
-      
-      // 确定赢家
-      this.determineWinner();
-    },
-    
-    // 计算每个玩家的最佳牌型
-    evaluateHands: function() {
-      // 简化版的牌型评估
-      this.players.forEach(player => {
-        if (!player.folded) {
-          // 在实际游戏中，这里应该实现真正的牌型计算
-          // 这里使用随机值模拟牌型强度
-          player.handRank = Math.floor(Math.random() * 10);
-        }
-      });
-    },
-    
-    // 确定赢家
-    determineWinner: function() {
-      let highestRank = -1;
-      let winners = [];
-      
-      // 找出最高牌型
-      this.players.forEach(player => {
-        if (!player.folded) {
-          if (player.handRank > highestRank) {
-            highestRank = player.handRank;
-            winners = [player];
-          } else if (player.handRank === highestRank) {
-            winners.push(player);
-          }
-        }
-      });
-      
-      // 分配筹码给赢家
-      const winAmount = Math.floor(this.pot / winners.length);
-      
-      winners.forEach(winner => {
-        winner.chips += winAmount;
-      });
-      
-      // 显示赢家信息
-      if (winners.length === 1) {
-        this.showMessage(`${winners[0].name} 赢得了 ${winAmount} 筹码!`);
-      } else {
-        const winnerNames = winners.map(w => w.name).join(', ');
-        this.showMessage(`平局！${winnerNames} 每人赢得 ${winAmount} 筹码!`);
-      }
-      
-      // 更新界面
-      this.updatePlayerInfo();
-      
-      // 提供开始新一轮的选项
-      document.getElementById('new-game-btn').disabled = false;
-      
-      // 检查游戏是否应该结束（玩家没有筹码）
-      if (this.players[0].chips <= 0) {
-        this.showMessage('你的筹码用完了！游戏结束');
-      }
-    },
-    
-    // 结束当前牌局
-    endHand: function() {
-      // 找出未弃牌的玩家
-      let winner = this.players.find(player => !player.folded);
-      
-      // 给赢家加筹码
-      winner.chips += this.pot;
-      
-      this.showMessage(`所有其他玩家都弃牌了。${winner.name} 赢得 ${this.pot} 筹码!`);
-      
-      // 更新界面
-      this.updatePlayerInfo();
-      
-      // 提供开始新一轮的选项
-      document.getElementById('new-game-btn').disabled = false;
-      
-      // 摊牌
-      if (!winner.isPlayer) {
-        // 如果赢家不是玩家，显示他的底牌
-        this.showOpponentCards();
-      }
-    },
-    
-    // 显示公共牌
-    showCommunityCards: function() {
-      const communityCardsArea = document.getElementById('community-cards-area');
-      communityCardsArea.innerHTML = '';
-      
-      this.communityCards.forEach(card => {
-        const cardElement = document.createElement('div');
-        cardElement.className = 'card';
-        cardElement.innerHTML = `<img src="${card.image}" alt="${card.value} of ${card.suit}">`;
-        communityCardsArea.appendChild(cardElement);
-      });
-    },
-    
-    // 高亮显示当前行动玩家
-    highlightActivePlayer: function() {
-        // 移除所有高亮
-        document.querySelectorAll('.player-box').forEach(elem => {
-        elem.classList.remove('active');
-        });
-        
-        // 添加高亮给当前玩家
-        document.getElementById(`player-${this.activePlayerIndex}-box`).classList.add('active');
-    },
-    
-    // 启用玩家操作按钮
-    enablePlayerActions: function() {
-      const callBtn = document.getElementById('call-btn');
-      const raiseBtn = document.getElementById('raise-btn');
-      const checkBtn = document.getElementById('check-btn');
-      const foldBtn = document.getElementById('fold-btn');
-      
-      // 只有当前玩家行动时才启用
-      if (this.activePlayerIndex === 0) {
-        const player = this.players[0];
-        
-        // 如果当前没有下注或者玩家已经跟注到最高注码，可以让牌
-        if (this.currentBet === 0 || player.bet === this.currentBet) {
-          checkBtn.disabled = false;
-        } else {
-          checkBtn.disabled = true;
-        }
-        
-        // 如果有人下注且和玩家当前注码不同，可以跟注
-        if (this.currentBet > 0 && this.currentBet !== player.bet) {
-          callBtn.disabled = false;
-        } else {
-          callBtn.disabled = true;
-        }
-        
-        // 只要玩家有足够的筹码，就可以加注
-        raiseBtn.disabled = player.chips <= this.currentBet;
-        
-        // 始终可以弃牌
-        foldBtn.disabled = false;
-      } else {
-        // 不是玩家行动时，禁用所有操作按钮
-        this.disablePlayerActions();
-      }
-    },
-    
-    // 禁用玩家操作按钮
-    disablePlayerActions: function() {
-      document.getElementById('call-btn').disabled = true;
-      document.getElementById('raise-btn').disabled = true;
-      document.getElementById('check-btn').disabled = true;
-      document.getElementById('fold-btn').disabled = true;
-    },
-    
-    // 更新界面上的游戏信息
-    updateGameInfo: function() {
-      document.getElementById('pot-amount').textContent = this.pot;
-    },
-    
-// 修改更新玩家信息函数
-updatePlayerInfo: function() {
-  // 更新玩家信息
-  document.querySelector('#player-0-box .player-chips').textContent = `${this.players[0].chips} 筹码`;
-  document.querySelector('#player-0-box .player-bet').textContent = `下注: ${this.players[0].bet}`;
+    // 重置下注滑块
+    const betSlider = document.getElementById('bet-slider');
+    const betAmount = document.getElementById('bet-amount');
+    if (betSlider && betAmount) {
+      betSlider.value = this.minBet;
+      betSlider.min = this.minBet;
+      betAmount.textContent = this.minBet;
+    }
+  },
   
-  // 更新电脑玩家信息，只有1号和2号
-  for (let i = 1; i <= 2; i++) {
-  document.querySelector(`#player-${i}-box .player-chips`).textContent = `${this.players[i].chips} 筹码`;
-  document.querySelector(`#player-${i}-box .player-bet`).textContent = `下注: ${this.players[i].bet}`;
+  createNewDeck: function() {
+    console.log('创建新牌组');
+    
+    // 这里可以使用真实的API创建牌组，例如 deckofcardsapi.com
+    // 为了简化，我们直接使用本地模拟
+    return new Promise((resolve) => {
+      this.deckId = 'local_deck_' + Date.now();
+      setTimeout(resolve, 500); // 模拟网络延迟
+    });
+  },
   
-  // 如果玩家已弃牌，添加弃牌标记
-  const playerBox = document.getElementById(`player-${i}-box`);
-  if (this.players[i].folded) {
+  dealCards: function() {
+    console.log('发牌');
+    
+    return new Promise((resolve) => {
+      // 生成牌
+      const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+      const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+      const deck = [];
+      
+      // 创建一副完整的牌
+      for (let suit of suits) {
+        for (let value of values) {
+          deck.push({suit, value});
+        }
+      }
+      
+      // 洗牌
+      for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+      }
+      
+      // 给每个玩家发3张牌
+      this.players.forEach(player => {
+        player.hand = deck.splice(0, 3);
+      });
+      
+      // 更新UI，显示牌
+      this.players.forEach(player => {
+        if (player.isPlayer) {
+          this.showPlayerCards(player.id);
+        } else {
+          this.showOpponentCardBacks(player.id);
+        }
+      });
+      
+      setTimeout(resolve, 1000); // 模拟发牌动画时间
+    });
+  },
+  
+  // 玩家操作
+  playerLook: function() {
+    console.log('玩家看牌');
+    
+    // 确保是玩家的回合
+    if (this.activePlayerIndex !== 0 || this.gamePhase !== "betting") return;
+    
+    const player = this.players[0]; // 玩家总是索引0
+    
+    // 如果已经看过牌，不能再次看牌
+    if (player.looked) {
+      this.showMessage("您已经看过牌了");
+      return;
+    }
+    
+    // 标记玩家已看牌
+    player.looked = true;
+    const playerBox = document.getElementById(`player-${player.id}`);
+    if (playerBox) {
+      playerBox.classList.add('looked');
+    }
+    
+    // 显示玩家的牌面（实际上玩家已经能看到自己的牌）
+    this.showPlayerCards(player.id);
+    
+    // 继续游戏，轮到下一个玩家
+    this.nextPlayer();
+  },
+  
+  playerFollow: function() {
+    console.log('玩家跟注');
+    
+    // 确保是玩家的回合
+    if (this.activePlayerIndex !== 0 || this.gamePhase !== "betting") return;
+    
+    const player = this.players[0];
+    const betDifference = this.currentBet - player.bet;
+    
+    // 检查玩家是否有足够的筹码
+    if (betDifference > player.chips) {
+      this.showMessage("您的筹码不足以跟注");
+      return;
+    }
+    
+    // 更新玩家筹码和下注
+    player.chips -= betDifference;
+    player.bet = this.currentBet;
+    this.pot += betDifference;
+    
+    // 更新UI
+    this.updatePlayerInfo();
+    this.updateGameInfo();
+    
+    // 继续游戏，轮到下一个玩家
+    this.nextPlayer();
+  },
+  
+  playerRaise: function() {
+    console.log('玩家加注');
+    
+    // 确保是玩家的回合
+    if (this.activePlayerIndex !== 0 || this.gamePhase !== "betting") return;
+    
+    const player = this.players[0];
+    
+    // 获取加注金额
+    const raiseAmount = parseInt(document.getElementById('bet-slider').value);
+    
+    // 检查加注金额是否有效
+    if (raiseAmount <= this.currentBet) {
+      this.showMessage("加注金额必须大于当前注码");
+      return;
+    }
+    
+    // 计算需要增加的筹码
+    const chipsDifference = raiseAmount - player.bet;
+    
+    // 检查玩家是否有足够的筹码
+    if (chipsDifference > player.chips) {
+      this.showMessage("您的筹码不足以加这么多注");
+      return;
+    }
+    
+    // 更新玩家筹码和下注
+    player.chips -= chipsDifference;
+    player.bet = raiseAmount;
+    this.pot += chipsDifference;
+    this.currentBet = raiseAmount;
+    
+    // 更新UI
+    this.updatePlayerInfo();
+    this.updateGameInfo();
+    
+    // 继续游戏，轮到下一个玩家
+    this.nextPlayer();
+  },
+  
+  playerFold: function() {
+    console.log('玩家弃牌');
+    
+    // 确保是玩家的回合
+    if (this.activePlayerIndex !== 0 || this.gamePhase !== "betting") return;
+    
+    const player = this.players[0];
+    
+    // 标记玩家已弃牌
+    player.folded = true;
+    this.playersInHand--;
+    
+    const playerBox = document.getElementById(`player-${player.id}`);
+    if (playerBox) {
       playerBox.classList.add('folded');
-  } else {
-      playerBox.classList.remove('folded');
-  }
-  }
+    }
+    
+    // 检查是否只剩一名玩家未弃牌
+    if (this.playersInHand === 1) {
+      // 游戏结束，确定赢家
+      this.determineWinner();
+      return;
+    }
+    
+    // 继续游戏，轮到下一个玩家
+    this.nextPlayer();
+  },
+  // AI决策
+processAIAction: function() {
+  console.log('AI开始行动');
   
-  // 玩家弃牌显示
-  if (this.players[0].folded) {
-  document.getElementById('player-0-box').classList.add('folded');
-  } else {
-  document.getElementById('player-0-box').classList.remove('folded');
-  }
+  // 禁用玩家控制
+  this.disablePlayerActions();
   
-  // 更新庄家、小盲注和大盲注标记
-  this.updatePositionMarkers();
+  // 获取当前AI玩家
+  const aiPlayer = this.players[this.activePlayerIndex];
+  
+  // 显示AI玩家正在思考
+  this.showMessage(`${aiPlayer.name}正在思考...`);
+  
+  // 延迟执行，模拟思考过程
+  setTimeout(() => {
+    // 获取AI决策
+    const action = this.getAIAction(aiPlayer);
+    
+    // 执行AI决策
+    switch (action.type) {
+      case 'look':
+        this.aiLook(aiPlayer);
+        break;
+      case 'follow':
+        this.aiFollow(aiPlayer);
+        break;
+      case 'raise':
+        this.aiRaise(aiPlayer, action.amount);
+        break;
+      case 'fold':
+        this.aiFold(aiPlayer);
+        break;
+    }
+    
+    // 检查游戏状态
+    if (this.gamePhase === "betting") {
+      // 继续下一玩家
+      this.nextPlayer();
+    }
+  }, 1500);
 },
 
-    // 添加一个新函数来更新位置标记
-    updatePositionMarkers: function() {
-        // 先清除所有标记
-        document.querySelectorAll('.player-marker').forEach(marker => marker.remove());
-        
-        // 添加庄家标记
-        const dealerBox = document.getElementById(`player-${this.dealerIndex}-box`);
-        const dealerMarker = document.createElement('div');
-        dealerMarker.className = 'player-marker dealer-marker';
-        dealerMarker.textContent = 'D';
-        dealerBox.appendChild(dealerMarker);
-        
-        // 添加小盲注标记
-        const sbBox = document.getElementById(`player-${this.smallBlindIndex}-box`);
-        const sbMarker = document.createElement('div');
-        sbMarker.className = 'player-marker small-blind-marker';
-        sbMarker.textContent = 'SB';
-        sbBox.appendChild(sbMarker);
-        
-        // 添加大盲注标记
-        const bbBox = document.getElementById(`player-${this.bigBlindIndex}-box`);
-        const bbMarker = document.createElement('div');
-        bbMarker.className = 'player-marker big-blind-marker';
-        bbMarker.textContent = 'BB';
-        bbBox.appendChild(bbMarker);
-    },
-    
-    // 更新游戏阶段显示
-    updatePhaseDisplay: function() {
-      document.getElementById('game-phase').textContent = this.gamePhaseNames[this.gamePhase] || '未开始';
-    },
-    
-    // 显示游戏消息
-    showMessage: function(message) {
-      const messageElement = document.getElementById('game-message');
-      messageElement.textContent = message;
-      
-      console.log(`游戏消息: ${message}`);
-      
-      // 自动隐藏消息（可选）
-      // setTimeout(() => {
-      //   messageElement.textContent = '';
-      // }, 5000);
-    },
-    
-    // 游戏阶段名称
-    gamePhaseNames: {
-      "idle": "未开始",
-      "preflop": "翻前",
-      "flop": "翻牌",
-      "turn": "转牌",
-      "river": "河牌",
-      "showdown": "摊牌"
+getAIAction: function(aiPlayer) {
+  console.log(`获取${aiPlayer.name}的决策`);
+  
+  // 50%随机决策的简单AI
+  // 在实际游戏中，这里可以添加更复杂的策略逻辑
+  
+  const randomValue = Math.random();
+  
+  // 如果AI还未看牌，有30%概率看牌
+  if (!aiPlayer.looked && randomValue < 0.3) {
+    return { type: 'look' };
+  }
+  
+  // 处理各种情况
+  if (this.currentBet > aiPlayer.bet) {
+    // 需要跟注或弃牌
+    // 如果差距太大，有30%概率弃牌
+    const betDifference = this.currentBet - aiPlayer.bet;
+    if (betDifference > aiPlayer.chips * 0.3 && randomValue < 0.3) {
+      return { type: 'fold' };
     }
-  };
+    
+    // 60%概率跟注，10%概率加注
+    if (randomValue < 0.6) {
+      return { type: 'follow' };
+    } else {
+      // 加注，金额为当前注码的1.5到2.5倍之间
+      const multiplier = 1.5 + Math.random();
+      const raiseAmount = Math.min(
+        Math.floor(this.currentBet * multiplier),
+        aiPlayer.chips + aiPlayer.bet
+      );
+      return { type: 'raise', amount: raiseAmount };
+    }
+  } else {
+    // 可以让牌(check)或加注
+    if (randomValue < 0.5) {
+      return { type: 'follow' }; // 在炸金花中相当于让牌
+    } else {
+      // 加注，金额为当前最小注的1.5到3倍之间
+      const multiplier = 1.5 + Math.random() * 1.5;
+      const raiseAmount = Math.min(
+        Math.floor(this.minBet * multiplier),
+        aiPlayer.chips + aiPlayer.bet
+      );
+      return { type: 'raise', amount: raiseAmount };
+    }
+  }
+},
+
+// AI动作实现
+aiLook: function(aiPlayer) {
+  console.log(`${aiPlayer.name}看牌`);
   
-  // 导出德州扑克游戏对象，供其他模块使用
-  window.cardGame = cardGame;
+  aiPlayer.looked = true;
   
-  // 初始化德州扑克游戏功能
-  document.addEventListener('DOMContentLoaded', () => {
-    cardGame.init();
+  const playerBox = document.getElementById(`player-${aiPlayer.id}`);
+  if (playerBox) {
+    playerBox.classList.add('looked');
+  }
+  
+  this.showMessage(`${aiPlayer.name}看了自己的牌`);
+},
+
+aiFollow: function(aiPlayer) {
+  console.log(`${aiPlayer.name}跟注`);
+  
+  const betDifference = this.currentBet - aiPlayer.bet;
+  
+  // 更新玩家筹码和下注
+  aiPlayer.chips -= betDifference;
+  aiPlayer.bet = this.currentBet;
+  this.pot += betDifference;
+  
+  // 更新UI
+  this.updatePlayerInfo();
+  this.updateGameInfo();
+  
+  this.showMessage(`${aiPlayer.name}跟注 ${betDifference} 筹码`);
+},
+
+aiRaise: function(aiPlayer, raiseAmount) {
+  console.log(`${aiPlayer.name}加注`);
+  
+  // 计算需要增加的筹码
+  const chipsDifference = raiseAmount - aiPlayer.bet;
+  
+  // 更新玩家筹码和下注
+  aiPlayer.chips -= chipsDifference;
+  aiPlayer.bet = raiseAmount;
+  this.pot += chipsDifference;
+  this.currentBet = raiseAmount;
+  
+  // 更新UI
+  this.updatePlayerInfo();
+  this.updateGameInfo();
+  
+  this.showMessage(`${aiPlayer.name}加注到 ${raiseAmount} 筹码`);
+},
+
+aiFold: function(aiPlayer) {
+  console.log(`${aiPlayer.name}弃牌`);
+  
+  // 标记玩家已弃牌
+  aiPlayer.folded = true;
+  this.playersInHand--;
+  
+  const playerBox = document.getElementById(`player-${aiPlayer.id}`);
+  if (playerBox) {
+    playerBox.classList.add('folded');
+  }
+  
+  this.showMessage(`${aiPlayer.name}弃牌了`);
+  
+  // 检查是否只剩一名玩家未弃牌
+  if (this.playersInHand === 1) {
+    // 游戏结束，确定赢家
+    this.determineWinner();
+  }
+},
+
+// 游戏流程控制
+nextPlayer: function() {
+  console.log('轮到下一个玩家');
+  
+  // 查找下一个未弃牌的玩家
+  let nextPlayerIndex = this.activePlayerIndex;
+  do {
+    nextPlayerIndex = (nextPlayerIndex + 1) % this.players.length;
+  } while (this.players[nextPlayerIndex].folded && nextPlayerIndex !== this.activePlayerIndex);
+  
+  // 如果所有玩家都下过注了，一轮结束
+  if (nextPlayerIndex === 0 && this.checkRoundComplete()) {
+    this.showdown();
+    return;
+  }
+  
+  // 更新当前玩家索引
+  this.activePlayerIndex = nextPlayerIndex;
+  
+  // 高亮显示当前玩家
+  this.highlightActivePlayer();
+  
+  // 如果是玩家的回合，启用控制按钮
+  if (nextPlayerIndex === 0) {
+    this.enablePlayerActions();
+  } else {
+    // AI玩家的回合，处理AI行动
+    this.processAIAction();
+  }
+},
+
+checkRoundComplete: function() {
+  console.log('检查当前回合是否完成');
+  
+  // 检查所有未弃牌的玩家是否下注相同
+  const activePlayers = this.players.filter(player => !player.folded);
+  const firstPlayerBet = activePlayers[0].bet;
+  
+  // 如果有一个玩家的下注与第一个玩家不同，回合尚未完成
+  for (const player of activePlayers) {
+    if (player.bet !== firstPlayerBet) {
+      return false;
+    }
+  }
+  
+  return true;
+},
+
+showdown: function() {
+  console.log('摊牌阶段');
+  
+  this.gamePhase = "showdown";
+  this.disablePlayerActions();
+  
+  // 显示所有未弃牌玩家的牌
+  this.players.forEach(player => {
+    if (!player.folded) {
+      this.showPlayerCards(player.id);
+    }
   });
+  
+  // 计算牌型大小并确定赢家
+  setTimeout(() => {
+    this.evaluateHands();
+    this.determineWinner();
+  }, 2000);
+},
+
+// 牌型评估
+evaluateHands: function() {
+  console.log('评估牌型');
+  
+  // 牌型值从大到小: 豹子(6) > 同花顺(5) > 同花(4) > 顺子(3) > 对子(2) > 单牌(1)
+  this.players.forEach(player => {
+    if (player.folded) {
+      player.handRank = { type: 0, value: 0 }; // 弃牌玩家
+      return;
+    }
+    
+    // 复制手牌以便排序
+    const cards = [...player.hand];
+    
+    // 按照牌面值排序（A最大）
+    const valueOrder = {'2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, '10':10, 'J':11, 'Q':12, 'K':13, 'A':14};
+    cards.sort((a, b) => valueOrder[b.value] - valueOrder[a.value]);
+    
+    // 检查是否有豹子（三张相同点数）
+    const isTrips = cards[0].value === cards[1].value && cards[1].value === cards[2].value;
+    if (isTrips) {
+      player.handRank = { type: 6, value: valueOrder[cards[0].value] };
+      player.handName = "豹子";
+      return;
+    }
+    
+    // 检查是否同花（三张同一花色）
+    const isFlush = cards[0].suit === cards[1].suit && cards[1].suit === cards[2].suit;
+    
+    // 检查是否顺子（三张连续牌）
+    const isStraight = 
+      valueOrder[cards[0].value] === valueOrder[cards[1].value] + 1 && 
+      valueOrder[cards[1].value] === valueOrder[cards[2].value] + 1;
+    
+    // 特殊情况：A-2-3 顺子
+    const isA23Straight = 
+      valueOrder[cards[0].value] === 14 && // A
+      valueOrder[cards[1].value] === 3 &&  // 3
+      valueOrder[cards[2].value] === 2;    // 2
+    
+    // 同花顺
+    if ((isStraight || isA23Straight) && isFlush) {
+      player.handRank = { type: 5, value: isStraight ? valueOrder[cards[0].value] : 3 };
+      player.handName = "同花顺";
+      return;
+    }
+    
+    // 同花
+    if (isFlush) {
+      player.handRank = { 
+        type: 4, 
+        value: valueOrder[cards[0].value] * 10000 + valueOrder[cards[1].value] * 100 + valueOrder[cards[2].value]
+      };
+      player.handName = "同花";
+      return;
+    }
+    
+    // 顺子
+    if (isStraight || isA23Straight) {
+      player.handRank = { type: 3, value: isStraight ? valueOrder[cards[0].value] : 3 };
+      player.handName = "顺子";
+      return;
+    }
+    
+    // 检查是否对子
+    const isPair1 = cards[0].value === cards[1].value;
+    const isPair2 = cards[1].value === cards[2].value;
+    
+    if (isPair1 || isPair2) {
+      const pairValue = isPair1 ? valueOrder[cards[0].value] : valueOrder[cards[1].value];
+      const kickerValue = isPair1 ? valueOrder[cards[2].value] : valueOrder[cards[0].value];
+      player.handRank = { type: 2, value: pairValue * 100 + kickerValue };
+      player.handName = "对子";
+      return;
+    }
+    
+    // 单牌
+    player.handRank = { 
+      type: 1, 
+      value: valueOrder[cards[0].value] * 10000 + valueOrder[cards[1].value] * 100 + valueOrder[cards[2].value]
+    };
+    player.handName = "高牌";
+  });
+},
+
+determineWinner: function() {
+  console.log('确定赢家');
+  
+  // 筛选出未弃牌的玩家
+  const activePlayers = this.players.filter(player => !player.folded);
+  
+  // 如果只有一个活跃玩家，他就是赢家
+  if (activePlayers.length === 1) {
+    const winner = activePlayers[0];
+    
+    // 将底池加入赢家筹码
+    winner.chips += this.pot;
+    
+    // 更新UI
+    this.updatePlayerInfo();
+    
+    // 显示赢家信息
+    this.showMessage(`${winner.name} 获胜，赢得 ${this.pot} 筹码！`);
+    
+    // 在短暂延迟后重置游戏
+    setTimeout(() => {
+      this.resetForNextHand();
+    }, 3000);
+    
+    return;
+  }
+  
+  // 按照牌型大小排序玩家
+  activePlayers.sort((a, b) => {
+    // 先比较牌型类型
+    if (a.handRank.type !== b.handRank.type) {
+      return b.handRank.type - a.handRank.type;
+    }
+    // 同一牌型，比较牌值
+    return b.handRank.value - a.handRank.value;
+  });
+  
+  // 第一个玩家就是赢家
+  const winner = activePlayers[0];
+  
+  // 将底池加入赢家筹码
+  winner.chips += this.pot;
+  
+  // 更新UI
+  this.updatePlayerInfo();
+  
+  // 显示赢家信息和牌型
+  this.showMessage(`${winner.name} 以 ${winner.handName} 获胜，赢得 ${this.pot} 筹码！`);
+  
+  // 延迟后重置游戏
+  setTimeout(() => {
+    this.resetForNextHand();
+  }, 3000);
+},
+
+resetForNextHand: function() {
+  // 准备下一轮游戏
+  this.gamePhase = "idle";
+  this.startNewGame();
+},
+
+// UI更新
+showPlayerCards: function(playerId) {
+  console.log(`显示玩家${playerId}的牌`);
+  
+  const player = this.players.find(p => p.id === playerId);
+  if (!player || player.hand.length === 0) return;
+  
+  const cardsContainer = document.getElementById(`player-cards-${playerId}`);
+  if (!cardsContainer) return;
+  
+  // 清空容器
+  cardsContainer.innerHTML = '';
+  
+  // 创建并添加牌元素
+  player.hand.forEach(card => {
+    const cardElement = document.createElement('div');
+    cardElement.className = `card ${card.suit}`;
+    
+    const valueElement = document.createElement('div');
+    valueElement.className = 'value';
+    valueElement.textContent = card.value;
+    
+    const suitElement = document.createElement('div');
+    suitElement.className = 'suit';
+    // 根据花色添加符号
+    switch (card.suit) {
+      case 'hearts': suitElement.textContent = '♥'; break;
+      case 'diamonds': suitElement.textContent = '♦'; break;
+      case 'clubs': suitElement.textContent = '♣'; break;
+      case 'spades': suitElement.textContent = '♠'; break;
+    }
+    
+    cardElement.appendChild(valueElement);
+    cardElement.appendChild(suitElement);
+    cardsContainer.appendChild(cardElement);
+  });
+},
+
+showOpponentCardBacks: function(playerId) {
+  console.log(`显示玩家${playerId}的牌背`);
+  
+  const player = this.players.find(p => p.id === playerId);
+  if (!player || player.hand.length === 0) return;
+  
+  const cardsContainer = document.getElementById(`player-cards-${playerId}`);
+  if (!cardsContainer) return;
+  
+  // 清空容器
+  cardsContainer.innerHTML = '';
+  
+  // 创建并添加牌背元素
+  for (let i = 0; i < player.hand.length; i++) {
+    const cardElement = document.createElement('div');
+    cardElement.className = 'card back';
+    cardsContainer.appendChild(cardElement);
+  }
+},
+
+showOpponentCards: function(playerId) {
+  // 与showPlayerCards相同，但是用于显示AI玩家的牌
+  this.showPlayerCards(playerId);
+},
+
+updatePlayerInfo: function() {
+  console.log('更新玩家信息');
+  
+  this.players.forEach(player => {
+    const playerBox = document.getElementById(`player-${player.id}`);
+    if (!playerBox) return;
+    
+    const chipsElement = playerBox.querySelector('.player-chips');
+    const betElement = playerBox.querySelector('.player-bet');
+    
+    if (chipsElement) {
+      chipsElement.textContent = `${player.chips} 筹码`;
+    }
+    
+    if (betElement) {
+      betElement.textContent = `下注: ${player.bet}`;
+    }
+  });
+},
+
+updateGameInfo: function() {
+  console.log('更新游戏信息');
+  
+  const potAmount = document.getElementById('pot-amount');
+  if (potAmount) {
+    potAmount.textContent = this.pot;
+  }
+  
+  const tablePot = document.getElementById('table-pot');
+  if (tablePot) {
+    tablePot.textContent = `彩池: ${this.pot}`;
+  }
+},
+
+highlightActivePlayer: function() {
+  console.log('高亮当前行动玩家');
+  
+  // 首先移除所有玩家的高亮
+  this.players.forEach(player => {
+    const playerBox = document.getElementById(`player-${player.id}`);
+    if (playerBox) {
+      playerBox.classList.remove('active');
+    }
+  });
+  
+  // 高亮当前玩家
+  const activePlayer = this.players[this.activePlayerIndex];
+  const playerBox = document.getElementById(`player-${activePlayer.id}`);
+  if (playerBox) {
+    playerBox.classList.add('active');
+  }
+},
+
+enablePlayerActions: function() {
+  console.log('启用玩家操作按钮');
+  
+  const player = this.players[0]; // 玩家总是索引0
+  const lookBtn = document.getElementById('look-btn');
+  const followBtn = document.getElementById('follow-btn');
+  const raiseBtn = document.getElementById('raise-btn');
+  const foldBtn = document.getElementById('fold-btn');
+  
+  // 看牌按钮：只有未看牌时可用
+  if (lookBtn) {
+    lookBtn.disabled = player.looked;
+  }
+  
+  // 跟注按钮：任何时候都可用
+  if (followBtn) {
+    followBtn.disabled = false;
+  }
+  
+  // 加注按钮：如果有足够筹码可用
+  if (raiseBtn) {
+    raiseBtn.disabled = player.chips <= 0;
+  }
+  
+  // 弃牌按钮：任何时候都可用
+  if (foldBtn) {
+    foldBtn.disabled = false;
+  }
+},
+
+disablePlayerActions: function() {
+  console.log('禁用玩家操作按钮');
+  
+  const lookBtn = document.getElementById('look-btn');
+  const followBtn = document.getElementById('follow-btn');
+  const raiseBtn = document.getElementById('raise-btn');
+  const foldBtn = document.getElementById('fold-btn');
+  
+  if (lookBtn) lookBtn.disabled = true;
+  if (followBtn) followBtn.disabled = true;
+  if (raiseBtn) raiseBtn.disabled = true;
+  if (foldBtn) foldBtn.disabled = true;
+},
+
+showMessage: function(message, duration = 2000) {
+  console.log('显示消息:', message);
+  
+  // 查找或创建消息元素
+  let messageElement = document.getElementById('game-message');
+  
+  if (!messageElement) {
+    messageElement = document.createElement('div');
+    messageElement.id = 'game-message';
+    messageElement.className = 'game-message';
+    document.querySelector('.bomb-game-body').appendChild(messageElement);
+  }
+  
+  // 设置消息内容并显示
+  messageElement.textContent = message;
+  messageElement.classList.add('show');
+  
+  // 设置计时器，自动隐藏消息
+  setTimeout(() => {
+    messageElement.classList.remove('show');
+  }, duration);
+}
+};
+
+// 添加此行，将bombGame对象作为全局cardGame对象导出
+window.cardGame = bombGame;
+
+// 确保DOM加载完成后初始化游戏
+document.addEventListener('DOMContentLoaded', () => {
+  // 初始化游戏，但不立即显示
+  bombGame.init();
+  console.log('炸金花游戏已初始化并准备就绪');
+});
