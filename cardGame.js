@@ -8,8 +8,8 @@ const bombGame = {
   minBet: 20,
   players: [
       { id: 0, name: "你", isPlayer: true, hand: [], chips: 1000, bet: 0, folded: false, looked: false },
-      { id: 1, name: "东方机器人", isPlayer: false, hand: [], chips: 1000, bet: 0, folded: false, looked: false },
-      { id: 2, name: "西方机器人", isPlayer: false, hand: [], chips: 1000, bet: 0, folded: false, looked: false }
+      { id: 1, name: "南宫问天", isPlayer: false, hand: [], chips: 1000, bet: 0, folded: false, looked: false },
+      { id: 2, name: "喜羊羊", isPlayer: false, hand: [], chips: 1000, bet: 0, folded: false, looked: false }
   ],
   activePlayerIndex: 0,
   playersInHand: 3,
