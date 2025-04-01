@@ -387,9 +387,9 @@ const toggleGameView = (showGameId, hideElements) => {
             if (confirm('是否恢复上次未完成的游戏？')) {
             const restored = currentSnakeGame.restoreGameState(savedSnakeGame);
             if (restored) {
-                console.log('成功恢复贪吃蛇游戏状态');
+                console.log('成功恢复贪吃蛇游戏状态，当前血量:', savedSnakeGame.health);
                 // 恢复成功后删除保存的状态，防止重复恢复
-                // localStorage.removeItem('snakeGameState'); // 暂时注释掉，直到确认恢复正常
+                localStorage.removeItem('snakeGameState');
             } else {
                 console.warn('恢复游戏状态失败，开始新游戏');
             }
@@ -427,39 +427,40 @@ const toggleGameView = (showGameId, hideElements) => {
         leaderboardBtn.addEventListener('click', snakeLeaderboardClickHandler);
         document.addEventListener('click', snakeDocumentClickHandler);
   
-        // 修改返回按钮处理，更可靠地保存游戏状态
         document.getElementById('back-btn').addEventListener('click', () => {
             if (currentSnakeGame) {
-            // 保存游戏状态之前先检查游戏是否正在进行
-            const shouldSaveState = !currentSnakeGame.gameOver && 
-                                    (currentSnakeGame.animationFrameId || currentSnakeGame.paused);
-            
-            if (shouldSaveState) {
+              // 保存游戏状态之前先检查游戏是否正在进行
+              const shouldSaveState = !currentSnakeGame.gameOver && 
+                                      (currentSnakeGame.isPlaying || 
+                                      currentSnakeGame.animationFrameId || 
+                                      currentSnakeGame.paused);
+              
+              if (shouldSaveState) {
                 // 确保游戏处于暂停状态
                 if (!currentSnakeGame.paused) {
-                currentSnakeGame.togglePause();
+                  currentSnakeGame.togglePause();
                 }
                 
                 // 保存游戏状态
                 const gameState = currentSnakeGame.saveGameState();
                 if (gameState) {
-                localStorage.setItem('snakeGameState', JSON.stringify(gameState));
-                console.log('贪吃蛇游戏状态已保存');
+                  localStorage.setItem('snakeGameState', JSON.stringify(gameState));
+                  console.log('贪吃蛇游戏状态已保存，当前血量:', gameState.health);
                 }
-            } else {
+              } else {
                 // 游戏已结束或未开始，清除保存的状态
                 localStorage.removeItem('snakeGameState');
                 console.log('游戏未在进行中，清除保存的状态');
-            }
-            
-            // 销毁游戏实例
-            currentSnakeGame.destroy();
-            currentSnakeGame = null;
+              }
+              
+              // 销毁游戏实例
+              currentSnakeGame.destroy();
+              currentSnakeGame = null;
             }
             
             console.log('返回游戏选择页面');
             debouncedToggleGameView('games-selection', true);
-        }, { once: true });
+          }, { once: true });
     });
   
     // 修复俄罗斯方块游戏实例重复创建问题

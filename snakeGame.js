@@ -701,35 +701,46 @@ move() {
     case 'left': head.x--; break;
     case 'right': head.x++; break;
   }
+  // 咬尾巴的特殊处理：防止连续咬尾巴
+  const tail = this.snake[this.snake.length - 1];
+  const isBitingTail = head.x === tail.x && head.y === tail.y;
   
-  // 检查碰撞
-  if (this.checkCollision(head)) {
-    // 发生碰撞时减少生命值
-    this.health--;
-    this.drawHealth();
-    
-    // 判断是否游戏结束
-    if (this.health <= 0) {
-      this.gameOver = true;
-      this.drawGameOver();
-      return;
-    }
-    
-    // 蛇反弹：根据当前方向后退一格
-    let backupHead = {...oldHead}; 
-    // 注意：保持在原位，不进入碰撞区域
-    
-    // 更新蛇头为后退位置
-    this.snake[0] = backupHead;
-    
-    // 触发闪烁和眩晕效果
-    this.startBlinking();
-    this.startInvincibility();
-    
-    // 绘制当前状态
-    this.draw();
-    return;
+  // 如果咬到尾巴且蛇长度过短，不允许继续咬
+  const minLength = 3; // 设置最小长度
+  if (isBitingTail && this.snake.length <= minLength) {
+    // 这里可以添加一个视觉提示"蛇太短了!"
+    // 但仍然允许正常移动，只是不处理咬尾巴逻辑
+  } else {
+      // 检查碰撞
+      if (this.checkCollision(head)) {
+        // 发生碰撞时减少生命值
+        this.health--;
+        this.drawHealth();
+        
+        // 判断是否游戏结束
+        if (this.health <= 0) {
+          this.gameOver = true;
+          this.drawGameOver();
+          return;
+        }
+        
+        // 蛇反弹：根据当前方向后退一格
+        let backupHead = {...oldHead}; 
+        // 注意：保持在原位，不进入碰撞区域
+        
+        // 更新蛇头为后退位置
+        this.snake[0] = backupHead;
+        
+        // 触发闪烁和眩晕效果
+        this.startBlinking();
+        this.startInvincibility();
+        
+        // 绘制当前状态
+        this.draw();
+        return;
+      }
   }
+
   
   // 正常移动逻辑：只有在没有碰撞的情况下执行
   this.snake.unshift(head);
@@ -969,9 +980,15 @@ checkCollision(head) {
   if (head.x < 0 || head.x >= this.widthInBlocks || head.y < 0 || head.y >= this.heightInBlocks) 
     return true;
     
-  // 检查是否撞到自己
-  if (this.snake.some((segment, index) => index > 0 && segment.x === head.x && segment.y === head.y))
-    return true;
+  // 检查是否撞到自己的任何部分
+  for (let i = 1; i < this.snake.length; i++) {
+    const segment = this.snake[i];
+    if (segment.x === head.x && segment.y === head.y) {
+      // 咬到自己的处理逻辑 - 传入被咬到的部分的索引
+      this.handleBodyBite(i);
+      return false; // 不算作普通碰撞，而是由专门的方法处理
+    }
+  }
     
   // 检查是否撞到怪物
   const monsterSize = 3; // 怪物占用的方块数（长宽）
@@ -1270,11 +1287,17 @@ saveGameState() {
     score: this.score,
     highScore: this.highScore,
     gameInProgress: true,
-    isPlaying: true
+    isPlaying: true,
+    // 添加血量保存
+    health: this.health,
+    maxHealth: this.maxHealth,
+    // 添加特殊水果状态
+    specialFruit: this.specialFruit ? JSON.parse(JSON.stringify(this.specialFruit)) : null,
+    foodEatenCount: this.foodEatenCount
   };
 }
 
-// 修改 restoreGameState 方法，使用DOM元素显示暂停状态
+// 修改 restoreGameState 方法，恢复完整游戏状态
 restoreGameState(state) {
   if (!state || !state.gameInProgress) {
     console.log('没有可恢复的游戏状态');
@@ -1293,8 +1316,20 @@ restoreGameState(state) {
   this.paused = true;
   this.isPlaying = true;
   
+  // 恢复血量状态
+  if (typeof state.health === 'number') {
+    this.health = state.health;
+  }
+  
+  // 恢复特殊水果
+  this.specialFruit = state.specialFruit;
+  this.foodEatenCount = state.foodEatenCount || 0;
+  
   this.scoreElement.textContent = this.score;
   this.highScoreElement.textContent = this.highScore;
+  
+  // 重新绘制血量显示
+  this.drawHealth();
   
   this.draw();
   this.showStaticPauseScreen();
@@ -1592,5 +1627,137 @@ removeSpeedUpEffect() {
   
   // 移除蛇头周围的速度线效果
   this.drawSpeedLines = false;
+}
+// 添加处理咬尾巴的方法
+handleTailBite() {
+  // 蛇变短(移除尾巴)
+  this.snake.pop();
+  
+  // 扣分逻辑
+  const pointsLost = 2; // 每次咬尾巴扣2分
+  this.score = Math.max(0, this.score - pointsLost); // 防止分数为负
+  this.drawScore();
+  
+  // 添加视觉反馈
+  this.showTailBiteEffect();
+}
+// 添加咬尾巴的视觉反馈
+showTailBiteEffect() {
+  // 创建临时提示
+  let biteIndicator = document.createElement('div');
+  biteIndicator.textContent = '-2';
+  biteIndicator.style.position = 'absolute';
+  biteIndicator.style.color = 'red';
+  biteIndicator.style.fontWeight = 'bold';
+  biteIndicator.style.fontSize = '24px';
+  
+  // 放置在canvas附近
+  const canvasContainer = this.canvas.parentElement;
+  if (canvasContainer) {
+    biteIndicator.style.top = '70px';
+    biteIndicator.style.left = '50%';
+    biteIndicator.style.transform = 'translateX(-50%)';
+    biteIndicator.style.zIndex = '101';
+    
+    // 添加动画
+    biteIndicator.style.animation = 'fadeUp 1s forwards';
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes fadeUp {
+        0% { opacity: 1; transform: translate(-50%, 0); }
+        100% { opacity: 0; transform: translate(-50%, -20px); }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    canvasContainer.appendChild(biteIndicator);
+    
+    // 动画结束后移除
+    setTimeout(() => {
+      if (biteIndicator.parentNode) {
+        biteIndicator.parentNode.removeChild(biteIndicator);
+      }
+    }, 1000);
+  }
+}
+// 添加处理咬身体的方法
+handleBodyBite(biteIndex) {
+  // 计算要减掉的分数 - 与切断的长度成正比
+  const segmentsRemoved = this.snake.length - biteIndex;
+  const pointsLost = Math.min(segmentsRemoved, 10); // 最多扣10分
+  
+  // 修改蛇的长度 - 从被咬的位置截断
+  this.snake = this.snake.slice(0, biteIndex);
+  
+  // 扣分
+  this.score = Math.max(0, this.score - pointsLost); // 防止分数为负
+  this.drawScore();
+  
+  // 添加视觉反馈
+  this.showBodyBiteEffect(pointsLost);
+  
+  // 如果蛇长度太短，可以触发游戏结束
+  const minLength = 2; // 最小长度
+  if (this.snake.length < minLength) {
+    this.health--; // 减少生命值
+    this.drawHealth();
+    
+    if (this.health <= 0) {
+      this.gameOver = true;
+      this.drawGameOver();
+      return;
+    }
+    
+    // 重新增长蛇的长度到安全长度
+    while (this.snake.length < minLength) {
+      const tail = this.snake[this.snake.length - 1];
+      this.snake.push({...tail});
+    }
+  }
+}
+// 添加咬身体的视觉反馈
+showBodyBiteEffect(pointsLost) {
+  // 创建临时提示
+  let biteIndicator = document.createElement('div');
+  biteIndicator.textContent = `-${pointsLost}`;
+  biteIndicator.style.position = 'absolute';
+  biteIndicator.style.color = 'red';
+  biteIndicator.style.fontWeight = 'bold';
+  biteIndicator.style.fontSize = '24px';
+  
+  // 放置在canvas附近
+  const canvasContainer = this.canvas.parentElement;
+  if (canvasContainer) {
+    biteIndicator.style.top = '70px';
+    biteIndicator.style.left = '50%';
+    biteIndicator.style.transform = 'translateX(-50%)';
+    biteIndicator.style.zIndex = '101';
+    
+    // 添加震动动画效果
+    biteIndicator.style.animation = 'shakeAndFade 1.2s forwards';
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes shakeAndFade {
+        0% { opacity: 1; transform: translate(-50%, 0); }
+        10%, 30%, 50% { transform: translate(-53%, 0); }
+        20%, 40%, 60% { transform: translate(-47%, 0); }
+        70% { transform: translate(-50%, 0); opacity: 1; }
+        100% { transform: translate(-50%, -25px); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    canvasContainer.appendChild(biteIndicator);
+    
+    // 动画结束后移除
+    setTimeout(() => {
+      if (biteIndicator.parentNode) {
+        biteIndicator.parentNode.removeChild(biteIndicator);
+      }
+    }, 1200);
+  }
+  
+  // 添加闪烁效果
+  this.startBlinking();
 }
 }
