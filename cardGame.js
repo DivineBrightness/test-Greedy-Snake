@@ -86,12 +86,15 @@ const bombGame = {
       });
     }
     
-    // 添加ESC键退出游戏的监听器
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this.isOpen) {
-        this.hide();
-      }
-    });
+      // 修改ESC键处理
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && this.isOpen) {
+          this.hide();
+          if (typeof window.backFromCardGame === 'function') {
+            window.backFromCardGame();
+          }
+        }
+      });
   },
   
   // 创建游戏界面
@@ -106,6 +109,8 @@ const bombGame = {
     // 创建游戏内容
     container.innerHTML = `
       <div class="bomb-game-content">
+      <!-- 添加返回按钮 -->
+      <button class="back-btn" id="bomb-game-back-btn"></button>
         <div class="bomb-game-header">
           <h2>炸金花</h2>
           <div class="game-info">
@@ -173,19 +178,21 @@ const bombGame = {
     `;
     
     document.body.appendChild(container);
-
-    // 添加返回按钮事件监听
-  const backBtn = document.getElementById('bomb-game-back-btn');
-  if (backBtn) {
-    backBtn.addEventListener('click', () => {
-      this.hide();
-      // 返回游戏选择页面
-      if (typeof toggleGameView === 'function') {
-        toggleGameView('games-selection', true);
-      }
-    });
-  }
-  },
+  
+    // 添加返回按钮事件（直接使用全局函数）
+    const backBtn = document.getElementById('bomb-game-back-btn');
+    if (backBtn) {
+      backBtn.addEventListener('click', function() {
+        bombGame.hide();
+        if (typeof window.backFromCardGame === 'function') {
+          window.backFromCardGame();
+        }
+      });
+    }
+  
+  // 添加新游戏按钮
+  this.addNewGameButton();
+},
 
   // 游戏逻辑
   startNewGame: function() {
@@ -605,7 +612,7 @@ aiFold: function(aiPlayer) {
   }
 },
 
-// 游戏流程控制
+// 修改nextPlayer函数中的回合结束检查
 nextPlayer: function() {
   console.log('轮到下一个玩家');
   
@@ -615,14 +622,14 @@ nextPlayer: function() {
     nextPlayerIndex = (nextPlayerIndex + 1) % this.players.length;
   } while (this.players[nextPlayerIndex].folded && nextPlayerIndex !== this.activePlayerIndex);
   
-  // 如果所有玩家都下过注了，一轮结束
-  if (nextPlayerIndex === 0 && this.checkRoundComplete()) {
+  // 更新当前玩家索引
+  this.activePlayerIndex = nextPlayerIndex;
+  
+  // 如果所有玩家都下过注了，且注码相同，则一轮结束
+  if (this.checkRoundComplete()) {
     this.showdown();
     return;
   }
-  
-  // 更新当前玩家索引
-  this.activePlayerIndex = nextPlayerIndex;
   
   // 高亮显示当前玩家
   this.highlightActivePlayer();
@@ -639,20 +646,38 @@ nextPlayer: function() {
 checkRoundComplete: function() {
   console.log('检查当前回合是否完成');
   
-  // 检查所有未弃牌的玩家是否下注相同
+  // 获取所有未弃牌的玩家
   const activePlayers = this.players.filter(player => !player.folded);
+  
+  // 如果只有一个活跃玩家，回合完成
+  if (activePlayers.length === 1) {
+    return true;
+  }
+  
+  // 检查所有未弃牌的玩家是否下注相同
   const firstPlayerBet = activePlayers[0].bet;
   
-  // 如果有一个玩家的下注与第一个玩家不同，回合尚未完成
+  // 如果回合已经过了一轮（每个玩家都有机会操作）并且所有人下注相同
+  let allBetsEqual = true;
+  let passedFullRound = false;
+  
+  // 判断是否已经过了完整的一轮
+  if (this.activePlayerIndex === 0 || this.activePlayerIndex >= activePlayers.length - 1) {
+    passedFullRound = true;
+  }
+  
+  // 判断所有玩家下注是否相同
   for (const player of activePlayers) {
     if (player.bet !== firstPlayerBet) {
-      return false;
+      allBetsEqual = false;
+      break;
     }
   }
   
-  return true;
+  return passedFullRound && allBetsEqual;
 },
 
+// 修改showdown函数
 showdown: function() {
   console.log('摊牌阶段');
   
@@ -662,7 +687,7 @@ showdown: function() {
   // 显示所有未弃牌玩家的牌
   this.players.forEach(player => {
     if (!player.folded) {
-      this.showPlayerCards(player.id);
+      this.showOpponentCards(player.id); // 使用showOpponentCards确保所有玩家的牌都显示
     }
   });
   
@@ -672,7 +697,24 @@ showdown: function() {
     this.determineWinner();
   }, 2000);
 },
-
+// 添加新的游戏控制函数
+addNewGameButton: function() {
+  // 创建新游戏按钮，允许玩家随时开始新一局
+  const controlPanel = document.querySelector('.bomb-controls');
+  if (!controlPanel) return;
+  
+  // 检查是否已存在新游戏按钮
+  if (document.getElementById('new-game-btn')) return;
+  
+  const newGameBtn = document.createElement('button');
+  newGameBtn.id = 'new-game-btn';
+  newGameBtn.className = 'bomb-btn primary';
+  newGameBtn.textContent = '新游戏';
+  newGameBtn.addEventListener('click', () => this.resetForNextHand());
+  
+  // 添加到控制面板的开始位置
+  controlPanel.insertBefore(newGameBtn, controlPanel.firstChild);
+},
 // 牌型评估
 evaluateHands: function() {
   console.log('评估牌型');

@@ -611,3 +611,26 @@ document.getElementById('tetris-back-btn').addEventListener('click', () => {
     }
   });
   });
+  // 创建全局导航函数，确保游戏间的导航正常工作
+window.navigateToGamesSelection = function() {
+    // 隐藏所有游戏界面
+    const gameViews = document.querySelectorAll('#snake-game, #tetris-game, .bomb-game-container');
+    gameViews.forEach(el => {
+      if (el) el.style.display = 'none';
+    });
+    
+    // 显示游戏选择页面
+    const gamesSelection = document.getElementById('games-selection');
+    if (gamesSelection) gamesSelection.style.display = 'block';
+    
+    // 设置页面标题为选择游戏
+    const pageTitle = document.getElementById('page-title');
+    if (pageTitle) pageTitle.textContent = '选择游戏';
+  };
+  
+  // 修改扑克牌游戏的退出处理
+  window.backFromCardGame = function() {
+    const cardGameContainer = document.querySelector('.bomb-game-container');
+    if (cardGameContainer) cardGameContainer.style.display = 'none';
+    window.navigateToGamesSelection();
+  };
