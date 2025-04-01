@@ -16,7 +16,7 @@ class SnakeGame {
       this.maxHealth = 3;
       this.health = this.maxHealth;
       this.isInvincible = false;
-      this.invincibleTime = 3000; // 无敌时间3秒
+      this.invincibleTime = 2000; // 无敌时间3秒
       this.isBlinking = false;
       this.blinkCount = 0;
       this.heartImg = new Image();
@@ -105,7 +105,7 @@ class SnakeGame {
       this.gameOver = false;
       this.paused = false;
       this.intervalId = null;
-      this.snake = [{x: 12, y: 20}, {x: 11, y: 20}, {x: 10, y: 20}, {x: 9, y: 20}, {x: 8, y: 20}];
+      this.snake = [ {x: 9, y: 20}, {x: 8, y: 20}];
       this.direction = 'right';
       this.nextDirection = 'right';
       this.pausedDirection = null;
@@ -123,108 +123,108 @@ class SnakeGame {
     }
 
   
-// 修改 initEventListeners 方法，合并开始和暂停按钮
-initEventListeners() {
-  // 添加键盘事件监听器
-  document.addEventListener('keydown', this.keyDownHandler);
-  
-  // 替换原来分开的开始和暂停按钮
-  const playPauseBtn = document.getElementById('snake-play-pause-btn');
-  const playPauseIcon = document.getElementById('snake-play-pause-icon');
-  
-  if (playPauseBtn) {
-    this.playPauseBtnHandler = () => {
-      if (this.gameOver) {
-        // 重置游戏
-        this.reset();
-        this.start();
-        playPauseIcon.src = './image/pause.svg';
-      } else if (this.paused) {
-        // 继续游戏
-        this.togglePause();
-        playPauseIcon.src = './image/pause.svg';
-      } else if (!this.animationFrameId) {
-        // 开始新游戏
-        this.start();
-        playPauseIcon.src = './image/pause.svg';
-      } else {
-        // 暂停游戏
-        this.togglePause();
-        playPauseIcon.src = './image/start.svg';
-      }
-    };
-    
-    playPauseBtn.addEventListener('click', this.playPauseBtnHandler);
-  }
-  
-  // 修改方向按钮处理，添加暂停检查
-  const upBtn = document.getElementById('up-btn');
-  const leftBtn = document.getElementById('left-btn');
-  const rightBtn = document.getElementById('right-btn');
-  const downBtn = document.getElementById('down-btn');
-  
-  this.upBtnHandler = () => { 
-    if (!this.paused && !this.gameOver && this.direction !== 'down') 
-      this.nextDirection = 'up'; 
-  };
-  this.leftBtnHandler = () => { 
-    if (!this.paused && !this.gameOver && this.direction !== 'right') 
-      this.nextDirection = 'left'; 
-  };
-  this.rightBtnHandler = () => { 
-    if (!this.paused && !this.gameOver && this.direction !== 'left') 
-      this.nextDirection = 'right'; 
-  };
-  this.downBtnHandler = () => { 
-    if (!this.paused && !this.gameOver && this.direction !== 'up') 
-      this.nextDirection = 'down'; 
-  };
-  
-  if (upBtn) upBtn.addEventListener('click', this.upBtnHandler);
-  if (leftBtn) leftBtn.addEventListener('click', this.leftBtnHandler);
-  if (rightBtn) rightBtn.addEventListener('click', this.rightBtnHandler);
-  if (downBtn) downBtn.addEventListener('click', this.downBtnHandler);
-}
-
-// 更新 handleKeyDown 方法，确保空格键只触发一次暂停/继续
-handleKeyDown(e) {
-  // 阻止所有游戏控制键的默认行为
-  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', ' '].includes(e.key)) {
-    e.preventDefault();
-  }
-  
-  // 防止快速连续按空格键导致的闪烁问题
-  if (e.key === ' ') {
-    // 使用防抖处理空格键
-    if (this.spaceKeyTimeout) {
-      clearTimeout(this.spaceKeyTimeout);
-    }
-    
-    this.spaceKeyTimeout = setTimeout(() => {
-      if (!this.gameOver) {
-        this.togglePause();
+    // 修改 initEventListeners 方法，合并开始和暂停按钮
+    initEventListeners() {
+      // 添加键盘事件监听器
+      document.addEventListener('keydown', this.keyDownHandler);
+      
+      // 替换原来分开的开始和暂停按钮
+      const playPauseBtn = document.getElementById('snake-play-pause-btn');
+      const playPauseIcon = document.getElementById('snake-play-pause-icon');
+      
+      if (playPauseBtn) {
+        this.playPauseBtnHandler = () => {
+          if (this.gameOver) {
+            // 重置游戏
+            this.reset();
+            this.start();
+            playPauseIcon.src = './image/pause.svg';
+          } else if (this.paused) {
+            // 继续游戏
+            this.togglePause();
+            playPauseIcon.src = './image/pause.svg';
+          } else if (!this.animationFrameId) {
+            // 开始新游戏
+            this.start();
+            playPauseIcon.src = './image/pause.svg';
+          } else {
+            // 暂停游戏
+            this.togglePause();
+            playPauseIcon.src = './image/start.svg';
+          }
+        };
         
-        // 同步更新按钮图标
-        const playPauseIcon = document.getElementById('snake-play-pause-icon');
-        if (playPauseIcon) {
-          playPauseIcon.src = this.paused ? './image/start.svg' : './image/pause.svg';
-        }
+        playPauseBtn.addEventListener('click', this.playPauseBtnHandler);
       }
-    }, 100); // 100ms内的连续空格按键只响应一次
-    
-    return;
-  }
-  
-  // 其他按键处理保持不变
-  if (this.gameOver || this.paused) return;
-  
-  switch(e.key) {
-    case 'ArrowUp': case 'w': case 'W': if (this.direction !== 'down') this.nextDirection = 'up'; break;
-    case 'ArrowDown': case 's': case 'S': if (this.direction !== 'up') this.nextDirection = 'down'; break;
-    case 'ArrowLeft': case 'a': case 'A': if (this.direction !== 'right') this.nextDirection = 'left'; break;
-    case 'ArrowRight': case 'd': case 'D': if (this.direction !== 'left') this.nextDirection = 'right'; break;
-  }
-}
+      
+      // 修改方向按钮处理，添加暂停检查
+      const upBtn = document.getElementById('up-btn');
+      const leftBtn = document.getElementById('left-btn');
+      const rightBtn = document.getElementById('right-btn');
+      const downBtn = document.getElementById('down-btn');
+      
+      this.upBtnHandler = () => { 
+        if (!this.paused && !this.gameOver && this.direction !== 'down') 
+          this.nextDirection = 'up'; 
+      };
+      this.leftBtnHandler = () => { 
+        if (!this.paused && !this.gameOver && this.direction !== 'right') 
+          this.nextDirection = 'left'; 
+      };
+      this.rightBtnHandler = () => { 
+        if (!this.paused && !this.gameOver && this.direction !== 'left') 
+          this.nextDirection = 'right'; 
+      };
+      this.downBtnHandler = () => { 
+        if (!this.paused && !this.gameOver && this.direction !== 'up') 
+          this.nextDirection = 'down'; 
+      };
+      
+      if (upBtn) upBtn.addEventListener('click', this.upBtnHandler);
+      if (leftBtn) leftBtn.addEventListener('click', this.leftBtnHandler);
+      if (rightBtn) rightBtn.addEventListener('click', this.rightBtnHandler);
+      if (downBtn) downBtn.addEventListener('click', this.downBtnHandler);
+    }
+
+    // 更新 handleKeyDown 方法，确保空格键只触发一次暂停/继续
+    handleKeyDown(e) {
+      // 阻止所有游戏控制键的默认行为
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', ' '].includes(e.key)) {
+        e.preventDefault();
+      }
+      
+      // 防止快速连续按空格键导致的闪烁问题
+      if (e.key === ' ') {
+        // 使用防抖处理空格键
+        if (this.spaceKeyTimeout) {
+          clearTimeout(this.spaceKeyTimeout);
+        }
+        
+        this.spaceKeyTimeout = setTimeout(() => {
+          if (!this.gameOver) {
+            this.togglePause();
+            
+            // 同步更新按钮图标
+            const playPauseIcon = document.getElementById('snake-play-pause-icon');
+            if (playPauseIcon) {
+              playPauseIcon.src = this.paused ? './image/start.svg' : './image/pause.svg';
+            }
+          }
+        }, 100); // 100ms内的连续空格按键只响应一次
+        
+        return;
+      }
+      
+      // 其他按键处理保持不变
+      if (this.gameOver || this.paused) return;
+      
+      switch(e.key) {
+        case 'ArrowUp': case 'w': case 'W': if (this.direction !== 'down') this.nextDirection = 'up'; break;
+        case 'ArrowDown': case 's': case 'S': if (this.direction !== 'up') this.nextDirection = 'down'; break;
+        case 'ArrowLeft': case 'a': case 'A': if (this.direction !== 'right') this.nextDirection = 'left'; break;
+        case 'ArrowRight': case 'd': case 'D': if (this.direction !== 'left') this.nextDirection = 'right'; break;
+      }
+    }
   
     createFood() {
       let newFood;
@@ -263,218 +263,218 @@ handleKeyDown(e) {
       }
     }
   
-// 修改 draw 方法中的怪物绘制，可以选择性地标记出有碰撞的区域
-draw() {
-  this.ctx.clearRect(0, 0, this.width, this.height);
-  this.drawGrid();
-  
-  // 使用怪物位置绘制怪物和边界
-  const monsterSize = 3; // 怪物占用的方块数（长宽）
-  
-  // 计算怪物边界
-  const monsterLeft = this.monsterPosition.x - Math.floor(monsterSize / 2);
-  const monsterRight = monsterLeft + monsterSize;
-  const monsterTop = this.monsterPosition.y - Math.floor(monsterSize / 2);
-  const monsterBottom = monsterTop + monsterSize;
+    // 修改 draw 方法中的怪物绘制，可以选择性地标记出有碰撞的区域
+    draw() {
+      this.ctx.clearRect(0, 0, this.width, this.height);
+      this.drawGrid();
+      
+      // 使用怪物位置绘制怪物和边界
+      const monsterSize = 3; // 怪物占用的方块数（长宽）
+      
+      // 计算怪物边界
+      const monsterLeft = this.monsterPosition.x - Math.floor(monsterSize / 2);
+      const monsterRight = monsterLeft + monsterSize;
+      const monsterTop = this.monsterPosition.y - Math.floor(monsterSize / 2);
+      const monsterBottom = monsterTop + monsterSize;
 
-  // 检查怪物是否被击中，如果是，绘制黄色闪烁效果
-  if (this.monsterHit && Date.now() - this.monsterHitTime < this.monsterHitDuration) {
-    // 创建黄色闪烁的怪物图像
-    this.ctx.globalAlpha = 0.8;
-    this.ctx.fillStyle = 'rgba(255, 255, 0, 0.5)';
-    this.ctx.fillRect(
-      monsterLeft * this.blockSize,
-      monsterTop * this.blockSize,
-      (monsterRight - monsterLeft) * this.blockSize,
-      (monsterBottom - monsterTop) * this.blockSize
-    );
-    this.ctx.globalAlpha = 1.0;
-  }
-  
-  // 绘制怪物图像
-  if (this.monsterImg.complete) {
-    this.ctx.drawImage(
-      this.monsterImg, 
-      monsterLeft * this.blockSize,
-      monsterTop * this.blockSize,
-      (monsterRight - monsterLeft) * this.blockSize,
-      (monsterBottom - monsterTop) * this.blockSize
-    );
-  }
-// 绘制龙的火焰效果 - 确保火焰视觉效果与碰撞检测匹配
-if (this.fireBreathActive && this.fireImg.complete) {
-  // 龙头位置 (左上角)
-  const dragonHeadX = monsterLeft;
-  const dragonHeadY = monsterTop;
-  
-  // 火焰起点 (龙头左侧) - 确保与碰撞检测中的坐标计算一致
-  const fireOriginX = (dragonHeadX - 1) * this.blockSize;
-  const fireOriginY = dragonHeadY * this.blockSize + this.blockSize;
-  
-  // 可选：标记火焰起点，帮助调试
-  /*
-  this.ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
-  this.ctx.beginPath();
-  this.ctx.arc(fireOriginX, fireOriginY, 3, 0, Math.PI * 2);
-  this.ctx.fill();
-  */
-  
-  // 为每个火焰方向绘制火焰
-  for (const direction of this.fireDirection) {
-    // 计算火焰终点 (距离为2个方块) - 与碰撞检测保持一致
-    const fireEndX = fireOriginX + direction.x * this.blockSize * 2;
-    const fireEndY = fireOriginY + direction.y * this.blockSize * 2;
-    
-    // 绘制火焰线
-    this.ctx.beginPath();
-    this.ctx.moveTo(fireOriginX, fireOriginY);
-    this.ctx.lineTo(fireEndX, fireEndY);
-    
-    // 创建渐变色火焰
-    const gradient = this.ctx.createLinearGradient(fireOriginX, fireOriginY, fireEndX, fireEndY);
-    gradient.addColorStop(0, 'rgba(255, 100, 0, 0.9)');
-    gradient.addColorStop(0.6, 'rgba(255, 50, 0, 0.7)');
-    gradient.addColorStop(1, 'rgba(255, 0, 0, 0.3)');
-    
-    // 增加线宽使火焰更容易被触碰
-    this.ctx.strokeStyle = gradient;
-    this.ctx.lineWidth = this.blockSize / 1.5; // 稍微增加火焰宽度
-    this.ctx.stroke();
-    
-    // 在火焰终点绘制火花效果
-    this.ctx.beginPath();
-    this.ctx.arc(fireEndX, fireEndY, this.blockSize / 3, 0, Math.PI * 2);
-    this.ctx.fillStyle = 'rgba(255, 200, 0, 0.5)';
-    this.ctx.fill();
-  }
-}
-  // 绘制子弹
-  this.ctx.fillStyle = 'rgba(255, 0, 0, 0.8)';
-  for (const bullet of this.bullets) {
-    this.ctx.beginPath();
-    this.ctx.arc(bullet.x, bullet.y, this.bulletSize, 0, Math.PI * 2);
-    this.ctx.fill();
-  }
-  
-  // 绘制特殊水果 (如果存在)
-  if (this.specialFruit) {
-    const img = this.fruitImagesLoaded[this.specialFruit.imageIndex];
-    if (img.complete) {
-      this.ctx.drawImage(
-        img,
-        this.specialFruit.x * this.blockSize,
-        this.specialFruit.y * this.blockSize,
-        this.blockSize,
-        this.blockSize
-      );
+      // 检查怪物是否被击中，如果是，绘制黄色闪烁效果
+      if (this.monsterHit && Date.now() - this.monsterHitTime < this.monsterHitDuration) {
+        // 创建黄色闪烁的怪物图像
+        this.ctx.globalAlpha = 0.8;
+        this.ctx.fillStyle = 'rgba(255, 255, 0, 0.5)';
+        this.ctx.fillRect(
+          monsterLeft * this.blockSize,
+          monsterTop * this.blockSize,
+          (monsterRight - monsterLeft) * this.blockSize,
+          (monsterBottom - monsterTop) * this.blockSize
+        );
+        this.ctx.globalAlpha = 1.0;
+      }
       
-      // 添加闪烁特效
-      const time = Date.now() / 200;
-      const alpha = 0.5 + 0.5 * Math.sin(time);
+      // 绘制怪物图像
+      if (this.monsterImg.complete) {
+        this.ctx.drawImage(
+          this.monsterImg, 
+          monsterLeft * this.blockSize,
+          monsterTop * this.blockSize,
+          (monsterRight - monsterLeft) * this.blockSize,
+          (monsterBottom - monsterTop) * this.blockSize
+        );
+      }
+    // 绘制龙的火焰效果 - 确保火焰视觉效果与碰撞检测匹配
+    if (this.fireBreathActive && this.fireImg.complete) {
+      // 龙头位置 (左上角)
+      const dragonHeadX = monsterLeft;
+      const dragonHeadY = monsterTop;
       
-      this.ctx.strokeStyle = `rgba(255, 215, 0, ${alpha})`;
-      this.ctx.lineWidth = 2;
-      this.ctx.strokeRect(
-        this.specialFruit.x * this.blockSize - 2,
-        this.specialFruit.y * this.blockSize - 2,
-        this.blockSize + 4,
-        this.blockSize + 4
-      );
-    }
-  }
-  
-  // 更明显的无敌状态效果
-  if (this.isInvincible) {
-    // 添加无敌状态提示
-    this.ctx.font = '16px Arial';
-    this.ctx.fillStyle = 'rgba(255, 0, 0, 0.7)';
-    this.ctx.textAlign = 'center';
-    
-    // 修改提示文字
-    const statusText = this.isStunned ? '眩晕状态' : '无敌状态';
-    this.ctx.fillText(statusText, this.width / 2, 20);
-  }
-  
-  // 根据闪烁状态决定是否绘制蛇
-  if (!this.isBlinking || this.blinkCount % 2 === 0) {
-
-    if (this.isSpeedUp && this.drawSpeedLines) {
-      const head = this.snake[0];
-      const headX = head.x * this.blockSize + this.blockSize / 2;
-      const headY = head.y * this.blockSize + this.blockSize / 2;
+      // 火焰起点 (龙头左侧) - 确保与碰撞检测中的坐标计算一致
+      const fireOriginX = (dragonHeadX - 1) * this.blockSize;
+      const fireOriginY = dragonHeadY * this.blockSize + this.blockSize;
       
-      // 根据移动方向绘制速度线
-      this.ctx.strokeStyle = 'rgba(255, 165, 0, 0.6)';
-      this.ctx.lineWidth = 1;
+      // 可选：标记火焰起点，帮助调试
+      /*
+      this.ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+      this.ctx.beginPath();
+      this.ctx.arc(fireOriginX, fireOriginY, 3, 0, Math.PI * 2);
+      this.ctx.fill();
+      */
       
-      const lineLength = this.blockSize * 1.5;
-      const numLines = 5;
-      
-      for (let i = 0; i < numLines; i++) {
+      // 为每个火焰方向绘制火焰
+      for (const direction of this.fireDirection) {
+        // 计算火焰终点 (距离为2个方块) - 与碰撞检测保持一致
+        const fireEndX = fireOriginX + direction.x * this.blockSize * 2;
+        const fireEndY = fireOriginY + direction.y * this.blockSize * 2;
+        
+        // 绘制火焰线
         this.ctx.beginPath();
+        this.ctx.moveTo(fireOriginX, fireOriginY);
+        this.ctx.lineTo(fireEndX, fireEndY);
         
-        // 根据方向确定速度线的起点和终点
-        let startX, startY, endX, endY;
+        // 创建渐变色火焰
+        const gradient = this.ctx.createLinearGradient(fireOriginX, fireOriginY, fireEndX, fireEndY);
+        gradient.addColorStop(0, 'rgba(255, 100, 0, 0.9)');
+        gradient.addColorStop(0.6, 'rgba(255, 50, 0, 0.7)');
+        gradient.addColorStop(1, 'rgba(255, 0, 0, 0.3)');
         
-        switch(this.direction) {
-          case 'up':
-            startX = headX - this.blockSize/2 + (this.blockSize * i / (numLines - 1));
-            startY = headY + this.blockSize/2;
-            endX = startX;
-            endY = startY + lineLength;
-            break;
-          case 'down':
-            startX = headX - this.blockSize/2 + (this.blockSize * i / (numLines - 1));
-            startY = headY - this.blockSize/2;
-            endX = startX;
-            endY = startY - lineLength;
-            break;
-          case 'left':
-            startX = headX + this.blockSize/2;
-            startY = headY - this.blockSize/2 + (this.blockSize * i / (numLines - 1));
-            endX = startX + lineLength;
-            endY = startY;
-            break;
-          case 'right':
-            startX = headX - this.blockSize/2;
-            startY = headY - this.blockSize/2 + (this.blockSize * i / (numLines - 1));
-            endX = startX - lineLength;
-            endY = startY;
-            break;
-        }
-        
-        this.ctx.moveTo(startX, startY);
-        this.ctx.lineTo(endX, endY);
+        // 增加线宽使火焰更容易被触碰
+        this.ctx.strokeStyle = gradient;
+        this.ctx.lineWidth = this.blockSize / 1.5; // 稍微增加火焰宽度
         this.ctx.stroke();
+        
+        // 在火焰终点绘制火花效果
+        this.ctx.beginPath();
+        this.ctx.arc(fireEndX, fireEndY, this.blockSize / 3, 0, Math.PI * 2);
+        this.ctx.fillStyle = 'rgba(255, 200, 0, 0.5)';
+        this.ctx.fill();
       }
     }
-    // 绘制蛇，添加无敌状态的更明显效果
-    this.snake.forEach((segment, index) => {
-      const ratio = index / this.snake.length;
-      const green = Math.floor(140 - ratio * 40);
+      // 绘制子弹
+      this.ctx.fillStyle = 'rgba(255, 0, 0, 0.8)';
+      for (const bullet of this.bullets) {
+        this.ctx.beginPath();
+        this.ctx.arc(bullet.x, bullet.y, this.bulletSize, 0, Math.PI * 2);
+        this.ctx.fill();
+      }
       
-      let color;
+      // 绘制特殊水果 (如果存在)
+      if (this.specialFruit) {
+        const img = this.fruitImagesLoaded[this.specialFruit.imageIndex];
+        if (img.complete) {
+          this.ctx.drawImage(
+            img,
+            this.specialFruit.x * this.blockSize,
+            this.specialFruit.y * this.blockSize,
+            this.blockSize,
+            this.blockSize
+          );
+          
+          // 添加闪烁特效
+          const time = Date.now() / 200;
+          const alpha = 0.5 + 0.5 * Math.sin(time);
+          
+          this.ctx.strokeStyle = `rgba(255, 215, 0, ${alpha})`;
+          this.ctx.lineWidth = 2;
+          this.ctx.strokeRect(
+            this.specialFruit.x * this.blockSize - 2,
+            this.specialFruit.y * this.blockSize - 2,
+            this.blockSize + 4,
+            this.blockSize + 4
+          );
+        }
+      }
+      
+      // 更明显的无敌状态效果
       if (this.isInvincible) {
-        // 无敌状态下使用闪光金色
-        color = index === 0 
-          ? 'rgba(255, 215, 0, 0.8)' // 头部金色
-          : `rgba(255, ${215 - ratio * 50}, 0, 0.7)`; // 身体渐变金色
-      } else {
-        // 正常状态下的颜色
-        color = index === 0 
-          ? '#4CAF50' 
-          : `rgb(76, ${green + 55}, 80)`;
+        // 添加无敌状态提示
+        this.ctx.font = '16px Arial';
+        this.ctx.fillStyle = 'rgba(255, 0, 0, 0.7)';
+        this.ctx.textAlign = 'center';
+        
+        // 修改提示文字
+        const statusText = this.isStunned ? '眩晕状态' : '无敌状态';
+        this.ctx.fillText(statusText, this.width / 2, 20);
       }
       
-      this.drawBlock(segment.x, segment.y, color);
-      if (index === 0) {
-        this.drawSnakeEyes(segment);
+      // 根据闪烁状态决定是否绘制蛇
+      if (!this.isBlinking || this.blinkCount % 2 === 0) {
+
+        if (this.isSpeedUp && this.drawSpeedLines) {
+          const head = this.snake[0];
+          const headX = head.x * this.blockSize + this.blockSize / 2;
+          const headY = head.y * this.blockSize + this.blockSize / 2;
+          
+          // 根据移动方向绘制速度线
+          this.ctx.strokeStyle = 'rgba(255, 165, 0, 0.6)';
+          this.ctx.lineWidth = 1;
+          
+          const lineLength = this.blockSize * 1.5;
+          const numLines = 5;
+          
+          for (let i = 0; i < numLines; i++) {
+            this.ctx.beginPath();
+            
+            // 根据方向确定速度线的起点和终点
+            let startX, startY, endX, endY;
+            
+            switch(this.direction) {
+              case 'up':
+                startX = headX - this.blockSize/2 + (this.blockSize * i / (numLines - 1));
+                startY = headY + this.blockSize/2;
+                endX = startX;
+                endY = startY + lineLength;
+                break;
+              case 'down':
+                startX = headX - this.blockSize/2 + (this.blockSize * i / (numLines - 1));
+                startY = headY - this.blockSize/2;
+                endX = startX;
+                endY = startY - lineLength;
+                break;
+              case 'left':
+                startX = headX + this.blockSize/2;
+                startY = headY - this.blockSize/2 + (this.blockSize * i / (numLines - 1));
+                endX = startX + lineLength;
+                endY = startY;
+                break;
+              case 'right':
+                startX = headX - this.blockSize/2;
+                startY = headY - this.blockSize/2 + (this.blockSize * i / (numLines - 1));
+                endX = startX - lineLength;
+                endY = startY;
+                break;
+            }
+            
+            this.ctx.moveTo(startX, startY);
+            this.ctx.lineTo(endX, endY);
+            this.ctx.stroke();
+          }
+        }
+        // 绘制蛇，添加无敌状态的更明显效果
+        this.snake.forEach((segment, index) => {
+          const ratio = index / this.snake.length;
+          const green = Math.floor(140 - ratio * 40);
+          
+          let color;
+          if (this.isInvincible) {
+            // 无敌状态下使用闪光金色
+            color = index === 0 
+              ? 'rgba(255, 215, 0, 0.8)' // 头部金色
+              : `rgba(255, ${215 - ratio * 50}, 0, 0.7)`; // 身体渐变金色
+          } else {
+            // 正常状态下的颜色
+            color = index === 0 
+              ? '#4CAF50' 
+              : `rgb(76, ${green + 55}, 80)`;
+          }
+          
+          this.drawBlock(segment.x, segment.y, color);
+          if (index === 0) {
+            this.drawSnakeEyes(segment);
+          }
+        });
       }
-    });
-  }
-  
-  this.drawBlock(this.food.x, this.food.y, '#FF5722');
-}
+      
+      this.drawBlock(this.food.x, this.food.y, '#FF5722');
+    }
   
 
 // 在 SnakeGame 类中添加 drawGrid 方法
@@ -1185,7 +1185,7 @@ reset() {
     this.animationFrameId = null;
   }
   
-  this.snake = [{x: 12, y: 20}, {x: 11, y: 20}, {x: 10, y: 20}, {x: 9, y: 20}, {x: 8, y: 20}];
+  this.snake = [{x: 9, y: 20}, {x: 8, y: 20}];
   this.direction = 'right';
   this.nextDirection = 'right';
   this.pausedDirection = null;
