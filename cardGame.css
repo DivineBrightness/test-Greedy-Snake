@@ -54,6 +54,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
+    /* 向上偏移一些 */
+    margin-top: -80px;
 }
 
 .bomb-table {
@@ -98,27 +100,28 @@
 }
 
 .player-position-0 {  /* 玩家位置 */
-  bottom: 20px;
+  bottom: 90px;
   left: 50%;
   transform: translateX(-50%);
 }
 
 .player-position-1 {  /* 东方AI位置 */
-  top: 50%;
+  top: 20%;
   right: 20px;
   transform: translateY(-50%);
 }
 
 .player-position-2 {  /* 西方AI位置 */
-  top: 50%;
+  top: 20%;
   left: 20px;
   transform: translateY(-50%);
 }
 
+/* 使玩家区域更紧凑 */
 .player-box {
   background-color: rgba(0, 0, 0, 0.5);
   border-radius: 10px;
-  padding: 10px;
+  padding: 8px; /* 减小内边距 */
   width: 100%;
   height: 100%;
   display: flex;
@@ -148,16 +151,17 @@
   align-items: center;
   width: 100%;
   font-size: 14px;
+  margin-bottom: 5px; /* 减小下边距 */
 }
 
 .player-name {
   font-weight: bold;
-  margin-bottom: 5px;
+  margin-bottom: 3px; /* 减小下边距 */
 }
 
 .player-chips {
   color: gold;
-  margin-bottom: 5px;
+  margin-bottom: 3px; /* 减小下边距 */
 }
 
 .player-bet {
@@ -169,7 +173,7 @@
   display: flex;
   justify-content: center;
   gap: 5px;
-  margin-top: 10px;
+  margin-top: 5px;
 }
 
 .card {
@@ -223,7 +227,7 @@
   left: 0;
   width: 100%;
   background-color: rgba(0, 0, 0, 0.7);
-  padding: 15px;
+  padding: 10px;
   display: flex;
   justify-content: center;
   z-index: 100;
@@ -234,12 +238,11 @@
   gap: 15px;
   align-items: center;
 }
-
 .bomb-btn {
-  padding: 8px 16px;
+  padding: 6px 12px; /* 减小按钮内边距 */
   border-radius: 5px;
   border: none;
-  font-size: 16px;
+  font-size: 14px; /* 减小字体大小 */
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -265,15 +268,16 @@
   color: white;
 }
 
-.bet-controls {       /* 加注控件 */
+/* 调整加注控件大小 */
+.bet-controls {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-left: 20px;
+  gap: 5px; /* 减小间距 */
+  margin-left: 10px; /* 减小左边距 */
 }
 
 .bet-controls input[type="range"] {
-  width: 150px;
+  width: 120px; /* 减小宽度 */
 }
 
 .bet-controls .bet-amount {
@@ -351,135 +355,7 @@
   transform: scale(1.1);
 }
 
-/* 玩家区域 */
-.player-position {
-  position: absolute;
-  width: 150px;
-  height: 180px;
-}
 
-.player-position-0 {  /* 玩家位置 */
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.player-position-1 {  /* 东方AI位置 */
-  top: 50%;
-  right: 20px;
-  transform: translateY(-50%);
-}
-
-.player-position-2 {  /* 西方AI位置 */
-  top: 50%;
-  left: 20px;
-  transform: translateY(-50%);
-}
-
-.player-box {
-  background-color: rgba(0, 0, 0, 0.5);
-  border-radius: 10px;
-  padding: 10px;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  color: white;
-  transition: all 0.3s ease;
-}
-
-.player-box.active {  /* 当前行动玩家 */
-  box-shadow: 0 0 15px 5px gold;
-  border: 2px solid gold;
-}
-
-.player-box.folded {  /* 已弃牌 */
-  opacity: 0.5;
-}
-
-.player-box.looked {  /* 已看牌 */
-  background-color: rgba(50, 100, 180, 0.6);
-}
-
-.player-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  font-size: 14px;
-}
-
-.player-cards {
-  display: flex;
-  justify-content: center;
-  gap: 5px;
-  margin-top: 10px;
-}
-
-/* 控制区 */
-.control-panel {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background-color: rgba(0, 0, 0, 0.7);
-  padding: 15px;
-  display: flex;
-  justify-content: center;
-  z-index: 100;
-}
-
-.bomb-controls {
-  display: flex;
-  gap: 15px;
-  align-items: center;
-}
-
-.bomb-btn {
-  padding: 8px 16px;
-  border-radius: 5px;
-  border: none;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.bomb-btn:hover {
-  transform: translateY(-2px);
-}
-
-.bomb-btn.primary {   /* 主要按钮 */
-  background-color: #e74c3c;
-  color: white;
-  font-weight: bold;
-}
-
-.bomb-btn.secondary { /* 次要按钮 */
-  background-color: #3498db;
-  color: white;
-}
-
-.bet-controls {       /* 加注控件 */
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-left: 20px;
-}
-
-.bet-controls input[type="range"] {
-  width: 150px;
-}
-
-.bet-controls .bet-amount {
-  background-color: #2c3e50;
-  color: white;
-  padding: 5px 10px;
-  border-radius: 4px;
-  min-width: 60px;
-  text-align: center;
-}
 
 /* 添加到cardGame.css文件的末尾 */
 
@@ -508,25 +384,4 @@
 /* 确保炸金花游戏中的返回按钮颜色适合深色背景 */
 .bomb-game-container .back-btn {
   filter: invert(1);
-}
-/* 返回按钮样式 */
-.back-btn {
-  position: absolute;
-  top: 15px;
-  left: 15px;
-  width: 40px;
-  height: 40px;
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-  z-index: 10;
-  transition: transform 0.2s ease;
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 8 8 12 12 16"></polyline><line x1="16" y1="12" x2="8" y2="12"></line></svg>');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-}
-
-.back-btn:hover {
-  transform: scale(1.1);
 }
