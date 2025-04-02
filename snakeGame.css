@@ -106,3 +106,16 @@
     text-align: center !important;
     box-shadow: 0 0 10px rgba(0,0,0,0.1) !important;
   }
+
+  /* 确保排行榜中的所有文字颜色为深色 */
+.leaderboard-panel .leaderboard-row,
+.leaderboard-panel .player,
+.leaderboard-panel .rank,
+.leaderboard-panel .date {
+  color: #333; /* 深灰色文字，确保在白色背景上清晰可见 */
+}
+  /* 特别指定玩家名称的样式 */
+.leaderboard-panel .player {
+  color: #222; /* 更深的灰色，强调玩家名字 */
+  font-weight: 500; /* 稍微加粗 */
+}
