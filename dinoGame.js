@@ -70,23 +70,13 @@ class DinoGame {
     // 简化版图片加载 - 只保留必要的图片引用
     this.images = {
       dino: {
-        run1: this.loadImage('./image/dino/dino-run1.png'),
-        run2: this.loadImage('./image/dino/dino-run2.png'),
-        jump: this.loadImage('./image/dino/dino-jump.png'),
-        crouch1: null, // 不加载此图片
-        crouch2: null, // 不加载此图片
-        dead: null     // 不加载此图片
+        run1: this.loadImage('./image/dino/squirtle.svg'),
+        run2: this.loadImage('./image/dino/squirtle.svg'),
+        jump: this.loadImage('./image/dino/squirtle.svg'),
       },
       obstacles: {
-        cactus1: this.loadImage('./image/dino/cactus1.png'),
-        cactus2: null, // 不加载其他仙人掌变种
-        cactus3: null, // 不加载其他仙人掌变种
-        bird1: null,   // 不加载鸟类图片
-        bird2: null    // 不加载鸟类图片
-      },
-      cloud: null,     // 不加载云
-      ground: null,    // 不加载地面
-      restart: null    // 不加载重启按钮
+        cactus1: this.loadImage('./image/dino/cactus.svg'),
+      }
     };
     
     // 简化图片加载计数
@@ -822,7 +812,7 @@ class DinoGame {
     this.ctx.font = '16px Arial';
     this.ctx.fillStyle = textColor;
     this.ctx.textAlign = 'right';
-    this.ctx.fillText(`HI ${this.highScore.toString().padStart(5, '0')} ${this.score.toString().padStart(5, '0')}`, this.width - 20, 30);
+    // this.ctx.fillText(`${this.score.toString().padStart(5, '0')}`, this.width - 20, 30);
   }
   
   drawGameOver() {
