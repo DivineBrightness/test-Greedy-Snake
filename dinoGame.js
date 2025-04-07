@@ -8,7 +8,7 @@ class DinoGame {
       height: 50,
       probability: 0.1
     };
-    this.fruitInterval = 10000; // 每10秒可能出现一个水果
+    this.fruitInterval = 20000; // 每10秒可能出现一个水果
     this.lastFruitTime = 0;
 
     // 添加无敌相关属性 - 但暂时不初始化依赖于dino的属性
@@ -855,9 +855,27 @@ class DinoGame {
     // 绘制恐龙
     if (dinoImage && dinoImage.complete && dinoImage.naturalWidth > 0) {
       this.ctx.save();
-      // 无敌状态添加闪烁效果
-      if (this.isInvincible && Math.floor(Date.now() / 100) % 2 === 0) {
-        this.ctx.globalAlpha = 0.7;
+      
+      // 无敌状态添加金色闪光效果
+      if (this.isInvincible) {
+        // 添加金色光晕
+        const glowSize = 10;
+        const glowAlpha = 0.3 + 0.2 * Math.sin(Date.now() / 100); // 脉动效果
+        
+        this.ctx.shadowColor = '#FFD700'; // 金色阴影
+        this.ctx.shadowBlur = 20 + 10 * Math.sin(Date.now() / 200); // 动态光晕大小
+        
+        // 绘制金色光环
+        this.ctx.fillStyle = `rgba(255, 215, 0, ${glowAlpha})`;
+        this.ctx.beginPath();
+        this.ctx.ellipse(
+          this.dino.x + this.dino.width/2,
+          this.dino.y + this.dino.height/2,
+          this.dino.width/2 + glowSize,
+          this.dino.height/2 + glowSize,
+          0, 0, Math.PI * 2
+        );
+        this.ctx.fill();
       }
       
       this.ctx.drawImage(
@@ -924,8 +942,8 @@ class DinoGame {
     // 如果处于无敌状态，显示倒计时
     if (this.isInvincible) {
       const secondsLeft = Math.ceil((this.invincibleDuration - this.invincibleTimer) / 1000);
-      this.ctx.font = '18px Arial';
-      this.ctx.fillStyle = '#ff0000';
+      this.ctx.font = '20px Arial';
+      this.ctx.fillStyle = '#FFD700'; // 金色字体
       this.ctx.textAlign = 'left';
       this.ctx.fillText(`无敌: ${secondsLeft}秒`, 20, 50);
     }
@@ -1210,7 +1228,7 @@ class DinoGame {
       this.fruits.push(fruit);
     }
   }
-  
+
   checkFruitCollisions() {
     const dinoBox = this.getCollisionBox(this.dino);
     
@@ -1227,9 +1245,9 @@ class DinoGame {
         this.isInvincible = true;
         this.invincibleTimer = 0;
         
-        // 恐龙变大50%
-        this.dino.width = this.originalDinoSize.width * 1.5;
-        this.dino.height = this.originalDinoSize.height * 1.5;
+        // 恐龙变大2倍而不是1.5倍
+        this.dino.width = this.originalDinoSize.width * 2;
+        this.dino.height = this.originalDinoSize.height * 2;
         this.dino.y = this.height - this.groundHeight - this.dino.height;
         
         // 移除水果
