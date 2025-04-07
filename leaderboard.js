@@ -67,10 +67,22 @@ async function loadLeaderboard(game, elementId) {
   try {
     // 首先确保排行榜元素具有正确的HTML结构
     if (!leaderboardElement.querySelector('.leaderboard-body')) {
+      // 根据游戏类型确定标题
+      let gameTitle = '';
+      if (game === 'snake') {
+        gameTitle = '贪吃蛇';
+      } else if (game === 'tetris') {
+        gameTitle = '俄罗斯方块';
+      } else if (game === 'dino') {
+        gameTitle = '恐龙跳跃';
+      } else {
+        gameTitle = '游戏';
+      }
+
       // 创建美化的HTML结构
       leaderboardElement.innerHTML = `
         <div class="leaderboard-header">
-          <h3>${game === 'snake' ? '贪吃蛇' : '俄罗斯方块'} - 排行榜</h3>
+          <h3>${gameTitle} - 排行榜</h3>
           <button class="leaderboard-close-btn">&times;</button>
         </div>
         <div class="leaderboard-table">
