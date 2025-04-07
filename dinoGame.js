@@ -16,8 +16,8 @@ class DinoGame {
     this.height = this.canvas.height;
     this.groundHeight = 60; // 地面高度
     this.speed = 5; // 初始速度
-    this.maxSpeed = 12; // 最大速度
-    this.acceleration = 0.001; // 加速度
+    this.maxSpeed = 36; // 最大速度
+    this.acceleration = 0.01; // 加速度
     
     // 放大恐龙尺寸
     this.dino = {
@@ -27,7 +27,7 @@ class DinoGame {
       height: 120, // 增大到120 (原来是80)
       jumping: false,
       jumpVelocity: 0,
-      jumpStrength: -20, // 增加跳跃力度 (原来是-16)
+      jumpStrength: -25, // 增加跳跃力度 (原来是-16)
       gravity: 0.8, // 增加重力 (原来是0.7)
       crouching: false
     };
@@ -35,10 +35,10 @@ class DinoGame {
     // 放大障碍物尺寸
     this.obstacles = [];
     this.obstacleTypes = [
-      { type: 'cactus', width: 60, height: 120, probability: 0.7 }, // 放大仙人掌
-      { type: 'bird', width: 90, height: 60, probability: 0.3, yOffset: -40 } // 放大鸟类
+      { type: 'cactus', width: 90, height: 180, probability: 0.7 }, // 放大仙人掌(原来是60x120)
+      { type: 'bird', width: 120, height: 80, probability: 0.3, yOffset: -40 } // 放大鸟类(原来是90x60)
     ];
-    this.minObstacleDistance = 500; // 增加障碍物之间的最小距离 (原来是400)
+    this.minObstacleDistance = 600; // 增加障碍物之间的最小距离 (原来是400)
     this.lastObstacleTime = 0; // 上次生成障碍物的时间
     this.obstacleInterval = 1500; // 初始障碍物生成间隔
     
@@ -595,8 +595,8 @@ class DinoGame {
       // 有三种高度: 地面, 中间, 高处 - 调整为更大的间隔
       const heightLevels = [
         this.height - this.groundHeight - obstacle.height, // 地面
-        this.height - this.groundHeight - obstacle.height - 90, // 中间 (原来是60)
-        this.height - this.groundHeight - obstacle.height - 180  // 高处 (原来是120)
+        this.height - this.groundHeight - obstacle.height - 110, // 中间 (增加高度)
+        this.height - this.groundHeight - obstacle.height - 220  // 高处 (增加高度)
       ];
       obstacle.y = heightLevels[Math.floor(Math.random() * heightLevels.length)];
     }
