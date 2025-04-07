@@ -9,6 +9,9 @@
 
 /* 游戏画布样式 */
 #dino-canvas {
+  width: 100%;
+  max-width: 900px; /* 与画布宽度一致 */
+  height: auto;
   border: 1px solid #ccc;
   background-color: #f7f7f7;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -358,4 +361,12 @@
   #dino-game {
     overflow: hidden;
     padding-bottom: 90px; /* 为控制按钮预留空间 */
+  }
+  /* 恐龙游戏选择按钮背景 */
+  #dino-select-btn {
+    background-image: url('./image/dino/icons8-steve-jumping-dino.svg');
+    background-size: 100%;
+    background-repeat: no-repeat;
+    background-position: center 30%;
+    background-color: #a478cd; /* 添加紫色背景 */
   }

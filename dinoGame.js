@@ -14,31 +14,31 @@ class DinoGame {
     // 游戏尺寸和速度
     this.width = this.canvas.width;
     this.height = this.canvas.height;
-    this.groundHeight = 20; // 地面高度
+    this.groundHeight = 40; // 地面高度
     this.speed = 5; // 初始速度
     this.maxSpeed = 12; // 最大速度
     this.acceleration = 0.001; // 加速度
     
-    // 恐龙属性
+    // 恐龙属性 - 放大尺寸
     this.dino = {
-      x: 50,
-      y: this.height - this.groundHeight - 40, // 恐龙初始位置
-      width: 40,
-      height: 40,
+      x: 80, // 向右移动一些，原来是50
+      y: this.height - this.groundHeight - 80, // 恐龙初始位置，根据新尺寸调整
+      width: 80, // 放大到80 (原来是40)
+      height: 80, // 放大到80 (原来是40)
       jumping: false,
       jumpVelocity: 0,
-      jumpStrength: -13, // 跳跃力度
-      gravity: 0.6, // 重力
+      jumpStrength: -16, // 增加跳跃力度以适应更大的尺寸 (原来是-13)
+      gravity: 0.7, // 稍微增加重力 (原来是0.6)
       crouching: false
     };
     
-    // 障碍物属性
+    // 障碍物属性 - 放大尺寸
     this.obstacles = [];
     this.obstacleTypes = [
-      { type: 'cactus', width: 20, height: 40, probability: 0.7 },
-      { type: 'bird', width: 30, height: 20, probability: 0.3, yOffset: -20 }
+      { type: 'cactus', width: 40, height: 80, probability: 0.7 }, // 放大仙人掌
+      { type: 'bird', width: 60, height: 40, probability: 0.3, yOffset: -40 } // 放大鸟类
     ];
-    this.minObstacleDistance = 300; // 障碍物之间的最小距离
+    this.minObstacleDistance = 400; // 增加障碍物之间的最小距离 (原来是300)
     this.lastObstacleTime = 0; // 上次生成障碍物的时间
     this.obstacleInterval = 1500; // 初始障碍物生成间隔
     
@@ -424,8 +424,8 @@ class DinoGame {
     this.obstacles = [];
     this.lastObstacleTime = 0;
     
-    // 重置恐龙状态
-    this.dino.y = this.height - this.groundHeight - 40;
+    // 重置恐龙状态 - 修复位置计算
+    this.dino.y = this.height - this.groundHeight - this.dino.height;
     this.dino.jumping = false;
     this.dino.jumpVelocity = 0;
     this.dino.crouching = false;
@@ -504,13 +504,13 @@ class DinoGame {
       }
     }
     
-    // 随机生成新的云朵
+    // 随机生成新的云朵 - 放大云朵
     if (Math.random() < 0.005) {
       this.clouds.push({
         x: this.width,
-        y: Math.random() * (this.height / 2 - 50),
-        width: 60,
-        height: 30
+        y: Math.random() * (this.height / 2 - 80),
+        width: 120, // 原来是60
+        height: 60  // 原来是30
       });
     }
     
@@ -573,16 +573,16 @@ class DinoGame {
       type: selectedType.type
     };
     
-    // 如果是鸟类，随机选择高度
-    if (obstacle.type === 'bird') {
-      // 有三种高度: 地面, 中间, 高处
-      const heightLevels = [
-        this.height - this.groundHeight - obstacle.height, // 地面
-        this.height - this.groundHeight - obstacle.height - 30, // 中间
-        this.height - this.groundHeight - obstacle.height - 60  // 高处
-      ];
-      obstacle.y = heightLevels[Math.floor(Math.random() * heightLevels.length)];
-    }
+// 创建障碍物时，如果是鸟类，调整高度选择
+if (obstacle.type === 'bird') {
+  // 有三种高度: 地面, 中间, 高处 - 调整为更大的间隔
+  const heightLevels = [
+    this.height - this.groundHeight - obstacle.height, // 地面
+    this.height - this.groundHeight - obstacle.height - 60, // 中间 (原来是30)
+    this.height - this.groundHeight - obstacle.height - 120  // 高处 (原来是60)
+  ];
+  obstacle.y = heightLevels[Math.floor(Math.random() * heightLevels.length)];
+}
     
     // 添加到障碍物列表中
     this.obstacles.push(obstacle);
@@ -663,14 +663,14 @@ class DinoGame {
     this.ctx.fillStyle = backgroundColor;
     this.ctx.fillRect(0, 0, this.width, this.height);
     
-    // 绘制云朵
+    // 绘制云朵 - 放大云朵
     for (const cloud of this.clouds) {
-        // 直接使用简单形状
-        this.ctx.fillStyle = '#ffffff';
-        this.ctx.beginPath();
-        this.ctx.arc(cloud.x + cloud.width/3, cloud.y + cloud.height/2, cloud.height/2, 0, Math.PI * 2);
-        this.ctx.arc(cloud.x + cloud.width*2/3, cloud.y + cloud.height/2, cloud.height/2, 0, Math.PI * 2);
-        this.ctx.fill();
+      // 放大云朵尺寸
+      this.ctx.fillStyle = '#ffffff';
+      this.ctx.beginPath();
+      this.ctx.arc(cloud.x + cloud.width/3, cloud.y + cloud.height/2, cloud.height/1.5, 0, Math.PI * 2);
+      this.ctx.arc(cloud.x + cloud.width*2/3, cloud.y + cloud.height/2, cloud.height/1.5, 0, Math.PI * 2);
+      this.ctx.fill();
     }
   
     // 绘制地面
@@ -943,8 +943,8 @@ class DinoGame {
       this.animationFrameId = null;
     }
     
-    // 重置恐龙位置
-    this.dino.y = this.height - this.groundHeight - 40;
+    // 重置恐龙位置 - 修复位置计算
+    this.dino.y = this.height - this.groundHeight - this.dino.height;
     this.dino.jumping = false;
     this.dino.jumpVelocity = 0;
     this.dino.crouching = false;
