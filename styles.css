@@ -1,28 +1,3 @@
-/* styles.css */
-#snake-leaderboard-content {
-  position: absolute;
-  top: 100%; /* 位于 game-info 下方 */
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: #f9f9f9;
-  padding: 10px;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  z-index: 10; /* 确保在其他元素之上 */
-  width: 100%;
-  text-align: center;
-}
-
-#snake-leaderboard-content h3 {
-  margin-bottom: 8px;
-  font-size: 16px;
-}
-
-#snake-leaderboard-content p {
-  margin: 4px 0;
-  font-size: 14px;
-}
-
 #tetris-leaderboard-content {
   background-color: #f9f9f9;
   padding: 8px; /* 稍微减小内边距以适应空间 */
@@ -255,7 +230,7 @@ body.winter { background-color: #f0f8ff; }
 }
 
 /* 修复模态框关闭按钮样式冲突 */
-#snake-modal button, #tetris-modal button {
+#tetris-modal button {
   margin-top: 15px;
   width: 140px;
   padding: 10px 0;
@@ -267,12 +242,11 @@ body.winter { background-color: #f0f8ff; }
   cursor: pointer;
   transition: all 0.2s ease;
 }
-#snake-modal button:hover, #tetris-modal button:hover {
+#tetris-modal button:hover {
   transform: translateY(-2px);
   box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
-
-#snake-player-select, #tetris-player-select {
+#tetris-player-select {
   margin-top: 15px;
   margin-bottom: 5px;
   width: 200px;
@@ -999,7 +973,6 @@ body.winter .seasonal-decoration {
 }
 
 /* 增加选择器特异性，确保关闭按钮样式不被覆盖 */
-#snake-modal button.modal-close-btn, 
 #tetris-modal button.modal-close-btn {
   position: absolute;
   top: 10px;
@@ -1019,15 +992,13 @@ body.winter .seasonal-decoration {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06); /* 淡淡的阴影 */
   z-index: 10;
 }
-
-#snake-modal button.modal-close-btn:hover, 
+ 
 #tetris-modal button.modal-close-btn:hover {
   background: rgba(255, 255, 255, 0.7); /* 悬停时稍微不透明 */
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
   transform: scale(1.05);
 }
 
-#snake-modal button.modal-close-btn .close-icon, 
 #tetris-modal button.modal-close-btn .close-icon {
   width: 24px;
   height: 24px;
@@ -1035,7 +1006,6 @@ body.winter .seasonal-decoration {
   transition: opacity 0.2s, transform 0.2s;
 }
 
-#snake-modal button.modal-close-btn:hover .close-icon, 
 #tetris-modal button.modal-close-btn:hover .close-icon {
   opacity: 1;
   transform: scale(1.1);
@@ -1763,45 +1733,7 @@ body #games-selection .games-header h2,
   }
 }
 
-/* 添加字符计数器的样式 */
-.custom-name-container {
-  position: relative;
-  margin: 10px 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
 
-.custom-name-container span {
-  color: #666;
-  font-size: 14px;
-}
-
-.custom-name-container input {
-  flex: 1;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-  -webkit-appearance: none;
-  appearance: none;
-  background-color: #fff;
-  min-width: 0;
-  width: 100%;
-  transition: border-color 0.2s;
-}
-
-.custom-name-container input:focus {
-  outline: none;
-  border-color: #4CAF50;
-  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
-  z-index: 10; /* 确保焦点时在顶层 */
-}
-/* 当输入过长时的警告样式 */
-.custom-name-container input.input-warning {
-  border-color: #ff6b6b;
-  box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.2);
-}
 /* 确保自定义输入框样式支持所有类型输入 */
 .custom-name-container input {
   flex: 1;
