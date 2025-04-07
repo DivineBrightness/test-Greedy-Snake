@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="./snakeGame.css?v=1.5.1">
   <link rel="stylesheet" href="./cardGame.css?v=1.5.2">
   <link rel="stylesheet" href="./heartMoments.css?v=1.4.1">
+  <link rel="stylesheet" href="./dinoGame.css?v=1.0.0">
   <!-- 添加 Lottie 库 -->
   <script defer src="./lottie.min.js?v=1.0.1"></script>
 </head>
@@ -42,6 +43,7 @@
         <button class="game-select-btn" id="snake-select-btn"><span>贪吃蛇</span></button>
         <button class="game-select-btn" id="tetris-select-btn"><span>俄罗斯方块</span></button>
         <button class="game-select-btn" id="card-select-btn"><span>扑克牌</span></button>
+        <button class="game-select-btn" id="dino-select-btn"><span>恐龙跳跃</span></button>
       </div>
     </div>
     
@@ -206,6 +208,46 @@
         </div>
       </div>
     </div>
+    
+<!-- 添加恐龙游戏界面 -->
+<div id="dino-game" style="display: none;">
+  <button class="back-btn" id="dino-back-btn"></button>
+  <button class="play-pause-btn fixed-btn" id="dino-play-pause-btn">
+    <img src="./image/start.svg" alt="开始/暂停" id="dino-play-pause-icon">
+  </button>
+  <h2>恐龙跳跃</h2>
+  <div class="dino-game-info">
+    <div class="dino-score-container">
+      <div class="dino-game-score">分数: <span id="dino-score">0</span></div>
+      <div class="dino-game-high-score">最高分: <span id="dino-high-score">0</span></div>
+    </div>
+    <div class="dino-leaderboard">
+      <button class="dino-leaderboard-btn" id="dino-leaderboard-btn">排行榜</button>
+      <div class="leaderboard-panel" id="dino-leaderboard-content" style="display: none;">
+        <!-- 排行榜内容 -->
+      </div>
+    </div>
+  </div>
+  <canvas id="dino-canvas" width="600" height="200"></canvas>
+  
+  <!-- 恐龙游戏模态框 - 修复版 -->
+  <div id="dino-modal" style="display: none;">
+    <div>
+      <!-- 空白结构，内容将由JavaScript动态生成 -->
+    </div>
+  </div>
+  
+  <!-- 移动端控制按钮 - 移到正确的位置内 -->
+  <div class="dino-mobile-controls">
+    <button class="dino-control-btn" id="dino-jump-btn">
+      <img src="./image/up.svg" alt="跳跃" class="dino-control-icon">
+    </button>
+    <button class="dino-control-btn" id="dino-crouch-btn">
+      <img src="./image/down.svg" alt="蹲下" class="dino-control-icon">
+    </button>
+  </div>
+</div>
+    
     <footer>© 2025 四季 | 小游戏集合 & 赏析</footer>
   </div>
   <script src="./leaderboard.js?v=1.4.2"></script>
@@ -219,6 +261,7 @@
   <script src="./cq.js?v=1.5.1"></script>
   <script defer src="./cardGame.js?v=1.5.3"></script>
   <script src="./daily.js?v=1.0.1"></script>
+  <script defer src="./dinoGame.js?v=1.0.0"></script>
   <script>
     // 页面加载完成后发送访问记录
     document.addEventListener('DOMContentLoaded', () => {
@@ -254,6 +297,12 @@
           <h3>炸金花</h3>
           <p>一款经典的扑克牌游戏，每名玩家会收到3张牌，牌型从大到小依次为：豹子、同花顺、同花、顺子、对子、单张。</p>
           <p>游戏中可通过"看牌"、"跟注"、"加注"和"弃牌"等操作来对抗AI对手。ESC键可退出游戏。</p>
+        </div>
+
+        <div class="game-instruction-section">
+          <h3>恐龙跳跃</h3>
+          <p>按空格键、上箭头或点击画面使恐龙跳跃，按下箭头使恐龙低头，躲避前方的仙人掌和飞鸟。随着分数增加，游戏速度会逐渐加快。</p>
+          <p>P键可暂停/继续游戏。游戏具有日夜交替场景变化。</p>
         </div>
       </div>
     </div>

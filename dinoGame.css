@@ -1,0 +1,361 @@
+/* 恐龙游戏容器样式 */
+#dino-game {
+  position: relative;
+  text-align: center;
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* 游戏画布样式 */
+#dino-canvas {
+  border: 1px solid #ccc;
+  background-color: #f7f7f7;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin: 0 auto;
+  display: block;
+  touch-action: none; /* 阻止触摸设备上的默认滚动行为 */
+  -webkit-tap-highlight-color: transparent; /* 移除触摸时的高亮效果 */
+}
+
+/* 游戏信息区域 */
+.dino-game-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 5px 10px;
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 5px;
+}
+
+.dino-score-container {
+  display: flex;
+  gap: 15px;
+}
+
+/* 游戏分数样式 */
+.dino-game-score, .dino-game-high-score {
+  font-size: 18px;
+  font-weight: bold;
+  color: #555;
+}
+
+
+
+/* 排行榜按钮和面板 */
+.dino-leaderboard {
+  position: relative;
+}
+
+.dino-leaderboard-btn {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.dino-leaderboard-btn:hover {
+  background-color: #3e8e41;
+}
+
+.dino-leaderboard-panel {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  background-color: white;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+  width: 300px;
+  z-index: 1000;
+  margin-top: 10px;
+}
+
+/* 修改恐龙游戏模态框样式，与贪吃蛇保持一致 */
+#dino-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85); /* 更暗的背景 */
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+  }
+
+  #dino-modal > div {
+    position: relative;
+    background: linear-gradient(to bottom, #ffffff, #f5f5f7);
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    width: 350px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    max-width: 90%;
+    position: relative;
+    z-index: 10000;
+    animation: modalFadeIn 0.3s ease-out;
+  }
+  @keyframes modalFadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+/* 模态框标题样式 */
+#dino-modal .modal-header {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 15px;
+    position: relative;
+  }
+  
+  #dino-modal h2 {
+    color: rgb(3, 93, 61);
+    margin-bottom: 15px;
+    font-size: 24px;
+    text-align: center;
+  }
+  #dino-modal p {
+    margin-bottom: 15px;
+  }
+#dino-modal h3 {
+  margin-top: 0;
+  color: rgb(3, 93, 61);
+  margin-bottom: 15px;
+  font-size: 24px;
+}
+
+/* 修改选择框样式 */
+#dino-modal select {
+    margin-top: 15px;
+    margin-bottom: 5px;
+    width: 200px;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+  }
+
+/* 自定义输入框样式 */
+#dino-modal .custom-name-container {
+    position: relative;
+    margin: 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  #dino-modal .custom-name-container span {
+    color: #666;
+    font-size: 14px;
+  }
+
+  #dino-modal .custom-name-container input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    -webkit-appearance: none;
+    appearance: none;
+    background-color: #fff;
+    min-width: 0;
+    width: 100%;
+    transition: border-color 0.2s;
+  }
+  #dino-modal .custom-name-container input:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+  }
+#dino-modal button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  width: 100%;
+}
+
+#dino-modal button:hover {
+  background-color: #3e8e41;
+}
+
+/* 关闭按钮样式 */
+#dino-modal button.modal-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 45px;
+    height: 45px;
+    margin-top: 0;
+    padding: 0;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+    z-index: 10;
+    border: none;
+    width: auto;
+  }
+
+#dino-modal .close-icon {
+  width: 24px;
+  height: 24px;
+}
+
+/* 响应式设计调整 */
+@media (max-width: 600px) {
+  #dino-canvas {
+    width: 100%;
+    height: auto;
+  }
+  
+  .dino-mobile-controls {
+    margin-top: 10px;
+  }
+  
+  .dino-control-btn {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .dino-control-icon {
+    width: 25px;
+    height: 25px;
+  }
+}
+
+/* 提交按钮样式 */
+#dino-modal button#dino-submit-btn {
+    margin-top: 15px;
+    width: 140px;
+    padding: 10px 0;
+    border-radius: 25px;
+    background: linear-gradient(45deg, #4ecdc4, #556270);
+    color: white;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  #dino-modal button#dino-submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  }
+  #dino-modal button.modal-close-btn:hover {
+    background: rgba(255, 255, 255, 0.7);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    transform: scale(1.05);
+  }
+  
+  #dino-modal button.modal-close-btn .close-icon {
+    width: 24px;
+    height: 24px;
+    opacity: 0.8;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  
+  #dino-modal button.modal-close-btn:hover .close-icon {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  
+  /* 移动设备样式优化 */
+  @media (max-width: 600px) {
+    #dino-modal > div {
+      padding: 25px 20px;
+    }
+    
+    #dino-modal button.modal-close-btn {
+      width: 42px;
+      height: 42px;
+      top: 8px;
+      right: 8px;
+    }
+    
+    #dino-modal button.modal-close-btn:active {
+      transform: scale(0.95);
+      background: rgba(255, 255, 255, 0.65);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+    }
+  }
+  /* 移动端控制按钮样式 - 确保只在恐龙游戏区域内展示 */
+#dino-game .dino-mobile-controls {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    align-items: center;
+    margin: 15px auto 0;
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  /* 控制按钮样式 */
+  #dino-game .dino-control-btn {
+    position: relative;
+    background-color: rgba(0, 0, 0, 0.15);
+    border: 2px solid rgba(0, 0, 0, 0.3);
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.2s, transform 0.1s;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  #dino-game .dino-control-btn:hover {
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+  
+  #dino-game .dino-control-btn:active {
+    background-color: rgba(0, 0, 0, 0.25);
+    transform: scale(0.95);
+  }
+  
+  #dino-game .dino-control-icon {
+    width: 24px;
+    height: 24px;
+  }
+  
+  /* 移动设备上的响应式调整 */
+  @media (max-width: 600px) {
+    #dino-game .dino-mobile-controls {
+      margin-top: 10px;
+      max-width: 250px;
+    }
+    
+    #dino-game .dino-control-btn {
+      width: 50px;
+      height: 50px;
+    }
+    
+    #dino-game .dino-control-icon {
+      width: 20px;
+      height: 20px;
+    }
+  }
+  
+  /* 确保按钮不会溢出父容器 */
+  #dino-game {
+    overflow: hidden;
+    padding-bottom: 90px; /* 为控制按钮预留空间 */
+  }
