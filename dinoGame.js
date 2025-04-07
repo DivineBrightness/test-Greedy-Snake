@@ -94,7 +94,11 @@ class DinoGame {
       dino: {
         run1: this.loadImage('./image/dino/squirtle.svg'),
         run2: this.loadImage('./image/dino/squirtle.svg'),
-        jump: this.loadImage('./image/dino/chicken.svg'),
+        jump: this.loadImage('./image/dino/squirtle.svg'),
+        
+        // run1: this.loadImage('./image/dino/dinosaur.png'),
+        // run2: this.loadImage('./image/dino/dinosaur.png'),
+        // jump: this.loadImage('./image/dino/dinosaur.png'),
       },
       obstacles: {
         cactus1: this.loadImage('./image/dino/cactus.svg'),
