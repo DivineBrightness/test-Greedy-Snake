@@ -67,7 +67,6 @@ class SnakeGame {
     './image/fruit/lemon.svg',
     './image/fruit/radish.svg',
     './image/fruit/watermelon.svg',
-    './image/fruit/fruit.svg',
     './image/fruit/pineapple.svg',
     './image/fruit/watermelon1.svg',
     './image/fruit/bell.svg',

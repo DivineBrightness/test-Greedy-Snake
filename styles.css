@@ -622,15 +622,24 @@ button:focus {
 /* 修改现有的移动设备媒体查询 */
 @media (max-width: 768px) {
   .games-grid {
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 创建两列布局 */
+    grid-gap: 15px; /* 设置网格间距 */
     align-items: center;
-    gap: 20px;
+    justify-content: center;
+    max-width: 400px; /* 控制整体宽度 */
+    margin: 20px auto;
   }
   
   .game-select-btn {
-    width: 180px;
-    height: 180px;
-    -webkit-tap-highlight-color: transparent; /* 移除默认的点击高亮 */
+    width: 100%; /* 使按钮宽度充满网格单元格 */
+    height: 150px; /* 调整高度适合2×2布局 */
+    margin: 0; /* 移除外边距 */
+  }
+  
+  /* 确保按钮内文字正确对齐 */
+  .game-select-btn span {
+    padding-bottom: 10px; /* 增加文字底部内边距 */
   }
   
   /* 为触摸设备优化交互反馈 */
@@ -646,7 +655,17 @@ button:focus {
     z-index: 3;
   }
 }
-
+/* 适配小屏幕设备 */
+@media (max-width: 400px) {
+  .games-grid {
+    grid-gap: 10px; /* 减小间距 */
+  }
+  
+  .game-select-btn {
+    height: 130px; /* 减小按钮高度 */
+    font-size: 20px; /* 减小字体大小 */
+  }
+}
 /* 添加触摸设备的悬停效果 */
 @media (hover: none) and (pointer: coarse) {
   .game-select-btn:active {
