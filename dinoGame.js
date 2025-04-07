@@ -1,5 +1,21 @@
 class DinoGame {
   constructor() {
+    // 添加水果相关属性
+    this.fruits = [];
+    this.fruitType = {
+      type: 'apple',
+      width: 50,
+      height: 50,
+      probability: 0.1
+    };
+    this.fruitInterval = 10000; // 每10秒可能出现一个水果
+    this.lastFruitTime = 0;
+
+    // 添加无敌相关属性 - 但暂时不初始化依赖于dino的属性
+    this.isInvincible = false;
+    this.invincibleTimer = 0;
+    this.invincibleDuration = 10000; // 无敌持续10秒
+
     this.canvas = document.getElementById('dino-canvas');
     this.ctx = this.canvas.getContext('2d');
     this.scoreElement = document.getElementById('dino-score');
@@ -30,6 +46,12 @@ class DinoGame {
       jumpStrength: -25, // 增加跳跃力度 (原来是-16)
       gravity: 0.8, // 增加重力 (原来是0.7)
       crouching: false
+    };
+    
+    // 初始化依赖于dino的属性 - 移到dino创建之后
+    this.originalDinoSize = {
+      width: this.dino.width,
+      height: this.dino.height
     };
     
     // 放大障碍物尺寸
@@ -77,12 +99,16 @@ class DinoGame {
       obstacles: {
         cactus1: this.loadImage('./image/dino/cactus.svg'),
         bird: this.loadImage('./image/dino/chicken.svg'), // 添加鸟类图片
+      },
+      // 添加水果图像
+      fruits: {
+        apple: this.loadImage('./image/fruit/apple1.svg')
       }
     };
     
     // 简化图片加载计数
     this.imagesLoaded = 0;
-    this.totalImages = 3; // 只期望加载恐龙和仙人掌图片
+    this.totalImages = 4;
     
     // 添加图像加载完成事件
     if (this.images.dino.run1) {
@@ -541,6 +567,7 @@ class DinoGame {
       }
     }
     
+    
     // 生成新的障碍物
     const now = Date.now();
     if (now - this.lastObstacleTime > this.obstacleInterval) {
@@ -554,7 +581,39 @@ class DinoGame {
         this.obstacleInterval = Math.max(800, 1500 - this.score / 10);
       }
     }
-    
+
+        // 更新无敌状态
+        if (this.isInvincible) {
+          this.invincibleTimer += 16; // 假设16ms为一帧
+          if (this.invincibleTimer > this.invincibleDuration) {
+            this.isInvincible = false;
+            this.invincibleTimer = 0;
+            
+            // 恢复恐龙原始大小
+            this.dino.width = this.originalDinoSize.width;
+            this.dino.height = this.originalDinoSize.height;
+            this.dino.y = this.height - this.groundHeight - this.dino.height;
+          }
+        }
+        // 更新水果位置
+        for (let i = 0; i < this.fruits.length; i++) {
+          this.fruits[i].x -= this.speed;
+          
+          // 如果水果移出屏幕，将其删除
+          if (this.fruits[i].x + this.fruits[i].width < 0) {
+            this.fruits.splice(i, 1);
+            i--;
+          }
+        }
+    // 生成新的水果
+    if (now - this.lastFruitTime > this.fruitInterval) {
+      if (Math.random() < this.fruitType.probability) {
+        this.generateFruit();
+        this.lastFruitTime = now;
+      }
+    }
+    // 检测恐龙与水果的碰撞
+    this.checkFruitCollisions();
     // 检测碰撞
     this.checkCollisions();
     
@@ -751,6 +810,29 @@ class DinoGame {
           }
         }
     }
+    // 绘制水果
+    for (const fruit of this.fruits) {
+      const fruitImage = this.images.fruits.apple;
+      
+      if (fruitImage && fruitImage.complete && fruitImage.naturalWidth > 0) {
+        this.ctx.drawImage(
+          fruitImage,
+          fruit.x, fruit.y,
+          fruit.width, fruit.height
+        );
+      } else {
+        // 备用绘制
+        this.ctx.fillStyle = '#ff0000';
+        this.ctx.beginPath();
+        this.ctx.arc(
+          fruit.x + fruit.width/2,
+          fruit.y + fruit.height/2,
+          fruit.width/2,
+          0, Math.PI * 2
+        );
+        this.ctx.fill();
+      }
+    }
     
     // 绘制恐龙
     let dinoImage;
@@ -766,69 +848,83 @@ class DinoGame {
     dinoImage = this.dinoFrame === 0 ? this.images.dino.run1 : this.images.dino.run2;
     }
 
-    // 绘制恐龙 - 使用图片或备用矩形
+    // 绘制恐龙
     if (dinoImage && dinoImage.complete && dinoImage.naturalWidth > 0) {
-    this.ctx.drawImage(
+      this.ctx.save();
+      // 无敌状态添加闪烁效果
+      if (this.isInvincible && Math.floor(Date.now() / 100) % 2 === 0) {
+        this.ctx.globalAlpha = 0.7;
+      }
+      
+      this.ctx.drawImage(
         dinoImage,
         this.dino.x, this.dino.y,
         this.dino.width, this.dino.height
-    );
+      );
+      this.ctx.restore();
     } else {
-    // 备用绘制 - 绘制一个灰色恐龙形状
-    this.ctx.fillStyle = '#535353';
-    
-    // 主体
-    this.ctx.fillRect(this.dino.x, this.dino.y, this.dino.width, this.dino.height);
-    
-    // 头部
-    this.ctx.fillRect(
-        this.dino.x + this.dino.width - this.dino.width/3, 
-        this.dino.y - this.dino.height/4, 
-        this.dino.width/3, 
-        this.dino.height/3
-    );
-    
-    // 眼睛
-    this.ctx.fillStyle = '#fff';
-    this.ctx.fillRect(
-        this.dino.x + this.dino.width - this.dino.width/6, 
-        this.dino.y - this.dino.height/6, 
-        this.dino.width/12, 
-        this.dino.width/12
-    );
-    
-    // 腿部
-    if (this.dinoFrame === 0) {
-        this.ctx.fillStyle = '#333';
-        this.ctx.fillRect(
-        this.dino.x + this.dino.width/4, 
-        this.dino.y + this.dino.height*0.8,
-        this.dino.width/6, 
-        this.dino.height*0.4
-        );
-        this.ctx.fillRect(
-        this.dino.x + this.dino.width*0.6, 
-        this.dino.y + this.dino.height*0.7,
-        this.dino.width/6, 
-        this.dino.height*0.5
-        );
-    } else {
-        this.ctx.fillStyle = '#333';
-        this.ctx.fillRect(
-        this.dino.x + this.dino.width*0.6, 
-        this.dino.y + this.dino.height*0.8,
-        this.dino.width/6, 
-        this.dino.height*0.4
-        );
-        this.ctx.fillRect(
-        this.dino.x + this.dino.width/4, 
-        this.dino.y + this.dino.height*0.7,
-        this.dino.width/6, 
-        this.dino.height*0.5
-        );
+      // 备用绘制 - 绘制一个灰色恐龙形状
+      this.ctx.fillStyle = '#535353';
+      
+      // 主体
+      this.ctx.fillRect(this.dino.x, this.dino.y, this.dino.width, this.dino.height);
+      
+      // 头部
+      this.ctx.fillRect(
+          this.dino.x + this.dino.width - this.dino.width/3, 
+          this.dino.y - this.dino.height/4, 
+          this.dino.width/3, 
+          this.dino.height/3
+      );
+      
+      // 眼睛
+      this.ctx.fillStyle = '#fff';
+      this.ctx.fillRect(
+          this.dino.x + this.dino.width - this.dino.width/6, 
+          this.dino.y - this.dino.height/6, 
+          this.dino.width/12, 
+          this.dino.width/12
+      );
+      
+      // 腿部
+      if (this.dinoFrame === 0) {
+          this.ctx.fillStyle = '#333';
+          this.ctx.fillRect(
+          this.dino.x + this.dino.width/4, 
+          this.dino.y + this.dino.height*0.8,
+          this.dino.width/6, 
+          this.dino.height*0.4
+          );
+          this.ctx.fillRect(
+          this.dino.x + this.dino.width*0.6, 
+          this.dino.y + this.dino.height*0.7,
+          this.dino.width/6, 
+          this.dino.height*0.5
+          );
+      } else {
+          this.ctx.fillStyle = '#333';
+          this.ctx.fillRect(
+          this.dino.x + this.dino.width*0.6, 
+          this.dino.y + this.dino.height*0.8,
+          this.dino.width/6, 
+          this.dino.height*0.4
+          );
+          this.ctx.fillRect(
+          this.dino.x + this.dino.width/4, 
+          this.dino.y + this.dino.height*0.7,
+          this.dino.width/6, 
+          this.dino.height*0.5
+          );
+      }
     }
+    // 如果处于无敌状态，显示倒计时
+    if (this.isInvincible) {
+      const secondsLeft = Math.ceil((this.invincibleDuration - this.invincibleTimer) / 1000);
+      this.ctx.font = '18px Arial';
+      this.ctx.fillStyle = '#ff0000';
+      this.ctx.textAlign = 'left';
+      this.ctx.fillText(`无敌: ${secondsLeft}秒`, 20, 50);
     }
-    
     // 用于调试的碰撞盒绘制
     if (false) { // 设置为true可以显示碰撞盒
       const box = this.getCollisionBox(this.dino);
@@ -964,7 +1060,14 @@ class DinoGame {
     this.isPlaying = false;
     this.score = 0;
     this.distance = 0;
-    
+    // 重置无敌相关状态
+    this.isInvincible = false;
+    this.invincibleTimer = 0;
+    this.fruits = [];
+    this.lastFruitTime = 0;
+    this.dino.width = this.originalDinoSize.width;
+    this.dino.height = this.originalDinoSize.height;
+
     // 清除动画帧
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
@@ -1078,6 +1181,104 @@ class DinoGame {
     
     console.log('恐龙游戏状态已恢复');
     return true;
+  }
+  generateFruit() {
+    // 创建水果 - 修改高度计算，使水果位置更高
+    const fruit = {
+      x: this.width,
+      // 固定在高处，使玩家需要跳到最高点才能吃到
+      y: this.height - this.groundHeight - this.fruitType.height - 300, // 原来是随机0-200，现在固定在300
+      width: this.fruitType.width,
+      height: this.fruitType.height,
+      type: this.fruitType.type
+    };
+    
+    // 确保水果不会与现有障碍物重叠
+    let shouldCreate = true;
+    for (const obstacle of this.obstacles) {
+      if (Math.abs(fruit.x - obstacle.x) < 150) {
+        shouldCreate = false;
+        break;
+      }
+    }
+    
+    if (shouldCreate) {
+      this.fruits.push(fruit);
+    }
+  }
+  
+  checkFruitCollisions() {
+    const dinoBox = this.getCollisionBox(this.dino);
+    
+    for (let i = 0; i < this.fruits.length; i++) {
+      const fruitBox = {
+        x: this.fruits[i].x,
+        y: this.fruits[i].y,
+        width: this.fruits[i].width,
+        height: this.fruits[i].height
+      };
+      
+      if (this.isColliding(dinoBox, fruitBox)) {
+        // 恐龙吃到水果，获得无敌状态
+        this.isInvincible = true;
+        this.invincibleTimer = 0;
+        
+        // 恐龙变大50%
+        this.dino.width = this.originalDinoSize.width * 1.5;
+        this.dino.height = this.originalDinoSize.height * 1.5;
+        this.dino.y = this.height - this.groundHeight - this.dino.height;
+        
+        // 移除水果
+        this.fruits.splice(i, 1);
+        i--;
+        
+        // 可以添加得分或音效
+        console.log('吃到苹果！进入无敌状态10秒');
+      }
+    }
+  }
+  
+  checkCollisions() {
+    // 获取恐龙碰撞盒
+    const dinoBox = this.getCollisionBox(this.dino);
+    
+    // 对每个障碍物进行碰撞检测
+    for (let i = 0; i < this.obstacles.length; i++) {
+      const obstacle = this.obstacles[i];
+      const obstacleBox = this.getCollisionBox(obstacle);
+      
+      // 如果发生碰撞
+      if (this.isColliding(dinoBox, obstacleBox)) {
+        if (this.isInvincible) {
+          // 无敌状态下，撞飞障碍物
+          obstacle.x = -obstacle.width; // 直接移出屏幕
+          this.score += 1; // 额外加分
+          this.scoreElement.textContent = this.score;
+          continue;
+        }
+        
+        // 非无敌状态下，游戏结束
+        this.gameOver = true;
+        this.isPlaying = false;
+        
+        // 更新最高分
+        if (this.score > this.highScore) {
+          this.highScore = this.score;
+          this.highScoreElement.textContent = this.highScore;
+          localStorage.setItem('dinoHighScore', this.highScore);
+        }
+        
+        // 停止游戏循环
+        if (this.animationFrameId) {
+          cancelAnimationFrame(this.animationFrameId);
+          this.animationFrameId = null;
+        }
+        
+        // 绘制游戏结束画面
+        this.drawGameOver();
+        return;
+      }
+    }
   }
 }
 
