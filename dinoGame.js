@@ -8,13 +8,17 @@ class DinoGame {
       height: 50,
       probability: 0.1
     };
-    this.fruitInterval = 20000; // 每10秒可能出现一个水果
+    this.fruitInterval = 20000; // 每20秒可能出现一个水果
     this.lastFruitTime = 0;
 
     // 添加无敌相关属性 - 但暂时不初始化依赖于dino的属性
     this.isInvincible = false;
     this.invincibleTimer = 0;
     this.invincibleDuration = 10000; // 无敌持续10秒
+        // 添加拖影效果属性
+        this.dinoPositions = [];  // 存储恐龙最近几个位置
+        this.maxTrailLength = 5;  // 拖影长度
+        
 
     this.canvas = document.getElementById('dino-canvas');
     this.ctx = this.canvas.getContext('2d');
@@ -196,11 +200,18 @@ class DinoGame {
       // 获取canvas位置
       const rect = this.canvas.getBoundingClientRect();
       
-      // 触摸下半部分屏幕蹲下，上半部分跳跃
-      if (touchY - rect.top > this.height / 2) {
-        this.dino.crouching = true;
+      if (this.isInvincible) {
+        // 无敌状态下，触摸屏幕位置决定恐龙的Y位置
+        const canvasY = touchY - rect.top;
+        const canvasRatio = this.height / rect.height;
+        this.dino.y = canvasY * canvasRatio - this.dino.height / 2;
       } else {
-        this.jump();
+        // 普通状态，触摸下半部分蹲下，上半部分跳跃
+        if (touchY - rect.top > this.height / 2) {
+          this.dino.crouching = true;
+        } else {
+          this.jump();
+        }
       }
     });
     
@@ -242,43 +253,70 @@ class DinoGame {
       playPauseBtn.addEventListener('click', this.playPauseBtnHandler);
     }
     
-    // 移动端专用控制按钮
+    // 修改移动端控制按钮
     const jumpBtn = document.getElementById('dino-jump-btn');
-    const crouchBtn = document.getElementById('dino-crouch-btn');
-    
     if (jumpBtn) {
       jumpBtn.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        this.jump();
+        if (this.isInvincible) {
+          // 无敌状态下向上移动
+          this.dino.y -= 40;
+        } else {
+          this.jump();
+        }
       });
       
-      // 添加鼠标事件以支持桌面调试
-      jumpBtn.addEventListener('mousedown', () => {
-        this.jump();
+      // 添加持续按住向上移动的效果
+      let upInterval;
+      jumpBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (this.isInvincible) {
+          upInterval = setInterval(() => {
+            this.dino.y -= 20;
+          }, 30);
+        }
+      });
+      
+      jumpBtn.addEventListener('touchend', () => {
+        if (upInterval) {
+          clearInterval(upInterval);
+          upInterval = null;
+        }
       });
     }
     
+    const crouchBtn = document.getElementById('dino-crouch-btn');
     if (crouchBtn) {
       crouchBtn.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        this.dino.crouching = true;
+        if (this.isInvincible) {
+          // 无敌状态下向下移动
+          this.dino.y += 40;
+        } else {
+          this.dino.crouching = true;
+        }
+      });
+      
+      // 添加持续按住向下移动的效果
+      let downInterval;
+      crouchBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (this.isInvincible) {
+          downInterval = setInterval(() => {
+            this.dino.y += 20;
+          }, 30);
+        }
       });
       
       crouchBtn.addEventListener('touchend', () => {
-        this.dino.crouching = false;
-      });
-      
-      // 添加鼠标事件以支持桌面调试
-      crouchBtn.addEventListener('mousedown', () => {
-        this.dino.crouching = true;
-      });
-      
-      crouchBtn.addEventListener('mouseup', () => {
-        this.dino.crouching = false;
-      });
-      
-      crouchBtn.addEventListener('mouseleave', () => {
-        this.dino.crouching = false;
+        if (this.isInvincible) {
+          if (downInterval) {
+            clearInterval(downInterval);
+            downInterval = null;
+          }
+        } else {
+          this.dino.crouching = false;
+        }
       });
     }
     
@@ -341,15 +379,28 @@ class DinoGame {
     }
   }
   
+  // 修改键盘控制，添加无敌状态下的上下移动
   handleKeyDown(e) {
     if (this.gameOver || this.paused) return;
     
     if (e.code === 'Space' || e.code === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
       e.preventDefault();
-      this.jump();
+      if (this.isInvincible) {
+        // 无敌状态下，上键向上移动
+        this.dino.y -= 40;
+      } else {
+        // 普通状态下，跳跃
+        this.jump();
+      }
     } else if (e.code === 'ArrowDown' || e.key === 's' || e.key === 'S') {
       e.preventDefault();
-      this.dino.crouching = true;
+      if (this.isInvincible) {
+        // 无敌状态下，下键向下移动
+        this.dino.y += 40;
+      } else {
+        // 普通状态下，蹲下
+        this.dino.crouching = true;
+      }
     } else if (e.code === 'KeyP') {
       this.togglePause();
     }
@@ -500,6 +551,25 @@ class DinoGame {
         console.log('跳过障碍物得分！当前分数：', this.score);
       }
     }
+    // 【添加此段代码】更新无敌状态计时器
+    if (this.isInvincible) {
+      this.invincibleTimer += 16; // 假设16ms为一帧
+      
+      // 无敌状态下保持飞行状态
+      this.dino.isFlying = true;
+      
+      // 无敌结束时恢复正常
+      if (this.invincibleTimer > this.invincibleDuration) {
+        this.isInvincible = false;
+        this.invincibleTimer = 0;
+        this.dino.isFlying = false;
+        
+        // 恢复恐龙原始大小
+        this.dino.width = this.originalDinoSize.width;
+        this.dino.height = this.originalDinoSize.height;
+        this.dino.y = this.height - this.groundHeight - this.dino.height;
+      }
+    }
     // 增加速度
     if (this.speed < this.maxSpeed) {
       this.speed += this.acceleration;
@@ -586,19 +656,27 @@ class DinoGame {
       }
     }
 
-        // 更新无敌状态
-        if (this.isInvincible) {
-          this.invincibleTimer += 16; // 假设16ms为一帧
-          if (this.invincibleTimer > this.invincibleDuration) {
-            this.isInvincible = false;
-            this.invincibleTimer = 0;
-            
-            // 恢复恐龙原始大小
-            this.dino.width = this.originalDinoSize.width;
-            this.dino.height = this.originalDinoSize.height;
-            this.dino.y = this.height - this.groundHeight - this.dino.height;
-          }
+
+    // 修改保存恐龙位置的方式 - 创建向后的拖影效果
+    if (this.frameCount % 2 === 0) { // 每2帧记录一次，增加拖影密度
+      // 清除之前的位置数组
+      if (this.isInvincible) {
+        // 计算向后的拖影位置，而不是记录当前位置
+        for (let i = 0; i < this.maxTrailLength; i++) {
+          const offset = (i + 1) * 15; // 每个拖影间隔15像素
+          this.dinoPositions[i] = {
+            x: this.dino.x - offset, // 向后偏移
+            y: this.dino.y + Math.sin(Date.now()/200 + i*0.5) * 5, // 添加微小的上下波动
+            width: this.dino.width * (1 - i/this.maxTrailLength * 0.3), // 逐渐缩小
+            height: this.dino.height * (1 - i/this.maxTrailLength * 0.3), // 逐渐缩小
+            isFlying: this.dino.isFlying || this.isInvincible
+          };
         }
+      } else {
+        // 非无敌状态下不显示拖影
+        this.dinoPositions = [];
+      }
+    }
         // 更新水果位置
         for (let i = 0; i < this.fruits.length; i++) {
           this.fruits[i].x -= this.speed;
@@ -837,21 +915,52 @@ class DinoGame {
         this.ctx.fill();
       }
     }
-    
-    // 绘制恐龙
+    // 优化拖影绘制效果
+    if (this.dinoPositions.length > 0 && this.isInvincible) {
+      const dinoImage = this.dinoFrame === 0 ? this.images.dino.run1 : this.images.dino.run2;
+      
+      // 从后向前绘制拖影，使后面的层不会覆盖前面的
+      for (let i = this.dinoPositions.length - 1; i >= 0; i--) {
+        const pos = this.dinoPositions[i];
+        // 使用指数降低透明度，使效果更加顺滑
+        const alpha = Math.pow(0.8, i); 
+        
+        if (dinoImage && dinoImage.complete && dinoImage.naturalWidth > 0) {
+          this.ctx.save();
+          this.ctx.globalAlpha = alpha * 0.7; // 降低整体透明度
+          
+          // 绘制金色光晕
+          const glowAlpha = alpha * 0.5;
+          this.ctx.fillStyle = `rgba(255, 215, 0, ${glowAlpha})`;
+          this.ctx.beginPath();
+          this.ctx.ellipse(
+            pos.x + pos.width/2,
+            pos.y + pos.height/2,
+            pos.width/2 + 5,
+            pos.height/2 + 5,
+            0, 0, Math.PI * 2
+          );
+          this.ctx.fill();
+          
+          // 绘制恐龙图像
+          this.ctx.drawImage(dinoImage, pos.x, pos.y, pos.width, pos.height);
+          this.ctx.restore();
+        }
+      }
+    }
+    // 绘制恐龙 (无敌状态的代码保持不变)
     let dinoImage;
-
     if (this.gameOver) {
-    dinoImage = this.images.dino.run1; // 使用基本恐龙图片替代死亡图片
-    } else if (this.dino.jumping) {
-    dinoImage = this.images.dino.jump;
-    if (!dinoImage || !dinoImage.complete) {
-        dinoImage = this.images.dino.run1; // 使用基本恐龙图片替代跳跃图片
-    }
+      dinoImage = this.images.dino.run1;
+    } else if (this.dino.jumping || this.dino.isFlying) {
+      dinoImage = this.images.dino.jump;
+      if (!dinoImage || !dinoImage.complete) {
+        dinoImage = this.images.dino.run1;
+      }
     } else {
-    dinoImage = this.dinoFrame === 0 ? this.images.dino.run1 : this.images.dino.run2;
+      dinoImage = this.dinoFrame === 0 ? this.images.dino.run1 : this.images.dino.run2;
     }
-
+    
     // 绘制恐龙
     if (dinoImage && dinoImage.complete && dinoImage.naturalWidth > 0) {
       this.ctx.save();
@@ -1089,6 +1198,9 @@ class DinoGame {
     this.lastFruitTime = 0;
     this.dino.width = this.originalDinoSize.width;
     this.dino.height = this.originalDinoSize.height;
+    this.dino.isFlying = false; // 重置飞行状态
+    this.dinoPositions = []; // 清空拖影位置
+ 
 
     // 清除动画帧
     if (this.animationFrameId) {
@@ -1245,16 +1357,19 @@ class DinoGame {
         this.isInvincible = true;
         this.invincibleTimer = 0;
         
-        // 恐龙变大2倍而不是1.5倍
+        // 恐龙变大2倍
         this.dino.width = this.originalDinoSize.width * 2;
         this.dino.height = this.originalDinoSize.height * 2;
-        this.dino.y = this.height - this.groundHeight - this.dino.height;
+        
+        // 让恐龙自动飞行起来 - 无需跳跃即可漂浮在空中
+        this.dino.y = this.height - this.groundHeight - this.dino.height - 120; // 飞行高度
+        this.dino.jumping = false; // 不是跳跃状态
+        this.dino.isFlying = true; // 标记为飞行状态
         
         // 移除水果
         this.fruits.splice(i, 1);
         i--;
         
-        // 可以添加得分或音效
         console.log('吃到苹果！进入无敌状态10秒');
       }
     }
