@@ -2,6 +2,8 @@
 class SnakeGame {
     // 修改 SnakeGame 构造函数，在最后添加绘制血量的调用
     constructor() {
+        // 添加标志，记录蛇是否已经咬过自己身体
+        this.hasEatenBody = false;
       this.isPlaying = false;
       this.canvas = document.getElementById('game-canvas');
       this.ctx = this.canvas.getContext('2d');
@@ -983,9 +985,14 @@ checkCollision(head) {
   for (let i = 1; i < this.snake.length; i++) {
     const segment = this.snake[i];
     if (segment.x === head.x && segment.y === head.y) {
-      // 咬到自己的处理逻辑 - 传入被咬到的部分的索引
-      this.handleBodyBite(i);
-      return false; // 不算作普通碰撞，而是由专门的方法处理
+      // 如果已经咬过身体，则当作普通碰撞处理
+      if (this.hasEatenBody) {
+        return true; // 返回true，触发普通的碰撞处理（减少生命值）
+      } else {
+        // 第一次咬身体，用特殊方式处理
+        this.handleBodyBite(i);
+        return false; // 不算作普通碰撞，由专门的方法处理
+      }
     }
   }
     
@@ -1210,7 +1217,8 @@ reset() {
   this.score = 0;
   this.gameOver = false;
   this.paused = false;
-  
+    // 重置咬身体标志
+    this.hasEatenBody = false;
   // 重置血量相关属性
   this.health = this.maxHealth;
   this.isInvincible = false;
@@ -1679,8 +1687,10 @@ showTailBiteEffect() {
     }, 1000);
   }
 }
-// 添加处理咬身体的方法
 handleBodyBite(biteIndex) {
+  // 设置标志，表示已经咬过身体
+  this.hasEatenBody = true;
+  
   // 计算要减掉的分数 - 与切断的长度成正比
   const segmentsRemoved = this.snake.length - biteIndex;
   const pointsLost = Math.min(segmentsRemoved, 10); // 最多扣10分
