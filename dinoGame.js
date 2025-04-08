@@ -3,10 +3,10 @@ class DinoGame {
     // 角色选择相关属性
     this.characters = [
       { id: "result_l", name: "小恐龙", path: "./image/dino/character/result_l.svg" },
-      { id: "squirtle", name: "杰尼龟", path: "./image/dino/character/squirtle.svg" }
+      { id: "squirtle", name: "杰尼龟", path: "./image/dino/character/squirtle.svg" },
     ];
     // 从localStorage加载选择的角色或使用默认角色
-    this.selectedCharacter = localStorage.getItem('dinoCharacter') || "result_l";
+    this.selectedCharacter = localStorage.getItem('dinoCharacter') || "squirtle";
 
     // 添加水果相关属性
     this.fruits = [];
@@ -110,6 +110,12 @@ class DinoGame {
         run1: this.loadImage(characterPath),
         run2: this.loadImage(characterPath),
         jump: this.loadImage(characterPath),
+        // run2: characterPath === "./image/dino/character/111.png"
+        //   ? this.loadImage("./image/dino/character/222.png")
+        //   : this.loadImage(characterPath),
+        // jump: characterPath === "./image/dino/character/111.png"
+        // ? this.loadImage("./image/dino/character/3333.png")
+        // : this.loadImage(characterPath),
       },
       obstacles: {
         cactus1: this.loadImage('./image/dino/cactus.svg'),
