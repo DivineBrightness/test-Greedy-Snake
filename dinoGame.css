@@ -378,4 +378,32 @@
     background-position: center 30%;
     background-color: #a478cd; /* 添加紫色背景 */
   }
-  
+/* 增加选择器优先级并使用!important */
+html body #dino-game:not([style*="display: none"]) ~ .fruit-basket,
+body:has(#dino-game:not([style*="display: none"])) .fruit-basket {
+  top: 5px !important;
+  right: 10px !important;
+}
+/* 角色选择按钮样式 */
+.dino-character-btn {
+  background-color: #9C27B0;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+  margin-right: 10px;
+}
+
+.dino-character-btn:hover {
+  background-color: #7B1FA2;
+}
+
+/* 修改控制按钮容器布局 */
+.dino-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}

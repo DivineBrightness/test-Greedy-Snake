@@ -1,5 +1,13 @@
 class DinoGame {
   constructor() {
+    // 角色选择相关属性
+    this.characters = [
+      { id: "result_l", name: "小恐龙", path: "./image/dino/character/result_l.svg" },
+      { id: "squirtle", name: "杰尼龟", path: "./image/dino/character/squirtle.svg" }
+    ];
+    // 从localStorage加载选择的角色或使用默认角色
+    this.selectedCharacter = localStorage.getItem('dinoCharacter') || "result_l";
+
     // 添加水果相关属性
     this.fruits = [];
     this.fruitType = {
@@ -93,20 +101,19 @@ class DinoGame {
   }
   
   loadImages() {
-    // 简化版图片加载 - 只保留必要的图片引用
+    // 获取当前选择的角色路径
+    const characterPath = this.getCharacterPath(this.selectedCharacter);
+    
+    // 简化版图片加载 - 修改为使用选择的角色
     this.images = {
       dino: {
-        run1: this.loadImage('./image/dino/squirtle.svg'),
-        run2: this.loadImage('./image/dino/squirtle.svg'),
-        jump: this.loadImage('./image/dino/squirtle.svg'),
-        
-        // run1: this.loadImage('./image/dino/dinosaur.png'),
-        // run2: this.loadImage('./image/dino/dinosaur.png'),
-        // jump: this.loadImage('./image/dino/dinosaur.png'),
+        run1: this.loadImage(characterPath),
+        run2: this.loadImage(characterPath),
+        jump: this.loadImage(characterPath),
       },
       obstacles: {
         cactus1: this.loadImage('./image/dino/cactus.svg'),
-        bird: this.loadImage('./image/dino/chicken.svg'), // 添加鸟类图片
+        bird: this.loadImage('./image/dino/chicken.svg'), 
       },
       // 添加水果图像
       fruits: {
@@ -182,6 +189,13 @@ class DinoGame {
   }
   
   initEventListeners() {
+    // 添加角色选择按钮
+    const characterBtn = document.getElementById('dino-character-btn');
+    if (characterBtn) {
+      characterBtn.addEventListener('click', () => {
+        this.showCharacterSelectionModal();
+      });
+    }
     // 空格键、上箭头或点击用于跳跃
     this.keyDownHandler = this.handleKeyDown.bind(this);
     document.addEventListener('keydown', this.keyDownHandler);
@@ -965,34 +979,32 @@ class DinoGame {
     if (dinoImage && dinoImage.complete && dinoImage.naturalWidth > 0) {
       this.ctx.save();
       
-      // 无敌状态添加金色闪光效果
-      if (this.isInvincible) {
-        // 添加金色光晕
-        const glowSize = 10;
-        const glowAlpha = 0.3 + 0.2 * Math.sin(Date.now() / 100); // 脉动效果
-        
-        this.ctx.shadowColor = '#FFD700'; // 金色阴影
-        this.ctx.shadowBlur = 20 + 10 * Math.sin(Date.now() / 200); // 动态光晕大小
-        
-        // 绘制金色光环
-        this.ctx.fillStyle = `rgba(255, 215, 0, ${glowAlpha})`;
-        this.ctx.beginPath();
-        this.ctx.ellipse(
-          this.dino.x + this.dino.width/2,
-          this.dino.y + this.dino.height/2,
-          this.dino.width/2 + glowSize,
-          this.dino.height/2 + glowSize,
-          0, 0, Math.PI * 2
-        );
-        this.ctx.fill();
-      }
-      
-      this.ctx.drawImage(
-        dinoImage,
-        this.dino.x, this.dino.y,
-        this.dino.width, this.dino.height
-      );
-      this.ctx.restore();
+// 计算保持宽高比的尺寸
+const imgRatio = dinoImage.naturalWidth / dinoImage.naturalHeight;
+let drawWidth = this.dino.width;
+let drawHeight = this.dino.height;
+
+// 根据图像原始宽高比调整绘制尺寸
+if (imgRatio > 1) { // 图像较宽
+  drawHeight = this.dino.width / imgRatio;
+} else { // 图像较高
+  drawWidth = this.dino.height * imgRatio;
+}
+
+// 居中绘制
+const offsetX = (this.dino.width - drawWidth) / 2;
+const offsetY = (this.dino.height - drawHeight) / 2;
+
+// 绘制恐龙图像时保持比例
+this.ctx.drawImage(
+  dinoImage,
+  this.dino.x + offsetX, 
+  this.dino.y + offsetY,
+  drawWidth, 
+  drawHeight
+);
+
+this.ctx.restore();
     } else {
       // 备用绘制 - 绘制一个灰色恐龙形状
       this.ctx.fillStyle = '#535353';
@@ -1416,6 +1428,171 @@ class DinoGame {
         return;
       }
     }
+  }
+  // 获取角色图片路径的辅助方法
+  getCharacterPath(characterId) {
+    const character = this.characters.find(char => char.id === characterId);
+    return character ? character.path : this.characters[0].path; // 默认返回第一个角色
+  }
+  // 显示角色选择模态框
+  showCharacterSelectionModal() {
+    // 如果游戏正在进行中，暂停游戏
+    const wasPlaying = this.isPlaying && !this.paused;
+    if (wasPlaying) {
+      this.togglePause();
+    }
+    
+    // 创建模态框
+    const modal = document.createElement('div');
+    modal.id = 'dino-character-modal';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.85)';
+    modal.style.display = 'flex';
+    modal.style.justifyContent = 'center';
+    modal.style.alignItems = 'center';
+    modal.style.zIndex = '10000';
+    
+    // 创建模态框内容
+    const modalContent = document.createElement('div');
+    modalContent.style.backgroundColor = 'white';
+    modalContent.style.padding = '30px';
+    modalContent.style.borderRadius = '15px';
+    modalContent.style.maxWidth = '500px';
+    modalContent.style.width = '90%';
+    modalContent.style.maxHeight = '80vh';
+    modalContent.style.overflowY = 'auto';
+    modalContent.style.position = 'relative';
+    
+    // 添加标题
+    const title = document.createElement('h2');
+    title.textContent = '选择角色';
+    title.style.marginBottom = '20px';
+    title.style.color = 'rgb(3, 93, 61)';
+    
+    // 添加关闭按钮
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '<img src="./image/x-circle.svg" alt="关闭" style="width: 24px; height: 24px;">';
+    closeBtn.style.position = 'absolute';
+    closeBtn.style.top = '10px';
+    closeBtn.style.right = '10px';
+    closeBtn.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
+    closeBtn.style.border = 'none';
+    closeBtn.style.borderRadius = '12px';
+    closeBtn.style.width = '45px';
+    closeBtn.style.height = '45px';
+    closeBtn.style.cursor = 'pointer';
+    closeBtn.style.display = 'flex';
+    closeBtn.style.justifyContent = 'center';
+    closeBtn.style.alignItems = 'center';
+    
+    // 添加角色选择容器
+    const charactersContainer = document.createElement('div');
+    charactersContainer.style.display = 'grid';
+    charactersContainer.style.gridTemplateColumns = 'repeat(2, 1fr)';
+    charactersContainer.style.gap = '20px';
+    charactersContainer.style.marginTop = '20px';
+    
+    // 添加角色选择卡片
+    this.characters.forEach(character => {
+      const characterCard = document.createElement('div');
+      characterCard.style.padding = '15px';
+      characterCard.style.border = `2px solid ${this.selectedCharacter === character.id ? '#4CAF50' : '#ddd'}`;
+      characterCard.style.borderRadius = '10px';
+      characterCard.style.cursor = 'pointer';
+      characterCard.style.textAlign = 'center';
+      characterCard.style.transition = 'all 0.3s ease';
+      
+      // 添加角色图像
+      const characterImg = document.createElement('img');
+      characterImg.src = character.path;
+      characterImg.alt = character.name;
+      characterImg.style.width = '120px';
+      characterImg.style.height = '120px';
+      characterImg.style.marginBottom = '10px';
+      
+      // 添加角色名称
+      const characterName = document.createElement('p');
+      characterName.textContent = character.name;
+      characterName.style.margin = '0';
+      characterName.style.fontSize = '16px';
+      characterName.style.fontWeight = 'bold';
+      
+      // 单击卡片选择角色
+      characterCard.addEventListener('click', () => {
+        // 更新选定的角色
+        this.selectedCharacter = character.id;
+        localStorage.setItem('dinoCharacter', character.id);
+        
+        // 更新所有卡片的边框颜色
+        const allCards = charactersContainer.querySelectorAll('div');
+        allCards.forEach(card => {
+          card.style.border = '2px solid #ddd';
+        });
+        
+        // 高亮显示选中的卡片
+        characterCard.style.border = '2px solid #4CAF50';
+        
+        // 重新加载角色图像
+        this.loadImages();
+      });
+      
+      // 将元素添加到卡片
+      characterCard.appendChild(characterImg);
+      characterCard.appendChild(characterName);
+      
+      // 将卡片添加到容器
+      charactersContainer.appendChild(characterCard);
+    });
+    
+    // 添加确认按钮
+    const confirmBtn = document.createElement('button');
+    confirmBtn.textContent = '确认';
+    confirmBtn.style.backgroundColor = '#4CAF50';
+    confirmBtn.style.color = 'white';
+    confirmBtn.style.border = 'none';
+    confirmBtn.style.padding = '10px 20px';
+    confirmBtn.style.borderRadius = '25px';
+    confirmBtn.style.marginTop = '20px';
+    confirmBtn.style.cursor = 'pointer';
+    confirmBtn.style.fontSize = '16px';
+    confirmBtn.style.width = '140px';
+    
+    // 确认按钮点击事件
+    confirmBtn.addEventListener('click', () => {
+      // 关闭模态框
+      document.body.removeChild(modal);
+      
+      // 如果之前正在游戏，恢复游戏
+      if (wasPlaying) {
+        this.togglePause();
+      }
+    });
+    
+    // 关闭按钮点击事件
+    closeBtn.addEventListener('click', () => {
+      document.body.removeChild(modal);
+      
+      // 如果之前正在游戏，恢复游戏
+      if (wasPlaying) {
+        this.togglePause();
+      }
+    });
+    
+    // 将所有元素添加到模态框内容
+    modalContent.appendChild(title);
+    modalContent.appendChild(closeBtn);
+    modalContent.appendChild(charactersContainer);
+    modalContent.appendChild(confirmBtn);
+    
+    // 将内容添加到模态框
+    modal.appendChild(modalContent);
+    
+    // 将模态框添加到页面
+    document.body.appendChild(modal);
   }
 }
 
