@@ -378,19 +378,32 @@
     background-position: center 30%;
     background-color: #a478cd; /* 添加紫色背景 */
   }
-  /* 调整恐龙游戏页面上的水果篮位置 */
-#dino-game:not([style*="display: none"]) ~ .fruit-basket {
-  top: 45px; /* 调整为更高的位置 */
+/* 增加选择器优先级并使用!important */
+html body #dino-game:not([style*="display: none"]) ~ .fruit-basket,
+body:has(#dino-game:not([style*="display: none"])) .fruit-basket {
+  top: 5px !important;
+  right: 10px !important;
+}
+/* 角色选择按钮样式 */
+.dino-character-btn {
+  background-color: #9C27B0;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+  margin-right: 10px;
 }
 
-/* 确保暂停按钮和返回按钮下方有足够空间 */
-#dino-game:not([style*="display: none"]) ~ .fruit-basket {
-  right: 20px;
-  transform: scale(1);
-  transition: transform 0.2s ease;
+.dino-character-btn:hover {
+  background-color: #7B1FA2;
 }
 
-/* 悬停效果 */
-#dino-game:not([style*="display: none"]) ~ .fruit-basket:hover {
-  transform: scale(1.1);
+/* 修改控制按钮容器布局 */
+.dino-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
