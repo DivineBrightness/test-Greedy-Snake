@@ -96,9 +96,9 @@ class DinoGame {
     // 简化版图片加载 - 只保留必要的图片引用
     this.images = {
       dino: {
-        run1: this.loadImage('./image/dino/squirtle.svg'),
-        run2: this.loadImage('./image/dino/squirtle.svg'),
-        jump: this.loadImage('./image/dino/squirtle.svg'),
+        run1: this.loadImage('./image/dino/result_l.svg'),
+        run2: this.loadImage('./image/dino/result_l.svg'),
+        jump: this.loadImage('./image/dino/result_l.svg'),
         
         // run1: this.loadImage('./image/dino/dinosaur.png'),
         // run2: this.loadImage('./image/dino/dinosaur.png'),
@@ -965,34 +965,32 @@ class DinoGame {
     if (dinoImage && dinoImage.complete && dinoImage.naturalWidth > 0) {
       this.ctx.save();
       
-      // 无敌状态添加金色闪光效果
-      if (this.isInvincible) {
-        // 添加金色光晕
-        const glowSize = 10;
-        const glowAlpha = 0.3 + 0.2 * Math.sin(Date.now() / 100); // 脉动效果
-        
-        this.ctx.shadowColor = '#FFD700'; // 金色阴影
-        this.ctx.shadowBlur = 20 + 10 * Math.sin(Date.now() / 200); // 动态光晕大小
-        
-        // 绘制金色光环
-        this.ctx.fillStyle = `rgba(255, 215, 0, ${glowAlpha})`;
-        this.ctx.beginPath();
-        this.ctx.ellipse(
-          this.dino.x + this.dino.width/2,
-          this.dino.y + this.dino.height/2,
-          this.dino.width/2 + glowSize,
-          this.dino.height/2 + glowSize,
-          0, 0, Math.PI * 2
-        );
-        this.ctx.fill();
-      }
-      
-      this.ctx.drawImage(
-        dinoImage,
-        this.dino.x, this.dino.y,
-        this.dino.width, this.dino.height
-      );
-      this.ctx.restore();
+// 计算保持宽高比的尺寸
+const imgRatio = dinoImage.naturalWidth / dinoImage.naturalHeight;
+let drawWidth = this.dino.width;
+let drawHeight = this.dino.height;
+
+// 根据图像原始宽高比调整绘制尺寸
+if (imgRatio > 1) { // 图像较宽
+  drawHeight = this.dino.width / imgRatio;
+} else { // 图像较高
+  drawWidth = this.dino.height * imgRatio;
+}
+
+// 居中绘制
+const offsetX = (this.dino.width - drawWidth) / 2;
+const offsetY = (this.dino.height - drawHeight) / 2;
+
+// 绘制恐龙图像时保持比例
+this.ctx.drawImage(
+  dinoImage,
+  this.dino.x + offsetX, 
+  this.dino.y + offsetY,
+  drawWidth, 
+  drawHeight
+);
+
+this.ctx.restore();
     } else {
       // 备用绘制 - 绘制一个灰色恐龙形状
       this.ctx.fillStyle = '#535353';

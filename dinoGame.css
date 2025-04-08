@@ -378,4 +378,19 @@
     background-position: center 30%;
     background-color: #a478cd; /* 添加紫色背景 */
   }
-  
+  /* 调整恐龙游戏页面上的水果篮位置 */
+#dino-game:not([style*="display: none"]) ~ .fruit-basket {
+  top: 45px; /* 调整为更高的位置 */
+}
+
+/* 确保暂停按钮和返回按钮下方有足够空间 */
+#dino-game:not([style*="display: none"]) ~ .fruit-basket {
+  right: 20px;
+  transform: scale(1);
+  transition: transform 0.2s ease;
+}
+
+/* 悬停效果 */
+#dino-game:not([style*="display: none"]) ~ .fruit-basket:hover {
+  transform: scale(1.1);
+}
