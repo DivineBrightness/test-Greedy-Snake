@@ -378,11 +378,19 @@
     background-position: center 30%;
     background-color: #a478cd; /* 添加紫色背景 */
   }
-/* 增加选择器优先级并使用!important */
+/* 修改水果篮在恐龙游戏中的位置，防止与游戏信息栏重叠 */
 html body #dino-game:not([style*="display: none"]) ~ .fruit-basket,
 body:has(#dino-game:not([style*="display: none"])) .fruit-basket {
-  top: 5px !important;
+  top: 0px !important; /* 调整为更低的位置，避开游戏信息栏 */
   right: 10px !important;
+}
+
+/* 确保在小屏幕设备上位置也适当调整 */
+@media (max-width: 600px) {
+  html body #dino-game:not([style*="display: none"]) ~ .fruit-basket,
+  body:has(#dino-game:not([style*="display: none"])) .fruit-basket {
+    top: 0px !important; /* 在小屏幕上进一步下移 */
+  }
 }
 /* 角色选择按钮样式 */
 .dino-character-btn {
