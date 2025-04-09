@@ -23,9 +23,6 @@ class DinoGame {
     this.isInvincible = false;
     this.invincibleTimer = 0;
     this.invincibleDuration = 10000; // 无敌持续10秒
-        // 添加拖影效果属性
-        this.dinoPositions = [];  // 存储恐龙最近几个位置
-        this.maxTrailLength = 5;  // 拖影长度
         
 
     this.canvas = document.getElementById('dino-canvas');
@@ -689,27 +686,6 @@ class DinoGame {
       }
     }
 
-
-    // 修改保存恐龙位置的方式 - 创建向后的拖影效果
-    if (this.frameCount % 2 === 0) { // 每2帧记录一次，增加拖影密度
-      // 清除之前的位置数组
-      if (this.isInvincible) {
-        // 计算向后的拖影位置，而不是记录当前位置
-        for (let i = 0; i < this.maxTrailLength; i++) {
-          const offset = (i + 1) * 15; // 每个拖影间隔15像素
-          this.dinoPositions[i] = {
-            x: this.dino.x - offset, // 向后偏移
-            y: this.dino.y + Math.sin(Date.now()/200 + i*0.5) * 5, // 添加微小的上下波动
-            width: this.dino.width * (1 - i/this.maxTrailLength * 0.3), // 逐渐缩小
-            height: this.dino.height * (1 - i/this.maxTrailLength * 0.3), // 逐渐缩小
-            isFlying: this.dino.isFlying || this.isInvincible
-          };
-        }
-      } else {
-        // 非无敌状态下不显示拖影
-        this.dinoPositions = [];
-      }
-    }
         // 更新水果位置
         for (let i = 0; i < this.fruits.length; i++) {
           this.fruits[i].x -= this.speed;
@@ -946,39 +922,6 @@ class DinoGame {
           0, Math.PI * 2
         );
         this.ctx.fill();
-      }
-    }
-    // 优化拖影绘制效果
-    if (this.dinoPositions.length > 0 && this.isInvincible) {
-      const dinoImage = this.dinoFrame === 0 ? this.images.dino.run1 : this.images.dino.run2;
-      
-      // 从后向前绘制拖影，使后面的层不会覆盖前面的
-      for (let i = this.dinoPositions.length - 1; i >= 0; i--) {
-        const pos = this.dinoPositions[i];
-        // 使用指数降低透明度，使效果更加顺滑
-        const alpha = Math.pow(0.8, i); 
-        
-        if (dinoImage && dinoImage.complete && dinoImage.naturalWidth > 0) {
-          this.ctx.save();
-          this.ctx.globalAlpha = alpha * 0.7; // 降低整体透明度
-          
-          // 绘制金色光晕
-          const glowAlpha = alpha * 0.5;
-          this.ctx.fillStyle = `rgba(255, 215, 0, ${glowAlpha})`;
-          this.ctx.beginPath();
-          this.ctx.ellipse(
-            pos.x + pos.width/2,
-            pos.y + pos.height/2,
-            pos.width/2 + 5,
-            pos.height/2 + 5,
-            0, 0, Math.PI * 2
-          );
-          this.ctx.fill();
-          
-          // 绘制恐龙图像
-          this.ctx.drawImage(dinoImage, pos.x, pos.y, pos.width, pos.height);
-          this.ctx.restore();
-        }
       }
     }
     // 绘制恐龙 (无敌状态的代码保持不变)
@@ -1230,7 +1173,6 @@ this.ctx.restore();
     this.dino.width = this.originalDinoSize.width;
     this.dino.height = this.originalDinoSize.height;
     this.dino.isFlying = false; // 重置飞行状态
-    this.dinoPositions = []; // 清空拖影位置
  
 
     // 清除动画帧
