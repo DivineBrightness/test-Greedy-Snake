@@ -79,8 +79,8 @@ class DinoGame {
     // 放大障碍物尺寸
     this.obstacles = [];
     this.obstacleTypes = [
-      { type: 'cactus', width: 90, height: 180, probability: 0.7 }, // 放大仙人掌(原来是60x120)
-      { type: 'bird', width: 120, height: 80, probability: 0.3, yOffset: -40 } // 放大鸟类(原来是90x60)
+      { type: 'cactus', width: 90, height: 180, probability: 0.6 }, // 降低仙人掌概率
+      { type: 'bird', width: 120, height: 80, probability: 0.4 } // 增加鸟类出现概率，移除yOffset
     ];
     this.minObstacleDistance = 600; // 增加障碍物之间的最小距离 (原来是400)
     this.lastObstacleTime = 0; // 上次生成障碍物的时间
@@ -124,7 +124,10 @@ class DinoGame {
       obstacles: {
         cactus1: this.loadImage('./image/dino/cactus.svg'),
         cactus2: this.loadImage('./image/dino/cactus1.svg'),
-        bird: this.loadImage('./image/dino/chicken.svg'), 
+        // 修改为使用3种不同的鸟类图像
+        bird1: this.loadImage('./image/dino/chicken.svg'),
+        bird2: this.loadImage('./image/dino/chicken1.svg'),
+        bird3: this.loadImage('./image/dino/chicken2.svg')
       },
       // 添加水果图像
       fruits: {
@@ -136,7 +139,7 @@ class DinoGame {
     
     // 简化图片加载计数
     this.imagesLoaded = 0;
-    this.totalImages = 6; // 增加1个图片计数，加入背景云朵
+    this.totalImages = 8; // 增加1个图片计数，加入背景云朵
     
     // 添加云朵图像加载，并加入控制台日志
     this.cloudEffect.image = this.loadImage('./image/dino/cloud.svg');
@@ -173,10 +176,21 @@ class DinoGame {
       this.images.obstacles.cactus2.onload = () => this.imageLoaded();
       this.images.obstacles.cactus2.onerror = () => this.imageLoaded();
     }
-    if (this.images.obstacles.bird) {
-      this.images.obstacles.bird.onload = () => this.imageLoaded();
-      this.images.obstacles.bird.onerror = () => this.imageLoaded();
-    }
+  // 添加3种鸟类图像的加载事件
+  if (this.images.obstacles.bird1) {
+    this.images.obstacles.bird1.onload = () => this.imageLoaded();
+    this.images.obstacles.bird1.onerror = () => this.imageLoaded();
+  }
+
+  if (this.images.obstacles.bird2) {
+    this.images.obstacles.bird2.onload = () => this.imageLoaded();
+    this.images.obstacles.bird2.onerror = () => this.imageLoaded();
+  }
+
+  if (this.images.obstacles.bird3) {
+    this.images.obstacles.bird3.onload = () => this.imageLoaded();
+    this.images.obstacles.bird3.onerror = () => this.imageLoaded();
+  }
     
     // 添加背景云朵图像加载事件
     if (this.images.backgroundCloud) {
@@ -812,19 +826,25 @@ class DinoGame {
       type: selectedType.type,
       passed: false // 添加标记，用于判断是否已经越过该障碍物
     };
+    
     // 如果是仙人掌类型，随机选择仙人掌样式
     if (obstacle.type === 'cactus') {
       obstacle.variant = Math.random() < 0.5 ? 1 : 2; // 随机选择仙人掌1或仙人掌2
     }
-    // 创建障碍物时，如果是鸟类，调整高度选择
+    
+    // 创建障碍物时，如果是鸟类，确定鸟的种类和高度
     if (obstacle.type === 'bird') {
-      // 有三种高度: 地面, 中间, 高处 - 调整为更大的间隔
+      // 固定3种高度 - 每种高度对应一种鸟类图像
       const heightLevels = [
-        this.height - this.groundHeight - obstacle.height, // 地面
-        this.height - this.groundHeight - obstacle.height - 110, // 中间 (增加高度)
-        this.height - this.groundHeight - obstacle.height - 220  // 高处 (增加高度)
+        { y: this.height - this.groundHeight - obstacle.height, variant: 1 }, // 地面 - 使用chicken.svg
+        { y: this.height - this.groundHeight - obstacle.height - 120, variant: 2 }, // 中间高度 - 使用chicken1.svg
+        { y: this.height - this.groundHeight - obstacle.height - 240, variant: 3 }  // 高处 - 使用chicken2.svg
       ];
-      obstacle.y = heightLevels[Math.floor(Math.random() * heightLevels.length)];
+      
+      // 随机选择一个高度级别
+      const selectedLevel = heightLevels[Math.floor(Math.random() * heightLevels.length)];
+      obstacle.y = selectedLevel.y;
+      obstacle.variant = selectedLevel.variant; // 记录鸟类的变种，用于选择正确的图像
     }
     
     // 添加到障碍物列表中
@@ -949,65 +969,101 @@ checkCollisions() {
     this.ctx.fillStyle = groundColor;
     this.ctx.fillRect(0, this.height - this.groundHeight, this.width, this.groundHeight);
     
-  // 绘制障碍物
-  for (const obstacle of this.obstacles) {
+   // 绘制障碍物
+   for (const obstacle of this.obstacles) {
     if (obstacle.type === 'cactus') {
-      // 根据变体选择仙人掌图像
+      // 添加缺失的仙人掌绘制代码
       const cactusImage = obstacle.variant === 1 ? 
         this.images.obstacles.cactus1 : 
         this.images.obstacles.cactus2;
       
       if (cactusImage && cactusImage.complete && cactusImage.naturalWidth > 0) {
+        // 正常绘制仙人掌图像
         this.ctx.drawImage(
           cactusImage,
           obstacle.x, obstacle.y,
           obstacle.width, obstacle.height
         );
       } else {
-        // 备用绘制 - 使用绿色矩形代表仙人掌
-        this.ctx.fillStyle = '#0d9e21';
-        this.ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+        // 备用绘制 - 确保在图片加载失败时也能看到明显的障碍物
+        this.ctx.fillStyle = '#2E7D32'; // 深绿色
+        this.ctx.fillRect(
+          obstacle.x, obstacle.y,
+          obstacle.width, obstacle.height * 0.7
+        );
         
-        // 添加一些细节让它看起来更像仙人掌
-        this.ctx.fillStyle = '#0b8a1c';
-        this.ctx.fillRect(obstacle.x + obstacle.width/4, obstacle.y - obstacle.height/4, obstacle.width/6, obstacle.height/4);
-        this.ctx.fillRect(obstacle.x + obstacle.width*2/3, obstacle.y - obstacle.height/6, obstacle.width/6, obstacle.height/3);
+        // 添加仙人掌的刺
+        this.ctx.fillStyle = '#81C784'; // 浅绿色
+        // 中间主干
+        this.ctx.fillRect(
+          obstacle.x + obstacle.width * 0.4, 
+          obstacle.y - obstacle.height * 0.3,
+          obstacle.width * 0.2, 
+          obstacle.height * 0.5
+        );
+        // 左分支
+        this.ctx.fillRect(
+          obstacle.x, 
+          obstacle.y + obstacle.height * 0.2,
+          obstacle.width * 0.4, 
+          obstacle.width * 0.15
+        );
+        // 右分支
+        this.ctx.fillRect(
+          obstacle.x + obstacle.width * 0.6, 
+          obstacle.y + obstacle.height * 0.3,
+          obstacle.width * 0.4, 
+          obstacle.width * 0.15
+        );
       }
-    } else if (obstacle.type === 'bird') {
-          // 使用鸟类图像
-        const birdImage = this.images.obstacles.bird;
+    }else if (obstacle.type === 'bird') {
+      // 根据变体选择正确的鸟类图像
+      let birdImage;
+      switch (obstacle.variant) {
+        case 1:
+          birdImage = this.images.obstacles.bird1;
+          break;
+        case 2:
+          birdImage = this.images.obstacles.bird2;
+          break;
+        case 3:
+          birdImage = this.images.obstacles.bird3;
+          break;
+        default:
+          birdImage = this.images.obstacles.bird1;
+      }
 
-        if (birdImage && birdImage.complete && birdImage.naturalWidth > 0) {
-              this.ctx.drawImage(
-              birdImage,
-              obstacle.x, obstacle.y,
-              obstacle.width, obstacle.height
-              );
-          } else {
-              // 备用绘制 - 使用简单形状表示鸟类
-              this.ctx.fillStyle = '#d05e3a';
-              this.ctx.beginPath();
-              this.ctx.ellipse(
-                  obstacle.x + obstacle.width/2, 
-                  obstacle.y + obstacle.height/2,
-                  obstacle.width/2, obstacle.height/2, 
-                  0, 0, Math.PI * 2
-              );
-              this.ctx.fill();
-              
-              // 添加翅膀
-              const wingOffset = this.birdFrame === 0 ? -5 : 5;
-              this.ctx.beginPath();
-              this.ctx.ellipse(
-                  obstacle.x + obstacle.width/2, 
-                  obstacle.y + obstacle.height/2 + wingOffset,
-                  obstacle.width/3, obstacle.height/4, 
-                  0, 0, Math.PI * 2
-              );
-              this.ctx.fill();
-          }
-        }
+      if (birdImage && birdImage.complete && birdImage.naturalWidth > 0) {
+        this.ctx.drawImage(
+          birdImage,
+          obstacle.x, obstacle.y,
+          obstacle.width, obstacle.height
+        );
+      } else {
+        // 备用绘制 - 使用简单形状表示鸟类
+        this.ctx.fillStyle = '#d05e3a';
+        this.ctx.beginPath();
+        this.ctx.ellipse(
+          obstacle.x + obstacle.width/2, 
+          obstacle.y + obstacle.height/2,
+          obstacle.width/2, obstacle.height/2, 
+          0, 0, Math.PI * 2
+        );
+        this.ctx.fill();
+        
+        // 添加翅膀
+        const wingOffset = this.birdFrame === 0 ? -5 : 5;
+        this.ctx.beginPath();
+        this.ctx.ellipse(
+          obstacle.x + obstacle.width/2, 
+          obstacle.y + obstacle.height/2 + wingOffset,
+          obstacle.width/3, obstacle.height/4, 
+          0, 0, Math.PI * 2
+        );
+        this.ctx.fill();
+      }
     }
+  }
     // 绘制水果
     for (const fruit of this.fruits) {
       const fruitImage = this.images.fruits.apple;
@@ -1358,12 +1414,21 @@ if (this.isProtected) {
     this.ctx.restore();
   }
 }
-    // 用于调试的碰撞盒绘制
-    if (false) { // 设置为true可以显示碰撞盒
-      const box = this.getCollisionBox(this.dino);
-      this.ctx.strokeStyle = 'blue';
-      this.ctx.strokeRect(box.x, box.y, box.width, box.height);
+  // 用于调试的碰撞盒绘制 - 临时设置为true
+  if (false) { // 原来是false，现在改为true开启碰撞盒显示
+    // 显示恐龙碰撞盒
+    const dinoBox = this.getCollisionBox(this.dino);
+    this.ctx.strokeStyle = 'blue';
+    this.ctx.lineWidth = 2;
+    this.ctx.strokeRect(dinoBox.x, dinoBox.y, dinoBox.width, dinoBox.height);
+    
+    // 显示所有障碍物碰撞盒
+    for (const obstacle of this.obstacles) {
+      const obstacleBox = this.getCollisionBox(obstacle);
+      this.ctx.strokeStyle = 'red';
+      this.ctx.strokeRect(obstacleBox.x, obstacleBox.y, obstacleBox.width, obstacleBox.height);
     }
+  }
     
     // 绘制分数
     this.ctx.font = '16px Arial';
