@@ -25,7 +25,7 @@ class DinoGame {
       height: 50,
       probability: 0.1
     };
-    this.fruitInterval = 10000; // 每20秒可能出现一个水果
+    this.fruitInterval = 20000; // 每20秒可能出现一个水果
     this.lastFruitTime = 0;
 
     // 添加无敌相关属性 - 但暂时不初始化依赖于dino的属性
