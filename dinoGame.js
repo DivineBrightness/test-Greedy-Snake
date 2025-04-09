@@ -2,9 +2,10 @@ class DinoGame {
   constructor() {
     // 角色选择相关属性
     this.characters = [
+      { id: "恐龙", name: "恐龙", path: "./image/dino/character/恐龙.svg" },
       { id: "奶龙", name: "小恐龙", path: "./image/dino/character/奶龙.svg" },
       { id: "杰尼龟", name: "杰尼龟", path: "./image/dino/character/杰尼龟.svg" },
-      { id: "恐龙", name: "恐龙", path: "./image/dino/character/恐龙.svg" },
+      { id: "波克比", name: "波克比", path: "./image/dino/character/波克比.svg" },
     ];
     // 从localStorage加载选择的角色或使用默认角色
     this.selectedCharacter = localStorage.getItem('dinoCharacter') || "杰尼龟";
@@ -24,7 +25,7 @@ class DinoGame {
       height: 50,
       probability: 0.1
     };
-    this.fruitInterval = 2000; // 每20秒可能出现一个水果
+    this.fruitInterval = 20000; // 每20秒可能出现一个水果
     this.lastFruitTime = 0;
 
     // 添加无敌相关属性 - 但暂时不初始化依赖于dino的属性
