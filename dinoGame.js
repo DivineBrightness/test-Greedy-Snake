@@ -25,14 +25,18 @@ class DinoGame {
       height: 50,
       probability: 0.1
     };
-    this.fruitInterval = 20000; // 每20秒可能出现一个水果
+    this.fruitInterval = 10000; // 每20秒可能出现一个水果
     this.lastFruitTime = 0;
 
     // 添加无敌相关属性 - 但暂时不初始化依赖于dino的属性
     this.isInvincible = false;
     this.invincibleTimer = 0;
-    this.invincibleDuration = 10000; // 无敌持续10秒
-        
+    this.invincibleDuration = 12000; // 无敌持续12秒
+      // 添加保护状态相关属性
+  this.isProtected = false;
+  this.protectionTimer = 0;
+  this.protectionDuration = 2000; // 保护持续2秒
+     
 
     this.canvas = document.getElementById('dino-canvas');
     this.ctx = this.canvas.getContext('2d');
@@ -598,39 +602,59 @@ class DinoGame {
         console.log('跳过障碍物得分！当前分数：', this.score);
       }
     }
-    // 更新无敌状态计时器
-    if (this.isInvincible) {
-      this.invincibleTimer += 16; // 假设16ms为一帧
-      
-      // 无敌状态下保持飞行状态
-      this.dino.isFlying = true;
-      
-      // 添加边界检测，防止飞出屏幕
-      const topBoundary = 20; // 距离顶部最小距离
-      const bottomBoundary = this.height - this.groundHeight - this.dino.height; // 距离地面最小距离
-      
-      if (this.dino.y < topBoundary) {
-        this.dino.y = topBoundary;
-      } else if (this.dino.y > bottomBoundary) {
-        this.dino.y = bottomBoundary;
-      }
-      
-      // 更新云朵特效
-      this.updateCloudEffect();
-      
-      // 无敌结束时恢复正常
-      if (this.invincibleTimer > this.invincibleDuration) {
-        this.isInvincible = false;
-        this.invincibleTimer = 0;
-        this.dino.isFlying = false;
-        this.cloudEffect.active = false;
-        
-        // 恢复恐龙原始大小
-        this.dino.width = this.originalDinoSize.width;
-        this.dino.height = this.originalDinoSize.height;
-        this.dino.y = this.height - this.groundHeight - this.dino.height;
-      }
-    }
+// 更新无敌状态计时器
+if (this.isInvincible) {
+  this.invincibleTimer += 16; // 假设16ms为一帧
+  
+  // 无敌状态下保持飞行状态
+  this.dino.isFlying = true;
+  
+  // 添加边界检测，防止飞出屏幕
+  const topBoundary = 20; // 距离顶部最小距离
+  const bottomBoundary = this.height - this.groundHeight - this.dino.height; // 距离地面最小距离
+  
+  if (this.dino.y < topBoundary) {
+    this.dino.y = topBoundary;
+  } else if (this.dino.y > bottomBoundary) {
+    this.dino.y = bottomBoundary;
+  }
+  
+  // 更新云朵特效
+  this.updateCloudEffect();
+  
+  // 无敌状态结束时处理
+  if (this.invincibleTimer > this.invincibleDuration) {
+    console.log('无敌状态结束，进入保护状态');
+    
+    // 标记无敌状态结束
+    this.isInvincible = false;
+    this.invincibleTimer = 0;
+    this.dino.isFlying = false;
+    this.cloudEffect.active = false;
+    
+    // 恢复恐龙原始大小
+    this.dino.width = this.originalDinoSize.width;
+    this.dino.height = this.originalDinoSize.height;
+    this.dino.y = this.height - this.groundHeight - this.dino.height;
+    
+    // 立即激活保护状态
+    this.isProtected = true;
+    this.protectionTimer = 0;
+  }
+}
+
+// 更新保护状态计时器
+if (this.isProtected) {
+  this.protectionTimer += 16; // 假设16ms为一帧
+  console.log('保护状态计时器:', this.protectionTimer, '/', this.protectionDuration);
+  
+  // 保护状态结束
+  if (this.protectionTimer > this.protectionDuration) {
+    this.isProtected = false;
+    this.protectionTimer = 0;
+    console.log('保护状态结束，恢复正常状态');
+  }
+}
     // 增加速度
     if (this.speed < this.maxSpeed) {
       this.speed += this.acceleration;
@@ -786,38 +810,55 @@ class DinoGame {
     this.obstacles.push(obstacle);
   }
   
-  checkCollisions() {
-    // 获取恐龙碰撞盒
-    const dinoBox = this.getCollisionBox(this.dino);
+
+// 修改 checkCollisions 方法，确保保护状态正确工作
+checkCollisions() {
+  // 获取恐龙碰撞盒
+  const dinoBox = this.getCollisionBox(this.dino);
+  
+  // 对每个障碍物进行碰撞检测
+  for (let i = 0; i < this.obstacles.length; i++) {
+    const obstacle = this.obstacles[i];
+    const obstacleBox = this.getCollisionBox(obstacle);
     
-    // 对每个障碍物进行碰撞检测
-    for (const obstacle of this.obstacles) {
-      const obstacleBox = this.getCollisionBox(obstacle);
-      
-      // 如果发生碰撞
-      if (this.isColliding(dinoBox, obstacleBox)) {
-        this.gameOver = true;
-        this.isPlaying = false;
+    // 如果发生碰撞
+    if (this.isColliding(dinoBox, obstacleBox)) {
+      // 无敌状态或保护状态下，撞飞障碍物
+      if (this.isInvincible || this.isProtected) {
+        // 无敌状态或保护状态下，撞飞障碍物
+        obstacle.x = -obstacle.width; // 直接移出屏幕
         
-        // 更新最高分
-        if (this.score > this.highScore) {
-          this.highScore = this.score;
-          this.highScoreElement.textContent = this.highScore;
-          localStorage.setItem('dinoHighScore', this.highScore);
+        // 仅在无敌状态下额外加分
+        if (this.isInvincible) {
+          this.score += 1; // 额外加分
+          this.scoreElement.textContent = this.score;
         }
-        
-        // 停止游戏循环
-        if (this.animationFrameId) {
-          cancelAnimationFrame(this.animationFrameId);
-          this.animationFrameId = null;
-        }
-        
-        // 绘制游戏结束画面
-        this.drawGameOver();
-        return;
+        continue;
       }
+      
+      // 非无敌或保护状态下，游戏结束
+      this.gameOver = true;
+      this.isPlaying = false;
+      
+      // 更新最高分
+      if (this.score > this.highScore) {
+        this.highScore = this.score;
+        this.highScoreElement.textContent = this.highScore;
+        localStorage.setItem('dinoHighScore', this.highScore);
+      }
+      
+      // 停止游戏循环
+      if (this.animationFrameId) {
+        cancelAnimationFrame(this.animationFrameId);
+        this.animationFrameId = null;
+      }
+      
+      // 绘制游戏结束画面
+      this.drawGameOver();
+      return;
     }
   }
+}
   
   getCollisionBox(entity) {
     // 缩小碰撞盒以使游戏更加宽松
@@ -1258,14 +1299,41 @@ class DinoGame {
         }
       }
     }
-    // 如果处于无敌状态，显示倒计时
-    if (this.isInvincible) {
-      const secondsLeft = Math.ceil((this.invincibleDuration - this.invincibleTimer) / 1000);
-      this.ctx.font = '20px Arial';
-      this.ctx.fillStyle = '#FFD700'; // 金色字体
+  // 如果处于无敌状态，显示倒计时
+  if (this.isInvincible) {
+    const secondsLeft = Math.ceil((this.invincibleDuration - this.invincibleTimer) / 1000);
+    this.ctx.font = '20px Arial';
+    this.ctx.fillStyle = '#FFD700'; // 金色字体
+    this.ctx.textAlign = 'left';
+    this.ctx.fillText(`无敌: ${secondsLeft}秒`, 20, 50);
+  }
+  
+  // 如果处于保护状态，显示提示和闪烁效果
+  if (this.isProtected) {
+    // 每150ms闪烁一次
+    if (Math.floor(this.protectionTimer / 150) % 2 === 0) {
+      // 绘制保护状态提示文字
+      const secondsLeft = Math.ceil((this.protectionDuration - this.protectionTimer) / 1000);
+      this.ctx.font = '18px Arial';
+      this.ctx.fillStyle = '#FF6347'; // 橙红色字体
       this.ctx.textAlign = 'left';
-      this.ctx.fillText(`无敌: ${secondsLeft}秒`, 20, 50);
+      this.ctx.fillText(`保护: ${secondsLeft}秒`, 20, 80);
+      
+      // 绘制保护状态光环
+      this.ctx.save();
+      this.ctx.beginPath();
+      this.ctx.arc(
+        this.dino.x + this.dino.width / 2,
+        this.dino.y + this.dino.height / 2,
+        Math.max(this.dino.width, this.dino.height) * 0.7,
+        0, Math.PI * 2
+      );
+      this.ctx.strokeStyle = 'rgba(255, 99, 71, 0.5)'; // 半透明橙红色
+      this.ctx.lineWidth = 3;
+      this.ctx.stroke();
+      this.ctx.restore();
     }
+  }
     // 用于调试的碰撞盒绘制
     if (false) { // 设置为true可以显示碰撞盒
       const box = this.getCollisionBox(this.dino);
@@ -1404,6 +1472,9 @@ class DinoGame {
     // 重置无敌相关状态
     this.isInvincible = false;
     this.invincibleTimer = 0;
+      // 重置保护相关状态
+    this.isProtected = false;
+    this.protectionTimer = 0;
     this.fruits = [];
     this.lastFruitTime = 0;
     this.dino.width = this.originalDinoSize.width;
@@ -1552,53 +1623,55 @@ class DinoGame {
     }
   }
 
-  checkFruitCollisions() {
-    const dinoBox = this.getCollisionBox(this.dino);
+// 1. 修复无敌状态显示与实际持续时间不匹配的问题 - 修改文本或修改持续时间
+checkFruitCollisions() {
+  const dinoBox = this.getCollisionBox(this.dino);
+  
+  for (let i = 0; i < this.fruits.length; i++) {
+    const fruitBox = {
+      x: this.fruits[i].x,
+      y: this.fruits[i].y,
+      width: this.fruits[i].width,
+      height: this.fruits[i].height
+    };
     
-    for (let i = 0; i < this.fruits.length; i++) {
-      const fruitBox = {
-        x: this.fruits[i].x,
-        y: this.fruits[i].y,
-        width: this.fruits[i].width,
-        height: this.fruits[i].height
-      };
+    if (this.isColliding(dinoBox, fruitBox)) {
+      // 恐龙吃到水果，获得无敌状态
+      this.isInvincible = true;
+      this.invincibleTimer = 0;
       
-      if (this.isColliding(dinoBox, fruitBox)) {
-        // 恐龙吃到水果，获得无敌状态
-        this.isInvincible = true;
-        this.invincibleTimer = 0;
-        
-        // 恐龙变大2倍
-        this.dino.width = this.originalDinoSize.width * 2;
-        this.dino.height = this.originalDinoSize.height * 2;
-        
-        // 让恐龙自动飞行起来 - 无需跳跃即可漂浮在空中
-        this.dino.y = this.height - this.groundHeight - this.dino.height - 120; // 飞行高度
-        this.dino.jumping = false; // 不是跳跃状态
-        this.dino.isFlying = true; // 标记为飞行状态
-        
-        // 添加腾云驾雾特效 - 添加更多日志
-        console.log('激活云朵特效');
-        this.cloudEffect.active = true;
-        
-        // 确保云朵图像已加载
-        if (!this.cloudEffect.image || !this.cloudEffect.image.complete) {
-          console.warn('云朵图像未加载，重新加载');
-          this.cloudEffect.image = this.loadImage('./image/dino/cloud.svg');
-        }
-        
-        // 初始化云朵效果
-        this.initCloudEffect();
-        console.log('云朵效果初始化完成', this.cloudEffect.clouds.length);
-        
-        // 移除水果
-        this.fruits.splice(i, 1);
-        i--;
-        
-        console.log('吃到苹果！进入无敌状态10秒');
+      // 恐龙变大2倍
+      this.dino.width = this.originalDinoSize.width * 2;
+      this.dino.height = this.originalDinoSize.height * 2;
+      
+      // 让恐龙自动飞行起来 - 无需跳跃即可漂浮在空中
+      this.dino.y = this.height - this.groundHeight - this.dino.height - 120; 
+      this.dino.jumping = false; 
+      this.dino.isFlying = true; 
+      
+      // 添加腾云驾雾特效
+      console.log('激活云朵特效');
+      this.cloudEffect.active = true;
+      
+      // 确保云朵图像已加载
+      if (!this.cloudEffect.image || !this.cloudEffect.image.complete) {
+        console.warn('云朵图像未加载，重新加载');
+        this.cloudEffect.image = this.loadImage('./image/dino/cloud.svg');
       }
+      
+      // 初始化云朵效果
+      this.initCloudEffect();
+      console.log('云朵效果初始化完成', this.cloudEffect.clouds.length);
+      
+      // 移除水果
+      this.fruits.splice(i, 1);
+      i--;
+      
+      // 修改这里的文本，使它与实际持续时间匹配
+      console.log('吃到苹果！进入无敌状态12秒');
     }
   }
+}
   
   checkCollisions() {
     // 获取恐龙碰撞盒
@@ -1807,73 +1880,75 @@ class DinoGame {
     // 将模态框添加到页面
     document.body.appendChild(modal);
   }
-  initCloudEffect() {
-    // 清空现有云朵
-    this.cloudEffect.clouds = [];
-    
-    // 调整为固定数量的云朵
-    const cloudCount = 5; // 固定为5朵云
-    
-    // 创建围绕恐龙脚下的云朵 - 固定大小
-    for (let i = 0; i < cloudCount; i++) {
-      // 使用固定大小和属性的云朵，只在脚下出现
-      this.cloudEffect.clouds.push({
-        // 水平均匀分布在恐龙周围
-        x: this.dino.x + this.dino.width/2 - 60 + (i - cloudCount/2) * 50,
-        // 固定在脚下位置
-        y: this.dino.y + this.dino.height-5,
-        width: 120, // 固定宽度
-        height: 60, // 固定高度
-        offsetX: 40,  // 固定水平漂浮范围
-        offsetY: 15,  // 固定垂直漂浮范围
-        angle: i * (Math.PI * 2 / cloudCount), // 均匀分布初始角度
-        angleSpeed: 0.01, // 固定角速度
-        opacity: 0.8,  // 固定透明度
-        scale: 1.0,  // 固定比例
-        zIndex: i < cloudCount/2 ? 3 : 7, // 前一半在恐龙后面，后一半在恐龙前面
-        pulsateOffset: i * (Math.PI / 2.5), // 每个云朵的脉动相位不同，创造波浪效果
-        pulsateSpeed: 0.05 // 脉动速度
-      });
-    }
-    
-    console.log(`创建了 ${this.cloudEffect.clouds.length} 朵云朵，固定在恐龙脚下`);
+
+initCloudEffect() {
+  // 清空现有云朵
+  this.cloudEffect.clouds = [];
+  
+  // 调整为固定数量的云朵
+  const cloudCount = 5; // 固定为5朵云
+  
+  // 创建围绕恐龙脚下的云朵 - 固定大小
+  for (let i = 0; i < cloudCount; i++) {
+    // 使用固定大小和属性的云朵，只在脚下出现
+    this.cloudEffect.clouds.push({
+      // 水平均匀分布在恐龙周围
+      x: this.dino.x + this.dino.width/2 - 60 + (i - cloudCount/2) * 50,
+      // 固定在脚下位置
+      y: this.dino.y + this.dino.height-5,
+      width: 120, // 固定宽度
+      height: 60, // 固定高度
+      offsetX: 40,  // 固定水平漂浮范围
+      offsetY: 15,  // 固定垂直漂浮范围
+      angle: i * (Math.PI * 2 / cloudCount), // 均匀分布初始角度
+      angleSpeed: 0.01, // 固定角速度
+      opacity: 0.8,  // 固定透明度
+      scale: 1.0,  // 固定比例
+      zIndex: i < cloudCount/2 ? 3 : 7, // 前一半在恐龙后面，后一半在恐龙前面
+      pulsateOffset: i * (Math.PI / 2.5), // 每个云朵的脉动相位不同，创造波浪效果
+      pulsateSpeed: 0.05 // 脉动速度
+    });
   }
   
-  updateCloudEffect() {
-    if (!this.cloudEffect.active) return;
+  console.log(`创建了 ${this.cloudEffect.clouds.length} 朵云朵，固定在恐龙脚下`);
+}
+
+// 3. 修复updateCloudEffect方法，确保正确更新云朵
+updateCloudEffect() {
+  if (!this.cloudEffect.active) return;
+  
+  // 更新每朵云的位置和状态
+  for (let i = 0; i < this.cloudEffect.clouds.length; i++) {
+    const cloud = this.cloudEffect.clouds[i];
     
-    // 更新每朵云的位置和状态
-    for (let i = 0; i < this.cloudEffect.clouds.length; i++) {
-      const cloud = this.cloudEffect.clouds[i];
-      
-      // 更新云朵角度
-      cloud.angle += cloud.angleSpeed;
-      
-      // 基础位置始终跟随恐龙
-      const baseX = this.dino.x + this.dino.width/2 - cloud.width/2;
-      const baseY = this.dino.y + this.dino.height-5; // 固定在脚下位置
-      
-      // 根据角度添加小幅度波动
-      cloud.x = baseX + Math.sin(cloud.angle) * cloud.offsetX;
-      cloud.y = baseY + Math.cos(cloud.angle) * cloud.offsetY;
-      
-      // 添加小幅度偏移，营造更自然的感觉
-      cloud.x += Math.sin(this.frameCount * 0.01 + i * 0.5) * 3;
-      
-      // 更新脉动相位，制造金色辉光的脉动效果
+    // 更新云朵角度
+    cloud.angle += cloud.angleSpeed;
+    
+    // 基础位置始终跟随恐龙
+    const baseX = this.dino.x + this.dino.width/2 - cloud.width/2;
+    const baseY = this.dino.y + this.dino.height-5; // 固定在脚下位置
+    
+    // 根据角度添加小幅度波动
+    cloud.x = baseX + Math.sin(cloud.angle) * cloud.offsetX;
+    cloud.y = baseY + Math.cos(cloud.angle) * cloud.offsetY;
+    
+    // 添加小幅度偏移，营造更自然的感觉
+    cloud.x += Math.sin(this.frameCount * 0.01 + i * 0.5) * 3;
+    
+    // 更新脉动效果
+    if (cloud.pulsateOffset !== undefined && cloud.pulsateSpeed !== undefined) {
       cloud.pulsateOffset += cloud.pulsateSpeed;
-      // 让opacity有轻微变化，范围在0.7到0.9之间
       cloud.opacity = 0.7 + 0.2 * Math.sin(cloud.pulsateOffset);
-      // 让scale有轻微变化，范围在0.95到1.05之间
       cloud.scale = 1.0 + 0.05 * Math.sin(cloud.pulsateOffset * 1.3);
     }
-    
-    // 如果无敌状态结束，停止云朵效果
-    if (!this.isInvincible) {
-      this.cloudEffect.active = false;
-      this.cloudEffect.clouds = [];
-    }
   }
+  
+  // 如果无敌状态结束，停止云朵效果
+  if (!this.isInvincible) {
+    this.cloudEffect.active = false;
+    this.cloudEffect.clouds = [];
+  }
+}
 }
 
 // 使游戏全局可访问
