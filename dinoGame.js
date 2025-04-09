@@ -2,11 +2,12 @@ class DinoGame {
   constructor() {
     // 角色选择相关属性
     this.characters = [
-      { id: "result_l", name: "小恐龙", path: "./image/dino/character/result_l.svg" },
-      { id: "squirtle", name: "杰尼龟", path: "./image/dino/character/squirtle.svg" },
+      { id: "奶龙", name: "小恐龙", path: "./image/dino/character/奶龙.svg" },
+      { id: "杰尼龟", name: "杰尼龟", path: "./image/dino/character/杰尼龟.svg" },
+      { id: "恐龙", name: "恐龙", path: "./image/dino/character/恐龙.svg" },
     ];
     // 从localStorage加载选择的角色或使用默认角色
-    this.selectedCharacter = localStorage.getItem('dinoCharacter') || "squirtle";
+    this.selectedCharacter = localStorage.getItem('dinoCharacter') || "杰尼龟";
 
     // 添加水果相关属性
     this.fruits = [];
