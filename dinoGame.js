@@ -279,8 +279,8 @@ class DinoGame {
       jumpBtn.addEventListener('touchstart', (e) => {
         e.preventDefault();
         if (this.isInvincible) {
-          // 无敌状态下向上移动
-          this.dino.y -= 40;
+          // 无敌状态下向上移动 (添加边界检测)
+          this.dino.y = Math.max(20, this.dino.y - 40);
         } else {
           this.jump();
         }
@@ -292,7 +292,7 @@ class DinoGame {
         e.preventDefault();
         if (this.isInvincible) {
           upInterval = setInterval(() => {
-            this.dino.y -= 20;
+            this.dino.y = Math.max(20, this.dino.y - 20);
           }, 30);
         }
       });
@@ -310,8 +310,9 @@ class DinoGame {
       crouchBtn.addEventListener('touchstart', (e) => {
         e.preventDefault();
         if (this.isInvincible) {
-          // 无敌状态下向下移动
-          this.dino.y += 40;
+          // 无敌状态下向下移动 (添加边界检测)
+          const bottomBoundary = this.height - this.groundHeight - this.dino.height;
+          this.dino.y = Math.min(bottomBoundary, this.dino.y + 40);
         } else {
           this.dino.crouching = true;
         }
@@ -323,7 +324,8 @@ class DinoGame {
         e.preventDefault();
         if (this.isInvincible) {
           downInterval = setInterval(() => {
-            this.dino.y += 20;
+            const bottomBoundary = this.height - this.groundHeight - this.dino.height;
+            this.dino.y = Math.min(bottomBoundary, this.dino.y + 20);
           }, 30);
         }
       });
@@ -406,8 +408,8 @@ class DinoGame {
     if (e.code === 'Space' || e.code === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
       e.preventDefault();
       if (this.isInvincible) {
-        // 无敌状态下，上键向上移动
-        this.dino.y -= 40;
+        // 无敌状态下，上键向上移动 (增加边界检测)
+        this.dino.y = Math.max(20, this.dino.y - 40);
       } else {
         // 普通状态下，跳跃
         this.jump();
@@ -415,8 +417,9 @@ class DinoGame {
     } else if (e.code === 'ArrowDown' || e.key === 's' || e.key === 'S') {
       e.preventDefault();
       if (this.isInvincible) {
-        // 无敌状态下，下键向下移动
-        this.dino.y += 40;
+        // 无敌状态下，下键向下移动 (增加边界检测)
+        const bottomBoundary = this.height - this.groundHeight - this.dino.height;
+        this.dino.y = Math.min(bottomBoundary, this.dino.y + 40);
       } else {
         // 普通状态下，蹲下
         this.dino.crouching = true;
@@ -571,12 +574,22 @@ class DinoGame {
         console.log('跳过障碍物得分！当前分数：', this.score);
       }
     }
-    // 【添加此段代码】更新无敌状态计时器
+// 【添加此段代码】更新无敌状态计时器
     if (this.isInvincible) {
       this.invincibleTimer += 16; // 假设16ms为一帧
       
       // 无敌状态下保持飞行状态
       this.dino.isFlying = true;
+      
+      // 添加边界检测，防止飞出屏幕 - 新增代码
+      const topBoundary = 20; // 距离顶部最小距离
+      const bottomBoundary = this.height - this.groundHeight - this.dino.height; // 距离地面最小距离
+      
+      if (this.dino.y < topBoundary) {
+        this.dino.y = topBoundary;
+      } else if (this.dino.y > bottomBoundary) {
+        this.dino.y = bottomBoundary;
+      }
       
       // 无敌结束时恢复正常
       if (this.invincibleTimer > this.invincibleDuration) {
