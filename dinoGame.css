@@ -24,7 +24,6 @@
   border-radius: 8px; /* 添加圆角 */
 }
 
-/* 游戏信息区域 - 精简显示 */
 .dino-game-info {
   display: flex;
   justify-content: space-between;
@@ -33,6 +32,7 @@
   padding: 5px;
   background-color: rgba(255, 255, 255, 0.7);
   border-radius: 5px;
+  margin-top: 40px; /* 添加顶部边距，向下移动 */
 }
 .dino-score-container {
   display: flex;
@@ -414,4 +414,28 @@ body:has(#dino-game:not([style*="display: none"])) .fruit-basket {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+/* 添加移动设备高度优化 */
+@media (max-width: 768px) {
+  #dino-canvas {
+    height: 70vh; /* 使用视口高度的70%，确保在手机上有更好的可视区域 */
+    max-height: 600px; /* 设置最大高度限制 */
+    object-fit: contain; /* 保持比例的同时填充可用空间 */
+  }
+  
+  #dino-game {
+    padding-bottom: 80px; /* 调整下部填充，为控制按钮留出足够空间 */
+  }
+}
+
+/* 针对特小屏幕设备进一步优化 */
+@media (max-width: 480px) {
+  #dino-canvas {
+    height: 60vh; /* 更小的屏幕使用稍小比例 */
+    max-height: 450px;
+  }
+  
+  .dino-game-info {
+    margin-top: 20px; /* 减少顶部边距 */
+  }
 }

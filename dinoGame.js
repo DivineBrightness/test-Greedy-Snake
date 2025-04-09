@@ -2,12 +2,21 @@ class DinoGame {
   constructor() {
     // 角色选择相关属性
     this.characters = [
-      { id: "result_l", name: "小恐龙", path: "./image/dino/character/result_l.svg" },
-      { id: "squirtle", name: "杰尼龟", path: "./image/dino/character/squirtle.svg" },
+      { id: "恐龙", name: "恐龙", path: "./image/dino/character/恐龙.svg" },
+      { id: "奶龙", name: "小恐龙", path: "./image/dino/character/奶龙.svg" },
+      { id: "杰尼龟", name: "杰尼龟", path: "./image/dino/character/杰尼龟.svg" },
+      { id: "波克比", name: "波克比", path: "./image/dino/character/波克比.svg" },
     ];
     // 从localStorage加载选择的角色或使用默认角色
-    this.selectedCharacter = localStorage.getItem('dinoCharacter') || "squirtle";
+    this.selectedCharacter = localStorage.getItem('dinoCharacter') || "杰尼龟";
 
+    // 添加飞天特效相关属性
+    this.cloudEffect = {
+      active: false,
+      clouds: [],
+      maxClouds: 2,  // 最大云朵数量
+      image: null    // 云朵图像
+    };
     // 添加水果相关属性
     this.fruits = [];
     this.fruitType = {
@@ -22,11 +31,12 @@ class DinoGame {
     // 添加无敌相关属性 - 但暂时不初始化依赖于dino的属性
     this.isInvincible = false;
     this.invincibleTimer = 0;
-    this.invincibleDuration = 10000; // 无敌持续10秒
-        // 添加拖影效果属性
-        this.dinoPositions = [];  // 存储恐龙最近几个位置
-        this.maxTrailLength = 5;  // 拖影长度
-        
+    this.invincibleDuration = 12000; // 无敌持续12秒
+      // 添加保护状态相关属性
+  this.isProtected = false;
+  this.protectionTimer = 0;
+  this.protectionDuration = 2000; // 保护持续2秒
+     
 
     this.canvas = document.getElementById('dino-canvas');
     this.ctx = this.canvas.getContext('2d');
@@ -69,8 +79,8 @@ class DinoGame {
     // 放大障碍物尺寸
     this.obstacles = [];
     this.obstacleTypes = [
-      { type: 'cactus', width: 90, height: 180, probability: 0.7 }, // 放大仙人掌(原来是60x120)
-      { type: 'bird', width: 120, height: 80, probability: 0.3, yOffset: -40 } // 放大鸟类(原来是90x60)
+      { type: 'cactus', width: 90, height: 180, probability: 0.6 }, // 降低仙人掌概率
+      { type: 'bird', width: 120, height: 80, probability: 0.4 } // 增加鸟类出现概率，移除yOffset
     ];
     this.minObstacleDistance = 600; // 增加障碍物之间的最小距离 (原来是400)
     this.lastObstacleTime = 0; // 上次生成障碍物的时间
@@ -110,26 +120,41 @@ class DinoGame {
         run1: this.loadImage(characterPath),
         run2: this.loadImage(characterPath),
         jump: this.loadImage(characterPath),
-        // run2: characterPath === "./image/dino/character/111.png"
-        //   ? this.loadImage("./image/dino/character/222.png")
-        //   : this.loadImage(characterPath),
-        // jump: characterPath === "./image/dino/character/111.png"
-        // ? this.loadImage("./image/dino/character/3333.png")
-        // : this.loadImage(characterPath),
       },
       obstacles: {
         cactus1: this.loadImage('./image/dino/cactus.svg'),
-        bird: this.loadImage('./image/dino/chicken.svg'), 
+        cactus2: this.loadImage('./image/dino/cactus1.svg'),
+        // 修改为使用3种不同的鸟类图像
+        bird1: this.loadImage('./image/dino/chicken.svg'),
+        bird2: this.loadImage('./image/dino/chicken1.svg'),
+        bird3: this.loadImage('./image/dino/chicken2.svg')
       },
       // 添加水果图像
       fruits: {
         apple: this.loadImage('./image/fruit/apple1.svg')
-      }
+      },
+      // 添加背景云朵图像
+      backgroundCloud: this.loadImage('./image/dino/cloud2.svg')
     };
     
     // 简化图片加载计数
     this.imagesLoaded = 0;
-    this.totalImages = 4;
+    this.totalImages = 8; // 增加1个图片计数，加入背景云朵
+    
+    // 添加云朵图像加载，并加入控制台日志
+    this.cloudEffect.image = this.loadImage('./image/dino/cloud.svg');
+    if(this.cloudEffect.image) {
+      this.cloudEffect.image.onload = () => {
+        console.log('云朵图像加载成功');
+        // 如果已经处于无敌状态，确保云朵效果正确初始化
+        if (this.isInvincible && this.cloudEffect.active && this.cloudEffect.clouds.length === 0) {
+          this.initCloudEffect();
+        }
+      };
+      this.cloudEffect.image.onerror = () => console.error('云朵图像加载失败');
+    } else {
+      console.error('无法创建云朵图像对象');
+    }
     
     // 添加图像加载完成事件
     if (this.images.dino.run1) {
@@ -146,11 +171,33 @@ class DinoGame {
       this.images.obstacles.cactus1.onload = () => this.imageLoaded();
       this.images.obstacles.cactus1.onerror = () => this.imageLoaded();
     }
-        // 添加鸟类图片的加载事件
-        if (this.images.obstacles.bird) {
-          this.images.obstacles.bird.onload = () => this.imageLoaded();
-          this.images.obstacles.bird.onerror = () => this.imageLoaded();
-        }
+    // 添加第二个仙人掌图像加载事件
+    if (this.images.obstacles.cactus2) {
+      this.images.obstacles.cactus2.onload = () => this.imageLoaded();
+      this.images.obstacles.cactus2.onerror = () => this.imageLoaded();
+    }
+  // 添加3种鸟类图像的加载事件
+  if (this.images.obstacles.bird1) {
+    this.images.obstacles.bird1.onload = () => this.imageLoaded();
+    this.images.obstacles.bird1.onerror = () => this.imageLoaded();
+  }
+
+  if (this.images.obstacles.bird2) {
+    this.images.obstacles.bird2.onload = () => this.imageLoaded();
+    this.images.obstacles.bird2.onerror = () => this.imageLoaded();
+  }
+
+  if (this.images.obstacles.bird3) {
+    this.images.obstacles.bird3.onload = () => this.imageLoaded();
+    this.images.obstacles.bird3.onerror = () => this.imageLoaded();
+  }
+    
+    // 添加背景云朵图像加载事件
+    if (this.images.backgroundCloud) {
+      this.images.backgroundCloud.onload = () => this.imageLoaded();
+      this.images.backgroundCloud.onerror = () => this.imageLoaded();
+    }
+    
     // 设置超时，即使图片未全部加载也启动游戏
     setTimeout(() => {
       if (!this.gameOver && !this.isPlaying) {
@@ -279,8 +326,8 @@ class DinoGame {
       jumpBtn.addEventListener('touchstart', (e) => {
         e.preventDefault();
         if (this.isInvincible) {
-          // 无敌状态下向上移动
-          this.dino.y -= 40;
+          // 无敌状态下向上移动 (添加边界检测)
+          this.dino.y = Math.max(20, this.dino.y - 40);
         } else {
           this.jump();
         }
@@ -292,7 +339,7 @@ class DinoGame {
         e.preventDefault();
         if (this.isInvincible) {
           upInterval = setInterval(() => {
-            this.dino.y -= 20;
+            this.dino.y = Math.max(20, this.dino.y - 20);
           }, 30);
         }
       });
@@ -310,8 +357,9 @@ class DinoGame {
       crouchBtn.addEventListener('touchstart', (e) => {
         e.preventDefault();
         if (this.isInvincible) {
-          // 无敌状态下向下移动
-          this.dino.y += 40;
+          // 无敌状态下向下移动 (添加边界检测)
+          const bottomBoundary = this.height - this.groundHeight - this.dino.height;
+          this.dino.y = Math.min(bottomBoundary, this.dino.y + 40);
         } else {
           this.dino.crouching = true;
         }
@@ -323,7 +371,8 @@ class DinoGame {
         e.preventDefault();
         if (this.isInvincible) {
           downInterval = setInterval(() => {
-            this.dino.y += 20;
+            const bottomBoundary = this.height - this.groundHeight - this.dino.height;
+            this.dino.y = Math.min(bottomBoundary, this.dino.y + 20);
           }, 30);
         }
       });
@@ -406,8 +455,8 @@ class DinoGame {
     if (e.code === 'Space' || e.code === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
       e.preventDefault();
       if (this.isInvincible) {
-        // 无敌状态下，上键向上移动
-        this.dino.y -= 40;
+        // 无敌状态下，上键向上移动 (增加边界检测)
+        this.dino.y = Math.max(20, this.dino.y - 40);
       } else {
         // 普通状态下，跳跃
         this.jump();
@@ -415,8 +464,9 @@ class DinoGame {
     } else if (e.code === 'ArrowDown' || e.key === 's' || e.key === 'S') {
       e.preventDefault();
       if (this.isInvincible) {
-        // 无敌状态下，下键向下移动
-        this.dino.y += 40;
+        // 无敌状态下，下键向下移动 (增加边界检测)
+        const bottomBoundary = this.height - this.groundHeight - this.dino.height;
+        this.dino.y = Math.min(bottomBoundary, this.dino.y + 40);
       } else {
         // 普通状态下，蹲下
         this.dino.crouching = true;
@@ -557,7 +607,7 @@ class DinoGame {
   update() {
     // 增加分数和距离
     this.distance += this.speed;
-    // this.score = Math.floor(this.distance / 10);
+    
     // 检查是否有障碍物被跳过
     for (const obstacle of this.obstacles) {
       // 判断恐龙是否已经越过障碍物的右边界(障碍物完全在恐龙左侧)
@@ -571,25 +621,68 @@ class DinoGame {
         console.log('跳过障碍物得分！当前分数：', this.score);
       }
     }
-    // 【添加此段代码】更新无敌状态计时器
+    
+    // 关键部分：保护状态处理必须先于障碍碰撞检测
+    
+    // 1. 更新无敌状态计时器
     if (this.isInvincible) {
       this.invincibleTimer += 16; // 假设16ms为一帧
       
       // 无敌状态下保持飞行状态
       this.dino.isFlying = true;
       
-      // 无敌结束时恢复正常
-      if (this.invincibleTimer > this.invincibleDuration) {
+      // 添加边界检测，防止飞出屏幕
+      const topBoundary = 20; // 距离顶部最小距离
+      const bottomBoundary = this.height - this.groundHeight - this.dino.height; // 距离地面最小距离
+      
+      if (this.dino.y < topBoundary) {
+        this.dino.y = topBoundary;
+      } else if (this.dino.y > bottomBoundary) {
+        this.dino.y = bottomBoundary;
+      }
+      
+      // 更新云朵特效
+      this.updateCloudEffect();
+      
+      // 无敌状态结束时处理
+      if (this.invincibleTimer >= this.invincibleDuration) {
+        console.log('无敌状态结束，进入保护状态');
+        
+        // 标记无敌状态结束
         this.isInvincible = false;
         this.invincibleTimer = 0;
         this.dino.isFlying = false;
+        this.cloudEffect.active = false;
+        this.cloudEffect.clouds = []; // 确保清空云朵数组
         
         // 恢复恐龙原始大小
         this.dino.width = this.originalDinoSize.width;
         this.dino.height = this.originalDinoSize.height;
+        
+        // 安全着陆 - 防止接触地面时发生碰撞
         this.dino.y = this.height - this.groundHeight - this.dino.height;
+        
+        // 立即激活保护状态 - 确保设置为true
+        this.isProtected = true;
+        this.protectionTimer = 0;
       }
     }
+    
+    // 2. 更新保护状态计时器
+    if (this.isProtected) {
+      this.protectionTimer += 16; // 假设16ms为一帧
+      console.log('保护状态计时器:', this.protectionTimer, '/', this.protectionDuration);
+      
+      // 保护状态结束
+      if (this.protectionTimer >= this.protectionDuration) {
+        this.isProtected = false;
+        this.protectionTimer = 0;
+        console.log('保护状态结束，恢复正常状态');
+      }
+    }
+    
+    // 3. 更新水果和障碍物位置
+    
     // 增加速度
     if (this.speed < this.maxSpeed) {
       this.speed += this.acceleration;
@@ -640,13 +733,13 @@ class DinoGame {
       }
     }
     
-    // 随机生成新的云朵 - 进一步放大
+    // 随机生成新的云朵
     if (Math.random() < 0.005) {
       this.clouds.push({
         x: this.width,
         y: Math.random() * (this.height / 2 - 120),
-        width: 180, // 原来是120
-        height: 90  // 原来是60
+        width: 180,
+        height: 120
       });
     }
     
@@ -661,7 +754,6 @@ class DinoGame {
       }
     }
     
-    
     // 生成新的障碍物
     const now = Date.now();
     if (now - this.lastObstacleTime > this.obstacleInterval) {
@@ -675,38 +767,18 @@ class DinoGame {
         this.obstacleInterval = Math.max(800, 1500 - this.score / 10);
       }
     }
-
-
-    // 修改保存恐龙位置的方式 - 创建向后的拖影效果
-    if (this.frameCount % 2 === 0) { // 每2帧记录一次，增加拖影密度
-      // 清除之前的位置数组
-      if (this.isInvincible) {
-        // 计算向后的拖影位置，而不是记录当前位置
-        for (let i = 0; i < this.maxTrailLength; i++) {
-          const offset = (i + 1) * 15; // 每个拖影间隔15像素
-          this.dinoPositions[i] = {
-            x: this.dino.x - offset, // 向后偏移
-            y: this.dino.y + Math.sin(Date.now()/200 + i*0.5) * 5, // 添加微小的上下波动
-            width: this.dino.width * (1 - i/this.maxTrailLength * 0.3), // 逐渐缩小
-            height: this.dino.height * (1 - i/this.maxTrailLength * 0.3), // 逐渐缩小
-            isFlying: this.dino.isFlying || this.isInvincible
-          };
-        }
-      } else {
-        // 非无敌状态下不显示拖影
-        this.dinoPositions = [];
+    
+    // 更新水果位置
+    for (let i = 0; i < this.fruits.length; i++) {
+      this.fruits[i].x -= this.speed;
+      
+      // 如果水果移出屏幕，将其删除
+      if (this.fruits[i].x + this.fruits[i].width < 0) {
+        this.fruits.splice(i, 1);
+        i--;
       }
     }
-        // 更新水果位置
-        for (let i = 0; i < this.fruits.length; i++) {
-          this.fruits[i].x -= this.speed;
-          
-          // 如果水果移出屏幕，将其删除
-          if (this.fruits[i].x + this.fruits[i].width < 0) {
-            this.fruits.splice(i, 1);
-            i--;
-          }
-        }
+    
     // 生成新的水果
     if (now - this.lastFruitTime > this.fruitInterval) {
       if (Math.random() < this.fruitType.probability) {
@@ -714,9 +786,13 @@ class DinoGame {
         this.lastFruitTime = now;
       }
     }
-    // 检测恐龙与水果的碰撞
+    
+    // 4. 关键检测部分：先检查水果碰撞，再检查障碍物碰撞
+    
+    // 检测恐龙与水果的碰撞 - 可能触发无敌状态
     this.checkFruitCollisions();
-    // 检测碰撞
+    
+    // 检测障碍物碰撞 - 必须在所有状态更新之后
     this.checkCollisions();
     
     // 更新日/夜状态
@@ -751,53 +827,79 @@ class DinoGame {
       passed: false // 添加标记，用于判断是否已经越过该障碍物
     };
     
-    // 创建障碍物时，如果是鸟类，调整高度选择
+    // 如果是仙人掌类型，随机选择仙人掌样式
+    if (obstacle.type === 'cactus') {
+      obstacle.variant = Math.random() < 0.5 ? 1 : 2; // 随机选择仙人掌1或仙人掌2
+    }
+    
+    // 创建障碍物时，如果是鸟类，确定鸟的种类和高度
     if (obstacle.type === 'bird') {
-      // 有三种高度: 地面, 中间, 高处 - 调整为更大的间隔
+      // 固定3种高度 - 每种高度对应一种鸟类图像
       const heightLevels = [
-        this.height - this.groundHeight - obstacle.height, // 地面
-        this.height - this.groundHeight - obstacle.height - 110, // 中间 (增加高度)
-        this.height - this.groundHeight - obstacle.height - 220  // 高处 (增加高度)
+        { y: this.height - this.groundHeight - obstacle.height, variant: 1 }, // 地面 - 使用chicken.svg
+        { y: this.height - this.groundHeight - obstacle.height - 120, variant: 2 }, // 中间高度 - 使用chicken1.svg
+        { y: this.height - this.groundHeight - obstacle.height - 240, variant: 3 }  // 高处 - 使用chicken2.svg
       ];
-      obstacle.y = heightLevels[Math.floor(Math.random() * heightLevels.length)];
+      
+      // 随机选择一个高度级别
+      const selectedLevel = heightLevels[Math.floor(Math.random() * heightLevels.length)];
+      obstacle.y = selectedLevel.y;
+      obstacle.variant = selectedLevel.variant; // 记录鸟类的变种，用于选择正确的图像
     }
     
     // 添加到障碍物列表中
     this.obstacles.push(obstacle);
   }
   
-  checkCollisions() {
-    // 获取恐龙碰撞盒
-    const dinoBox = this.getCollisionBox(this.dino);
+
+// 修改 checkCollisions 方法，确保保护状态正确工作
+checkCollisions() {
+  // 获取恐龙碰撞盒
+  const dinoBox = this.getCollisionBox(this.dino);
+  
+  // 对每个障碍物进行碰撞检测
+  for (let i = 0; i < this.obstacles.length; i++) {
+    const obstacle = this.obstacles[i];
+    const obstacleBox = this.getCollisionBox(obstacle);
     
-    // 对每个障碍物进行碰撞检测
-    for (const obstacle of this.obstacles) {
-      const obstacleBox = this.getCollisionBox(obstacle);
-      
-      // 如果发生碰撞
-      if (this.isColliding(dinoBox, obstacleBox)) {
-        this.gameOver = true;
-        this.isPlaying = false;
+    // 如果发生碰撞
+    if (this.isColliding(dinoBox, obstacleBox)) {
+      // 无敌状态或保护状态下，撞飞障碍物
+      if (this.isInvincible || this.isProtected) {
+        // 无敌状态或保护状态下，撞飞障碍物
+        obstacle.x = -obstacle.width; // 直接移出屏幕
         
-        // 更新最高分
-        if (this.score > this.highScore) {
-          this.highScore = this.score;
-          this.highScoreElement.textContent = this.highScore;
-          localStorage.setItem('dinoHighScore', this.highScore);
+        // 仅在无敌状态下额外加分
+        if (this.isInvincible) {
+          this.score += 1; // 额外加分
+          this.scoreElement.textContent = this.score;
         }
-        
-        // 停止游戏循环
-        if (this.animationFrameId) {
-          cancelAnimationFrame(this.animationFrameId);
-          this.animationFrameId = null;
-        }
-        
-        // 绘制游戏结束画面
-        this.drawGameOver();
-        return;
+        continue;
       }
+      
+      // 非无敌或保护状态下，游戏结束
+      this.gameOver = true;
+      this.isPlaying = false;
+      
+      // 更新最高分
+      if (this.score > this.highScore) {
+        this.highScore = this.score;
+        this.highScoreElement.textContent = this.highScore;
+        localStorage.setItem('dinoHighScore', this.highScore);
+      }
+      
+      // 停止游戏循环
+      if (this.animationFrameId) {
+        cancelAnimationFrame(this.animationFrameId);
+        this.animationFrameId = null;
+      }
+      
+      // 绘制游戏结束画面
+      this.drawGameOver();
+      return;
     }
   }
+}
   
   getCollisionBox(entity) {
     // 缩小碰撞盒以使游戏更加宽松
@@ -841,77 +943,127 @@ class DinoGame {
     this.ctx.fillStyle = backgroundColor;
     this.ctx.fillRect(0, 0, this.width, this.height);
     
-    // 绘制云朵 - 放大云朵
+    // 绘制云朵 - 使用新的cloud2.svg图像
     for (const cloud of this.clouds) {
-      // 放大云朵尺寸
-      this.ctx.fillStyle = '#ffffff';
-      this.ctx.beginPath();
-      this.ctx.arc(cloud.x + cloud.width/3, cloud.y + cloud.height/2, cloud.height/1.5, 0, Math.PI * 2);
-      this.ctx.arc(cloud.x + cloud.width*2/3, cloud.y + cloud.height/2, cloud.height/1.5, 0, Math.PI * 2);
-      this.ctx.fill();
+      if (this.images.backgroundCloud && this.images.backgroundCloud.complete && this.images.backgroundCloud.naturalWidth > 0) {
+        // 使用加载的云朵图像，保持原始尺寸
+        this.ctx.drawImage(
+          this.images.backgroundCloud,
+          cloud.x, 
+          cloud.y,
+          cloud.width, // 使用对象中的原始尺寸
+          cloud.height 
+        );
+      } else {
+        // 备用绘制 - 使用白色圆形
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.beginPath();
+        this.ctx.arc(cloud.x + cloud.width/3, cloud.y + cloud.height/2, cloud.height/1.5, 0, Math.PI * 2);
+        this.ctx.arc(cloud.x + cloud.width*2/3, cloud.y + cloud.height/2, cloud.height/1.5, 0, Math.PI * 2);
+        this.ctx.fill();
+      }
     }
+  
   
     // 绘制地面
     this.ctx.fillStyle = groundColor;
     this.ctx.fillRect(0, this.height - this.groundHeight, this.width, this.groundHeight);
     
-    // 绘制障碍物
-    for (const obstacle of this.obstacles) {
-        if (obstacle.type === 'cactus') {
-        // 尝试使用仙人掌图像
-        const cactusImage = this.images.obstacles.cactus1;
+   // 绘制障碍物
+   for (const obstacle of this.obstacles) {
+    if (obstacle.type === 'cactus') {
+      // 添加缺失的仙人掌绘制代码
+      const cactusImage = obstacle.variant === 1 ? 
+        this.images.obstacles.cactus1 : 
+        this.images.obstacles.cactus2;
+      
+      if (cactusImage && cactusImage.complete && cactusImage.naturalWidth > 0) {
+        // 正常绘制仙人掌图像
+        this.ctx.drawImage(
+          cactusImage,
+          obstacle.x, obstacle.y,
+          obstacle.width, obstacle.height
+        );
+      } else {
+        // 备用绘制 - 确保在图片加载失败时也能看到明显的障碍物
+        this.ctx.fillStyle = '#2E7D32'; // 深绿色
+        this.ctx.fillRect(
+          obstacle.x, obstacle.y,
+          obstacle.width, obstacle.height * 0.7
+        );
         
-        if (cactusImage && cactusImage.complete && cactusImage.naturalWidth > 0) {
-            this.ctx.drawImage(
-            cactusImage,
-            obstacle.x, obstacle.y,
-            obstacle.width, obstacle.height
-            );
-        } else {
-            // 备用绘制 - 使用绿色矩形代表仙人掌
-            this.ctx.fillStyle = '#0d9e21';
-            this.ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-            
-            // 添加一些细节让它看起来更像仙人掌
-            this.ctx.fillStyle = '#0b8a1c';
-            this.ctx.fillRect(obstacle.x + obstacle.width/4, obstacle.y - obstacle.height/4, obstacle.width/6, obstacle.height/4);
-            this.ctx.fillRect(obstacle.x + obstacle.width*2/3, obstacle.y - obstacle.height/6, obstacle.width/6, obstacle.height/3);
-        }
-        } else if (obstacle.type === 'bird') {
-          // 使用鸟类图像
-        const birdImage = this.images.obstacles.bird;
+        // 添加仙人掌的刺
+        this.ctx.fillStyle = '#81C784'; // 浅绿色
+        // 中间主干
+        this.ctx.fillRect(
+          obstacle.x + obstacle.width * 0.4, 
+          obstacle.y - obstacle.height * 0.3,
+          obstacle.width * 0.2, 
+          obstacle.height * 0.5
+        );
+        // 左分支
+        this.ctx.fillRect(
+          obstacle.x, 
+          obstacle.y + obstacle.height * 0.2,
+          obstacle.width * 0.4, 
+          obstacle.width * 0.15
+        );
+        // 右分支
+        this.ctx.fillRect(
+          obstacle.x + obstacle.width * 0.6, 
+          obstacle.y + obstacle.height * 0.3,
+          obstacle.width * 0.4, 
+          obstacle.width * 0.15
+        );
+      }
+    }else if (obstacle.type === 'bird') {
+      // 根据变体选择正确的鸟类图像
+      let birdImage;
+      switch (obstacle.variant) {
+        case 1:
+          birdImage = this.images.obstacles.bird1;
+          break;
+        case 2:
+          birdImage = this.images.obstacles.bird2;
+          break;
+        case 3:
+          birdImage = this.images.obstacles.bird3;
+          break;
+        default:
+          birdImage = this.images.obstacles.bird1;
+      }
 
-        if (birdImage && birdImage.complete && birdImage.naturalWidth > 0) {
-              this.ctx.drawImage(
-              birdImage,
-              obstacle.x, obstacle.y,
-              obstacle.width, obstacle.height
-              );
-          } else {
-              // 备用绘制 - 使用简单形状表示鸟类
-              this.ctx.fillStyle = '#d05e3a';
-              this.ctx.beginPath();
-              this.ctx.ellipse(
-                  obstacle.x + obstacle.width/2, 
-                  obstacle.y + obstacle.height/2,
-                  obstacle.width/2, obstacle.height/2, 
-                  0, 0, Math.PI * 2
-              );
-              this.ctx.fill();
-              
-              // 添加翅膀
-              const wingOffset = this.birdFrame === 0 ? -5 : 5;
-              this.ctx.beginPath();
-              this.ctx.ellipse(
-                  obstacle.x + obstacle.width/2, 
-                  obstacle.y + obstacle.height/2 + wingOffset,
-                  obstacle.width/3, obstacle.height/4, 
-                  0, 0, Math.PI * 2
-              );
-              this.ctx.fill();
-          }
-        }
+      if (birdImage && birdImage.complete && birdImage.naturalWidth > 0) {
+        this.ctx.drawImage(
+          birdImage,
+          obstacle.x, obstacle.y,
+          obstacle.width, obstacle.height
+        );
+      } else {
+        // 备用绘制 - 使用简单形状表示鸟类
+        this.ctx.fillStyle = '#d05e3a';
+        this.ctx.beginPath();
+        this.ctx.ellipse(
+          obstacle.x + obstacle.width/2, 
+          obstacle.y + obstacle.height/2,
+          obstacle.width/2, obstacle.height/2, 
+          0, 0, Math.PI * 2
+        );
+        this.ctx.fill();
+        
+        // 添加翅膀
+        const wingOffset = this.birdFrame === 0 ? -5 : 5;
+        this.ctx.beginPath();
+        this.ctx.ellipse(
+          obstacle.x + obstacle.width/2, 
+          obstacle.y + obstacle.height/2 + wingOffset,
+          obstacle.width/3, obstacle.height/4, 
+          0, 0, Math.PI * 2
+        );
+        this.ctx.fill();
+      }
     }
+  }
     // 绘制水果
     for (const fruit of this.fruits) {
       const fruitImage = this.images.fruits.apple;
@@ -935,40 +1087,84 @@ class DinoGame {
         this.ctx.fill();
       }
     }
-    // 优化拖影绘制效果
-    if (this.dinoPositions.length > 0 && this.isInvincible) {
-      const dinoImage = this.dinoFrame === 0 ? this.images.dino.run1 : this.images.dino.run2;
-      
-      // 从后向前绘制拖影，使后面的层不会覆盖前面的
-      for (let i = this.dinoPositions.length - 1; i >= 0; i--) {
-        const pos = this.dinoPositions[i];
-        // 使用指数降低透明度，使效果更加顺滑
-        const alpha = Math.pow(0.8, i); 
-        
-        if (dinoImage && dinoImage.complete && dinoImage.naturalWidth > 0) {
+    // 绘制后面的云朵 (低zIndex)
+    if (this.cloudEffect.active && this.cloudEffect.clouds.length > 0) {
+      for (const cloud of this.cloudEffect.clouds) {
+        // 只绘制zIndex < 5的云朵(恐龙后面的云)
+        if (cloud.zIndex < 5) {
           this.ctx.save();
-          this.ctx.globalAlpha = alpha * 0.7; // 降低整体透明度
+          this.ctx.globalAlpha = cloud.opacity;
           
-          // 绘制金色光晕
-          const glowAlpha = alpha * 0.5;
-          this.ctx.fillStyle = `rgba(255, 215, 0, ${glowAlpha})`;
-          this.ctx.beginPath();
-          this.ctx.ellipse(
-            pos.x + pos.width/2,
-            pos.y + pos.height/2,
-            pos.width/2 + 5,
-            pos.height/2 + 5,
-            0, 0, Math.PI * 2
-          );
-          this.ctx.fill();
+          // 添加金色辉光效果
+          this.ctx.shadowColor = 'rgba(255, 215, 0, 0.8)'; // 金色阴影
+          this.ctx.shadowBlur = 15; // 阴影模糊程度
+          this.ctx.shadowOffsetX = 0;
+          this.ctx.shadowOffsetY = 0;
           
-          // 绘制恐龙图像
-          this.ctx.drawImage(dinoImage, pos.x, pos.y, pos.width, pos.height);
+          if (this.cloudEffect.image && this.cloudEffect.image.complete) {
+            // 在绘制前，先绘制金色光晕底层
+            this.ctx.globalAlpha = 0.4; // 降低透明度，使光晕效果更柔和
+            this.ctx.drawImage(
+              this.cloudEffect.image,
+              cloud.x - 5, cloud.y - 5, // 稍微偏移
+              (cloud.width + 10) * cloud.scale, // 扩大尺寸，创造光晕效果
+              (cloud.height + 10) * cloud.scale
+            );
+            
+            // 恢复原始透明度，绘制主要云朵图像
+            this.ctx.globalAlpha = cloud.opacity;
+            this.ctx.drawImage(
+              this.cloudEffect.image,
+              cloud.x, cloud.y,
+              cloud.width * cloud.scale, 
+              cloud.height * cloud.scale
+            );
+          } else {
+            // 备用绘制方法
+            // 先绘制金色光晕
+            this.ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+            this.ctx.beginPath();
+            this.ctx.ellipse(
+              cloud.x + cloud.width/3, 
+              cloud.y + cloud.height/2, 
+              (cloud.width/2 + 5) * cloud.scale, 
+              (cloud.height/2 + 5) * cloud.scale, 
+              0, 0, Math.PI * 2
+            );
+            this.ctx.ellipse(
+              cloud.x + cloud.width*2/3, 
+              cloud.y + cloud.height/2, 
+              (cloud.width/2 + 5) * cloud.scale, 
+              (cloud.height/2 + 5) * cloud.scale, 
+              0, 0, Math.PI * 2
+            );
+            this.ctx.fill();
+            
+            // 然后绘制主要云朵
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            this.ctx.beginPath();
+            this.ctx.ellipse(
+              cloud.x + cloud.width/3, 
+              cloud.y + cloud.height/2, 
+              cloud.width/2 * cloud.scale, 
+              cloud.height/2 * cloud.scale, 
+              0, 0, Math.PI * 2
+            );
+            this.ctx.ellipse(
+              cloud.x + cloud.width*2/3, 
+              cloud.y + cloud.height/2, 
+              cloud.width/2 * cloud.scale, 
+              cloud.height/2 * cloud.scale, 
+              0, 0, Math.PI * 2
+            );
+            this.ctx.fill();
+          }
+          
           this.ctx.restore();
         }
       }
     }
-    // 绘制恐龙 (无敌状态的代码保持不变)
+    // 绘制恐龙 
     let dinoImage;
     if (this.gameOver) {
       dinoImage = this.images.dino.run1;
@@ -980,37 +1176,76 @@ class DinoGame {
     } else {
       dinoImage = this.dinoFrame === 0 ? this.images.dino.run1 : this.images.dino.run2;
     }
-    
-    // 绘制恐龙
     if (dinoImage && dinoImage.complete && dinoImage.naturalWidth > 0) {
       this.ctx.save();
-      
-// 计算保持宽高比的尺寸
-const imgRatio = dinoImage.naturalWidth / dinoImage.naturalHeight;
-let drawWidth = this.dino.width;
-let drawHeight = this.dino.height;
+      // 如果处于无敌状态，在恐龙前面绘制一些额外的云朵效果（营造包围感）
+      if (this.cloudEffect.active && this.cloudEffect.clouds.length > 0) {
+        // 绘制前景云朵（只绘制2-3朵，营造包围感）
+        for (let i = 0; i < Math.min(3, this.cloudEffect.clouds.length); i++) {
+          const cloud = this.cloudEffect.clouds[i];
+          
+          // 只在恐龙前方绘制
+          if (cloud.x > this.dino.x + this.dino.width/2) {
+            this.ctx.save();
+            this.ctx.globalAlpha = cloud.opacity * 0.7; // 稍微透明一些
+            
+            if (this.cloudEffect.image && this.cloudEffect.image.complete) {
+              // 使用图像绘制云朵
+              this.ctx.drawImage(
+                this.cloudEffect.image,
+                cloud.x + 30, cloud.y - 10, // 稍微调整位置以获得更好的视觉效果
+                cloud.width * cloud.scale * 0.7, // 稍微小一些
+                cloud.height * cloud.scale * 0.7
+              );
+            } else {
+              // 备用绘制方法
+              this.ctx.fillStyle = '#ffffff';
+              this.ctx.beginPath();
+              this.ctx.arc(
+                cloud.x + 30 + cloud.width/3, 
+                cloud.y - 10 + cloud.height/2, 
+                cloud.height/2 * cloud.scale * 0.7, 
+                0, Math.PI * 2
+              );
+              this.ctx.arc(
+                cloud.x + 30 + cloud.width*2/3, 
+                cloud.y - 10 + cloud.height/2, 
+                cloud.height/2 * cloud.scale * 0.7, 
+                0, Math.PI * 2
+              );
+              this.ctx.fill();
+            }
+            
+            this.ctx.restore();
+          }
+        }
+      }  
+      // 计算保持宽高比的尺寸
+      const imgRatio = dinoImage.naturalWidth / dinoImage.naturalHeight;
+      let drawWidth = this.dino.width;
+      let drawHeight = this.dino.height;
 
-// 根据图像原始宽高比调整绘制尺寸
-if (imgRatio > 1) { // 图像较宽
-  drawHeight = this.dino.width / imgRatio;
-} else { // 图像较高
-  drawWidth = this.dino.height * imgRatio;
-}
+      // 根据图像原始宽高比调整绘制尺寸
+      if (imgRatio > 1) { // 图像较宽
+        drawHeight = this.dino.width / imgRatio;
+      } else { // 图像较高
+        drawWidth = this.dino.height * imgRatio;
+      }
 
-// 居中绘制
-const offsetX = (this.dino.width - drawWidth) / 2;
-const offsetY = (this.dino.height - drawHeight) / 2;
+      // 居中绘制
+      const offsetX = (this.dino.width - drawWidth) / 2;
+      const offsetY = (this.dino.height - drawHeight) / 2;
 
-// 绘制恐龙图像时保持比例
-this.ctx.drawImage(
-  dinoImage,
-  this.dino.x + offsetX, 
-  this.dino.y + offsetY,
-  drawWidth, 
-  drawHeight
-);
+      // 绘制恐龙图像时保持比例
+      this.ctx.drawImage(
+        dinoImage,
+        this.dino.x + offsetX, 
+        this.dino.y + offsetY,
+        drawWidth, 
+        drawHeight
+      );
 
-this.ctx.restore();
+      this.ctx.restore();
     } else {
       // 备用绘制 - 绘制一个灰色恐龙形状
       this.ctx.fillStyle = '#535353';
@@ -1066,20 +1301,134 @@ this.ctx.restore();
           );
       }
     }
-    // 如果处于无敌状态，显示倒计时
-    if (this.isInvincible) {
-      const secondsLeft = Math.ceil((this.invincibleDuration - this.invincibleTimer) / 1000);
-      this.ctx.font = '20px Arial';
-      this.ctx.fillStyle = '#FFD700'; // 金色字体
-      this.ctx.textAlign = 'left';
-      this.ctx.fillText(`无敌: ${secondsLeft}秒`, 20, 50);
+    // 3. 绘制前面的云朵 (高zIndex)
+    if (this.cloudEffect.active && this.cloudEffect.clouds.length > 0) {
+      for (const cloud of this.cloudEffect.clouds) {
+        // 只绘制zIndex >= 5的云朵(恐龙前面的云)
+        if (cloud.zIndex >= 5) {
+          this.ctx.save();
+          this.ctx.globalAlpha = cloud.opacity;
+          
+          // 添加金色辉光效果
+          this.ctx.shadowColor = 'rgba(255, 215, 0, 0.8)'; // 金色阴影
+          this.ctx.shadowBlur = 15; // 阴影模糊程度
+          this.ctx.shadowOffsetX = 0;
+          this.ctx.shadowOffsetY = 0;
+          
+          if (this.cloudEffect.image && this.cloudEffect.image.complete) {
+            // 在绘制前，先绘制金色光晕底层
+            this.ctx.globalAlpha = 0.4; // 降低透明度，使光晕效果更柔和
+            this.ctx.drawImage(
+              this.cloudEffect.image,
+              cloud.x - 5, cloud.y - 5, // 稍微偏移
+              (cloud.width + 10) * cloud.scale, // 扩大尺寸，创造光晕效果
+              (cloud.height + 10) * cloud.scale
+            );
+            
+            // 恢复原始透明度，绘制主要云朵图像
+            this.ctx.globalAlpha = cloud.opacity;
+            this.ctx.drawImage(
+              this.cloudEffect.image,
+              cloud.x, cloud.y,
+              cloud.width * cloud.scale, 
+              cloud.height * cloud.scale
+            );
+          } else {
+            // 备用绘制方法，同上
+            // 先绘制金色光晕
+            this.ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+            this.ctx.beginPath();
+            this.ctx.ellipse(
+              cloud.x + cloud.width/3, 
+              cloud.y + cloud.height/2, 
+              (cloud.width/2 + 5) * cloud.scale, 
+              (cloud.height/2 + 5) * cloud.scale, 
+              0, 0, Math.PI * 2
+            );
+            this.ctx.ellipse(
+              cloud.x + cloud.width*2/3, 
+              cloud.y + cloud.height/2, 
+              (cloud.width/2 + 5) * cloud.scale, 
+              (cloud.height/2 + 5) * cloud.scale, 
+              0, 0, Math.PI * 2
+            );
+            this.ctx.fill();
+            
+            // 然后绘制主要云朵
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            this.ctx.beginPath();
+            this.ctx.ellipse(
+              cloud.x + cloud.width/3, 
+              cloud.y + cloud.height/2, 
+              cloud.width/2 * cloud.scale, 
+              cloud.height/2 * cloud.scale, 
+              0, 0, Math.PI * 2
+            );
+            this.ctx.ellipse(
+              cloud.x + cloud.width*2/3, 
+              cloud.y + cloud.height/2, 
+              cloud.width/2 * cloud.scale, 
+              cloud.height/2 * cloud.scale, 
+              0, 0, Math.PI * 2
+            );
+            this.ctx.fill();
+          }
+          
+          this.ctx.restore();
+        }
+      }
     }
-    // 用于调试的碰撞盒绘制
-    if (false) { // 设置为true可以显示碰撞盒
-      const box = this.getCollisionBox(this.dino);
-      this.ctx.strokeStyle = 'blue';
-      this.ctx.strokeRect(box.x, box.y, box.width, box.height);
+  // 如果处于无敌状态，显示倒计时
+  if (this.isInvincible) {
+    const secondsLeft = Math.ceil((this.invincibleDuration - this.invincibleTimer) / 1000);
+    this.ctx.font = '20px Arial';
+    this.ctx.fillStyle = '#FFD700'; // 金色字体
+    this.ctx.textAlign = 'left';
+    this.ctx.fillText(`无敌: ${secondsLeft}秒`, 20, 50);
+  }
+  
+// 如果处于保护状态，显示提示和闪烁效果
+if (this.isProtected) {
+  // 每150ms闪烁一次
+  if (Math.floor(this.protectionTimer / 150) % 2 === 0) {
+    // 绘制保护状态提示文字
+    const secondsLeft = Math.ceil((this.protectionDuration - this.protectionTimer) / 1000);
+    this.ctx.font = '18px Arial';
+    this.ctx.fillStyle = '#FF6347'; // 橙红色字体
+    this.ctx.textAlign = 'left';
+    this.ctx.fillText(`保护: ${secondsLeft}秒`, 20, 80);
+    
+    // 绘制保护状态光环 - 使用不同颜色区分无敌状态
+    this.ctx.save();
+    this.ctx.beginPath();
+    this.ctx.arc(
+      this.dino.x + this.dino.width / 2,
+      this.dino.y + this.dino.height / 2,
+      Math.max(this.dino.width, this.dino.height) * 0.7,
+      0, Math.PI * 2
+    );
+    this.ctx.strokeStyle = 'rgba(255, 99, 71, 0.7)'; // 更明显的橙红色
+    this.ctx.lineWidth = 4; // 加粗线条
+    this.ctx.setLineDash([8, 4]); // 添加虚线效果，区分无敌状态
+    this.ctx.stroke();
+    this.ctx.restore();
+  }
+}
+  // 用于调试的碰撞盒绘制 - 临时设置为true
+  if (false) { // 原来是false，现在改为true开启碰撞盒显示
+    // 显示恐龙碰撞盒
+    const dinoBox = this.getCollisionBox(this.dino);
+    this.ctx.strokeStyle = 'blue';
+    this.ctx.lineWidth = 2;
+    this.ctx.strokeRect(dinoBox.x, dinoBox.y, dinoBox.width, dinoBox.height);
+    
+    // 显示所有障碍物碰撞盒
+    for (const obstacle of this.obstacles) {
+      const obstacleBox = this.getCollisionBox(obstacle);
+      this.ctx.strokeStyle = 'red';
+      this.ctx.strokeRect(obstacleBox.x, obstacleBox.y, obstacleBox.width, obstacleBox.height);
     }
+  }
     
     // 绘制分数
     this.ctx.font = '16px Arial';
@@ -1212,12 +1561,14 @@ this.ctx.restore();
     // 重置无敌相关状态
     this.isInvincible = false;
     this.invincibleTimer = 0;
+      // 重置保护相关状态
+    this.isProtected = false;
+    this.protectionTimer = 0;
     this.fruits = [];
     this.lastFruitTime = 0;
     this.dino.width = this.originalDinoSize.width;
     this.dino.height = this.originalDinoSize.height;
     this.dino.isFlying = false; // 重置飞行状态
-    this.dinoPositions = []; // 清空拖影位置
  
 
     // 清除动画帧
@@ -1239,7 +1590,9 @@ this.ctx.restore();
     // 更新按钮图标
     const playPauseIcon = document.getElementById('dino-play-pause-icon');
     if (playPauseIcon) playPauseIcon.src = './image/start.svg';
-    
+      // 重置云朵特效
+  this.cloudEffect.active = false;
+  this.cloudEffect.clouds = [];
     // 绘制重置后的画面
     this.draw();
   }
@@ -1359,82 +1712,56 @@ this.ctx.restore();
     }
   }
 
-  checkFruitCollisions() {
-    const dinoBox = this.getCollisionBox(this.dino);
-    
-    for (let i = 0; i < this.fruits.length; i++) {
-      const fruitBox = {
-        x: this.fruits[i].x,
-        y: this.fruits[i].y,
-        width: this.fruits[i].width,
-        height: this.fruits[i].height
-      };
-      
-      if (this.isColliding(dinoBox, fruitBox)) {
-        // 恐龙吃到水果，获得无敌状态
-        this.isInvincible = true;
-        this.invincibleTimer = 0;
-        
-        // 恐龙变大2倍
-        this.dino.width = this.originalDinoSize.width * 2;
-        this.dino.height = this.originalDinoSize.height * 2;
-        
-        // 让恐龙自动飞行起来 - 无需跳跃即可漂浮在空中
-        this.dino.y = this.height - this.groundHeight - this.dino.height - 120; // 飞行高度
-        this.dino.jumping = false; // 不是跳跃状态
-        this.dino.isFlying = true; // 标记为飞行状态
-        
-        // 移除水果
-        this.fruits.splice(i, 1);
-        i--;
-        
-        console.log('吃到苹果！进入无敌状态10秒');
-      }
-    }
-  }
+// 1. 修复无敌状态显示与实际持续时间不匹配的问题 - 修改文本或修改持续时间
+checkFruitCollisions() {
+  const dinoBox = this.getCollisionBox(this.dino);
   
-  checkCollisions() {
-    // 获取恐龙碰撞盒
-    const dinoBox = this.getCollisionBox(this.dino);
+  for (let i = 0; i < this.fruits.length; i++) {
+    const fruitBox = {
+      x: this.fruits[i].x,
+      y: this.fruits[i].y,
+      width: this.fruits[i].width,
+      height: this.fruits[i].height
+    };
     
-    // 对每个障碍物进行碰撞检测
-    for (let i = 0; i < this.obstacles.length; i++) {
-      const obstacle = this.obstacles[i];
-      const obstacleBox = this.getCollisionBox(obstacle);
+    if (this.isColliding(dinoBox, fruitBox)) {
+      // 恐龙吃到水果，获得无敌状态
+      this.isInvincible = true;
+      this.invincibleTimer = 0;
       
-      // 如果发生碰撞
-      if (this.isColliding(dinoBox, obstacleBox)) {
-        if (this.isInvincible) {
-          // 无敌状态下，撞飞障碍物
-          obstacle.x = -obstacle.width; // 直接移出屏幕
-          this.score += 1; // 额外加分
-          this.scoreElement.textContent = this.score;
-          continue;
-        }
-        
-        // 非无敌状态下，游戏结束
-        this.gameOver = true;
-        this.isPlaying = false;
-        
-        // 更新最高分
-        if (this.score > this.highScore) {
-          this.highScore = this.score;
-          this.highScoreElement.textContent = this.highScore;
-          localStorage.setItem('dinoHighScore', this.highScore);
-        }
-        
-        // 停止游戏循环
-        if (this.animationFrameId) {
-          cancelAnimationFrame(this.animationFrameId);
-          this.animationFrameId = null;
-        }
-        
-        // 绘制游戏结束画面
-        this.drawGameOver();
-        return;
+      // 恐龙变大2倍
+      this.dino.width = this.originalDinoSize.width * 2;
+      this.dino.height = this.originalDinoSize.height * 2;
+      
+      // 让恐龙自动飞行起来 - 无需跳跃即可漂浮在空中
+      this.dino.y = this.height - this.groundHeight - this.dino.height - 120; 
+      this.dino.jumping = false; 
+      this.dino.isFlying = true; 
+      
+      // 添加腾云驾雾特效
+      console.log('激活云朵特效');
+      this.cloudEffect.active = true;
+      
+      // 确保云朵图像已加载
+      if (!this.cloudEffect.image || !this.cloudEffect.image.complete) {
+        console.warn('云朵图像未加载，重新加载');
+        this.cloudEffect.image = this.loadImage('./image/dino/cloud.svg');
       }
+      
+      // 初始化云朵效果
+      this.initCloudEffect();
+      console.log('云朵效果初始化完成', this.cloudEffect.clouds.length);
+      
+      // 移除水果
+      this.fruits.splice(i, 1);
+      i--;
+      
+      // 修改这里的文本，使它与实际持续时间匹配
+      console.log('吃到苹果！进入无敌状态12秒');
     }
   }
+}
+  
   // 获取角色图片路径的辅助方法
   getCharacterPath(characterId) {
     const character = this.characters.find(char => char.id === characterId);
@@ -1600,6 +1927,75 @@ this.ctx.restore();
     // 将模态框添加到页面
     document.body.appendChild(modal);
   }
+
+initCloudEffect() {
+  // 清空现有云朵
+  this.cloudEffect.clouds = [];
+  
+  // 调整为固定数量的云朵
+  const cloudCount = 5; // 固定为5朵云
+  
+  // 创建围绕恐龙脚下的云朵 - 固定大小
+  for (let i = 0; i < cloudCount; i++) {
+    // 使用固定大小和属性的云朵，只在脚下出现
+    this.cloudEffect.clouds.push({
+      // 水平均匀分布在恐龙周围
+      x: this.dino.x + this.dino.width/2 - 60 + (i - cloudCount/2) * 50,
+      // 固定在脚下位置
+      y: this.dino.y + this.dino.height-5,
+      width: 120, // 固定宽度
+      height: 60, // 固定高度
+      offsetX: 40,  // 固定水平漂浮范围
+      offsetY: 15,  // 固定垂直漂浮范围
+      angle: i * (Math.PI * 2 / cloudCount), // 均匀分布初始角度
+      angleSpeed: 0.01, // 固定角速度
+      opacity: 0.8,  // 固定透明度
+      scale: 1.0,  // 固定比例
+      zIndex: i < cloudCount/2 ? 3 : 7, // 前一半在恐龙后面，后一半在恐龙前面
+      pulsateOffset: i * (Math.PI / 2.5), // 每个云朵的脉动相位不同，创造波浪效果
+      pulsateSpeed: 0.05 // 脉动速度
+    });
+  }
+  
+  console.log(`创建了 ${this.cloudEffect.clouds.length} 朵云朵，固定在恐龙脚下`);
+}
+
+// 3. 修复updateCloudEffect方法，确保正确更新云朵
+updateCloudEffect() {
+  if (!this.cloudEffect.active) return;
+  
+  // 更新每朵云的位置和状态
+  for (let i = 0; i < this.cloudEffect.clouds.length; i++) {
+    const cloud = this.cloudEffect.clouds[i];
+    
+    // 更新云朵角度
+    cloud.angle += cloud.angleSpeed;
+    
+    // 基础位置始终跟随恐龙
+    const baseX = this.dino.x + this.dino.width/2 - cloud.width/2;
+    const baseY = this.dino.y + this.dino.height-5; // 固定在脚下位置
+    
+    // 根据角度添加小幅度波动
+    cloud.x = baseX + Math.sin(cloud.angle) * cloud.offsetX;
+    cloud.y = baseY + Math.cos(cloud.angle) * cloud.offsetY;
+    
+    // 添加小幅度偏移，营造更自然的感觉
+    cloud.x += Math.sin(this.frameCount * 0.01 + i * 0.5) * 3;
+    
+    // 更新脉动效果
+    if (cloud.pulsateOffset !== undefined && cloud.pulsateSpeed !== undefined) {
+      cloud.pulsateOffset += cloud.pulsateSpeed;
+      cloud.opacity = 0.7 + 0.2 * Math.sin(cloud.pulsateOffset);
+      cloud.scale = 1.0 + 0.05 * Math.sin(cloud.pulsateOffset * 1.3);
+    }
+  }
+  
+  // 如果无敌状态结束，停止云朵效果
+  if (!this.isInvincible) {
+    this.cloudEffect.active = false;
+    this.cloudEffect.clouds = [];
+  }
+}
 }
 
 // 使游戏全局可访问

@@ -93,30 +93,40 @@ setTimeout(() => {
   checkSecretSequence(season);
 }
 
+// 存储固定的季节图片序列
+let seasonImageSequence = null;
+
 // 设置默认季节图片的辅助函数
 function setDefaultSeasonImage(decoration, season, seasonFolder) {
-  // 根据季节选择一个默认图片
+  // 如果序列未初始化，则创建一个随机序列
+  if (!seasonImageSequence) {
+    seasonImageSequence = {
+      spring: Math.floor(Math.random() * 8) + 1,
+      summer: Math.floor(Math.random() * 8) + 1,
+      autumn: Math.floor(Math.random() * 8) + 1,
+      winter: Math.floor(Math.random() * 8) + 1
+    };
+    console.log("生成固定季节图片序列:", 
+      `春${seasonImageSequence.spring}`, 
+      `夏${seasonImageSequence.summer}`, 
+      `秋${seasonImageSequence.autumn}`, 
+      `冬${seasonImageSequence.winter}`);
+  }
+
+  // 根据季节使用固定的图片
   let defaultImage = '';
   switch(season) {
     case 'spring': 
-      // 随机从春1-春8中选择
-      const springNum = Math.floor(Math.random() * 8) + 1;
-      defaultImage = `春${springNum}.svg`;
+      defaultImage = `春${seasonImageSequence.spring}.svg`;
       break;
     case 'summer': 
-      // 随机从夏1-夏8中选择
-      const summerNum = Math.floor(Math.random() * 8) + 1;
-      defaultImage = `夏${summerNum}.svg`;
+      defaultImage = `夏${seasonImageSequence.summer}.svg`;
       break;
     case 'autumn': 
-      // 随机从秋1-秋8中选择
-      const autumnNum = Math.floor(Math.random() * 8) + 1;
-      defaultImage = `秋${autumnNum}.svg`; 
+      defaultImage = `秋${seasonImageSequence.autumn}.svg`; 
       break;
     case 'winter': 
-      // 随机从冬1-冬8中选择
-      const winterNum = Math.floor(Math.random() * 8) + 1;
-      defaultImage = `冬${winterNum}.svg`;
+      defaultImage = `冬${seasonImageSequence.winter}.svg`;
       break;
   }
   
