@@ -115,12 +115,6 @@ class DinoGame {
         run1: this.loadImage(characterPath),
         run2: this.loadImage(characterPath),
         jump: this.loadImage(characterPath),
-        // run2: characterPath === "./image/dino/character/111.png"
-        //   ? this.loadImage("./image/dino/character/222.png")
-        //   : this.loadImage(characterPath),
-        // jump: characterPath === "./image/dino/character/111.png"
-        // ? this.loadImage("./image/dino/character/3333.png")
-        // : this.loadImage(characterPath),
       },
       obstacles: {
         cactus1: this.loadImage('./image/dino/cactus.svg'),
@@ -129,12 +123,15 @@ class DinoGame {
       // 添加水果图像
       fruits: {
         apple: this.loadImage('./image/fruit/apple1.svg')
-      }
+      },
+      // 添加背景云朵图像
+      backgroundCloud: this.loadImage('./image/dino/cloud2.svg')
     };
     
     // 简化图片加载计数
     this.imagesLoaded = 0;
-    this.totalImages = 4;
+    this.totalImages = 5; // 增加1个图片计数，加入背景云朵
+    
     // 添加云朵图像加载，并加入控制台日志
     this.cloudEffect.image = this.loadImage('./image/dino/cloud.svg');
     if(this.cloudEffect.image) {
@@ -149,6 +146,7 @@ class DinoGame {
     } else {
       console.error('无法创建云朵图像对象');
     }
+    
     // 添加图像加载完成事件
     if (this.images.dino.run1) {
       this.images.dino.run1.onload = () => this.imageLoaded();
@@ -164,11 +162,18 @@ class DinoGame {
       this.images.obstacles.cactus1.onload = () => this.imageLoaded();
       this.images.obstacles.cactus1.onerror = () => this.imageLoaded();
     }
-        // 添加鸟类图片的加载事件
-        if (this.images.obstacles.bird) {
-          this.images.obstacles.bird.onload = () => this.imageLoaded();
-          this.images.obstacles.bird.onerror = () => this.imageLoaded();
-        }
+    
+    if (this.images.obstacles.bird) {
+      this.images.obstacles.bird.onload = () => this.imageLoaded();
+      this.images.obstacles.bird.onerror = () => this.imageLoaded();
+    }
+    
+    // 添加背景云朵图像加载事件
+    if (this.images.backgroundCloud) {
+      this.images.backgroundCloud.onload = () => this.imageLoaded();
+      this.images.backgroundCloud.onerror = () => this.imageLoaded();
+    }
+    
     // 设置超时，即使图片未全部加载也启动游戏
     setTimeout(() => {
       if (!this.gameOver && !this.isPlaying) {
@@ -680,8 +685,8 @@ class DinoGame {
       this.clouds.push({
         x: this.width,
         y: Math.random() * (this.height / 2 - 120),
-        width: 180, // 原来是120
-        height: 90  // 原来是60
+        width: 180, // 恢复为原始宽度
+        height: 120  // 恢复为原始高度
       });
     }
     
@@ -855,15 +860,27 @@ class DinoGame {
     this.ctx.fillStyle = backgroundColor;
     this.ctx.fillRect(0, 0, this.width, this.height);
     
-    // 绘制云朵 - 放大云朵
+    // 绘制云朵 - 使用新的cloud2.svg图像
     for (const cloud of this.clouds) {
-      // 放大云朵尺寸
-      this.ctx.fillStyle = '#ffffff';
-      this.ctx.beginPath();
-      this.ctx.arc(cloud.x + cloud.width/3, cloud.y + cloud.height/2, cloud.height/1.5, 0, Math.PI * 2);
-      this.ctx.arc(cloud.x + cloud.width*2/3, cloud.y + cloud.height/2, cloud.height/1.5, 0, Math.PI * 2);
-      this.ctx.fill();
+      if (this.images.backgroundCloud && this.images.backgroundCloud.complete && this.images.backgroundCloud.naturalWidth > 0) {
+        // 使用加载的云朵图像，保持原始尺寸
+        this.ctx.drawImage(
+          this.images.backgroundCloud,
+          cloud.x, 
+          cloud.y,
+          cloud.width, // 使用对象中的原始尺寸
+          cloud.height 
+        );
+      } else {
+        // 备用绘制 - 使用白色圆形
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.beginPath();
+        this.ctx.arc(cloud.x + cloud.width/3, cloud.y + cloud.height/2, cloud.height/1.5, 0, Math.PI * 2);
+        this.ctx.arc(cloud.x + cloud.width*2/3, cloud.y + cloud.height/2, cloud.height/1.5, 0, Math.PI * 2);
+        this.ctx.fill();
+      }
     }
+  
   
     // 绘制地面
     this.ctx.fillStyle = groundColor;
