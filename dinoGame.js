@@ -9,6 +9,13 @@ class DinoGame {
     // 从localStorage加载选择的角色或使用默认角色
     this.selectedCharacter = localStorage.getItem('dinoCharacter') || "杰尼龟";
 
+    // 添加飞天特效相关属性
+    this.cloudEffect = {
+      active: false,
+      clouds: [],
+      maxClouds: 2,  // 最大云朵数量
+      image: null    // 云朵图像
+    };
     // 添加水果相关属性
     this.fruits = [];
     this.fruitType = {
@@ -17,7 +24,7 @@ class DinoGame {
       height: 50,
       probability: 0.1
     };
-    this.fruitInterval = 20000; // 每20秒可能出现一个水果
+    this.fruitInterval = 2000; // 每20秒可能出现一个水果
     this.lastFruitTime = 0;
 
     // 添加无敌相关属性 - 但暂时不初始化依赖于dino的属性
@@ -128,7 +135,20 @@ class DinoGame {
     // 简化图片加载计数
     this.imagesLoaded = 0;
     this.totalImages = 4;
-    
+    // 添加云朵图像加载，并加入控制台日志
+    this.cloudEffect.image = this.loadImage('./image/dino/cloud.svg');
+    if(this.cloudEffect.image) {
+      this.cloudEffect.image.onload = () => {
+        console.log('云朵图像加载成功');
+        // 如果已经处于无敌状态，确保云朵效果正确初始化
+        if (this.isInvincible && this.cloudEffect.active && this.cloudEffect.clouds.length === 0) {
+          this.initCloudEffect();
+        }
+      };
+      this.cloudEffect.image.onerror = () => console.error('云朵图像加载失败');
+    } else {
+      console.error('无法创建云朵图像对象');
+    }
     // 添加图像加载完成事件
     if (this.images.dino.run1) {
       this.images.dino.run1.onload = () => this.imageLoaded();
@@ -572,14 +592,14 @@ class DinoGame {
         console.log('跳过障碍物得分！当前分数：', this.score);
       }
     }
-// 【添加此段代码】更新无敌状态计时器
+    // 更新无敌状态计时器
     if (this.isInvincible) {
       this.invincibleTimer += 16; // 假设16ms为一帧
       
       // 无敌状态下保持飞行状态
       this.dino.isFlying = true;
       
-      // 添加边界检测，防止飞出屏幕 - 新增代码
+      // 添加边界检测，防止飞出屏幕
       const topBoundary = 20; // 距离顶部最小距离
       const bottomBoundary = this.height - this.groundHeight - this.dino.height; // 距离地面最小距离
       
@@ -589,11 +609,15 @@ class DinoGame {
         this.dino.y = bottomBoundary;
       }
       
+      // 更新云朵特效
+      this.updateCloudEffect();
+      
       // 无敌结束时恢复正常
       if (this.invincibleTimer > this.invincibleDuration) {
         this.isInvincible = false;
         this.invincibleTimer = 0;
         this.dino.isFlying = false;
+        this.cloudEffect.active = false;
         
         // 恢复恐龙原始大小
         this.dino.width = this.originalDinoSize.width;
@@ -925,7 +949,46 @@ class DinoGame {
         this.ctx.fill();
       }
     }
-    // 绘制恐龙 (无敌状态的代码保持不变)
+    // 1. 绘制后面的云朵 (低zIndex)
+    if (this.cloudEffect.active && this.cloudEffect.clouds.length > 0) {
+      for (const cloud of this.cloudEffect.clouds) {
+        // 只绘制zIndex < 5的云朵(恐龙后面的云)
+        if (cloud.zIndex < 5) {
+          this.ctx.save();
+          this.ctx.globalAlpha = cloud.opacity;
+          
+          if (this.cloudEffect.image && this.cloudEffect.image.complete) {
+            this.ctx.drawImage(
+              this.cloudEffect.image,
+              cloud.x, cloud.y,
+              cloud.width * cloud.scale, cloud.height * cloud.scale
+            );
+          } else {
+            // 备用绘制方法
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            this.ctx.beginPath();
+            this.ctx.ellipse(
+              cloud.x + cloud.width/3, 
+              cloud.y + cloud.height/2, 
+              cloud.width/2 * cloud.scale, 
+              cloud.height/2 * cloud.scale, 
+              0, 0, Math.PI * 2
+            );
+            this.ctx.ellipse(
+              cloud.x + cloud.width*2/3, 
+              cloud.y + cloud.height/2, 
+              cloud.width/2 * cloud.scale, 
+              cloud.height/2 * cloud.scale, 
+              0, 0, Math.PI * 2
+            );
+            this.ctx.fill();
+          }
+          
+          this.ctx.restore();
+        }
+      }
+    }
+    // 绘制恐龙 
     let dinoImage;
     if (this.gameOver) {
       dinoImage = this.images.dino.run1;
@@ -937,37 +1000,76 @@ class DinoGame {
     } else {
       dinoImage = this.dinoFrame === 0 ? this.images.dino.run1 : this.images.dino.run2;
     }
-    
-    // 绘制恐龙
     if (dinoImage && dinoImage.complete && dinoImage.naturalWidth > 0) {
       this.ctx.save();
-      
-// 计算保持宽高比的尺寸
-const imgRatio = dinoImage.naturalWidth / dinoImage.naturalHeight;
-let drawWidth = this.dino.width;
-let drawHeight = this.dino.height;
+      // 如果处于无敌状态，在恐龙前面绘制一些额外的云朵效果（营造包围感）
+      if (this.cloudEffect.active && this.cloudEffect.clouds.length > 0) {
+        // 绘制前景云朵（只绘制2-3朵，营造包围感）
+        for (let i = 0; i < Math.min(3, this.cloudEffect.clouds.length); i++) {
+          const cloud = this.cloudEffect.clouds[i];
+          
+          // 只在恐龙前方绘制
+          if (cloud.x > this.dino.x + this.dino.width/2) {
+            this.ctx.save();
+            this.ctx.globalAlpha = cloud.opacity * 0.7; // 稍微透明一些
+            
+            if (this.cloudEffect.image && this.cloudEffect.image.complete) {
+              // 使用图像绘制云朵
+              this.ctx.drawImage(
+                this.cloudEffect.image,
+                cloud.x + 30, cloud.y - 10, // 稍微调整位置以获得更好的视觉效果
+                cloud.width * cloud.scale * 0.7, // 稍微小一些
+                cloud.height * cloud.scale * 0.7
+              );
+            } else {
+              // 备用绘制方法
+              this.ctx.fillStyle = '#ffffff';
+              this.ctx.beginPath();
+              this.ctx.arc(
+                cloud.x + 30 + cloud.width/3, 
+                cloud.y - 10 + cloud.height/2, 
+                cloud.height/2 * cloud.scale * 0.7, 
+                0, Math.PI * 2
+              );
+              this.ctx.arc(
+                cloud.x + 30 + cloud.width*2/3, 
+                cloud.y - 10 + cloud.height/2, 
+                cloud.height/2 * cloud.scale * 0.7, 
+                0, Math.PI * 2
+              );
+              this.ctx.fill();
+            }
+            
+            this.ctx.restore();
+          }
+        }
+      }  
+      // 计算保持宽高比的尺寸
+      const imgRatio = dinoImage.naturalWidth / dinoImage.naturalHeight;
+      let drawWidth = this.dino.width;
+      let drawHeight = this.dino.height;
 
-// 根据图像原始宽高比调整绘制尺寸
-if (imgRatio > 1) { // 图像较宽
-  drawHeight = this.dino.width / imgRatio;
-} else { // 图像较高
-  drawWidth = this.dino.height * imgRatio;
-}
+      // 根据图像原始宽高比调整绘制尺寸
+      if (imgRatio > 1) { // 图像较宽
+        drawHeight = this.dino.width / imgRatio;
+      } else { // 图像较高
+        drawWidth = this.dino.height * imgRatio;
+      }
 
-// 居中绘制
-const offsetX = (this.dino.width - drawWidth) / 2;
-const offsetY = (this.dino.height - drawHeight) / 2;
+      // 居中绘制
+      const offsetX = (this.dino.width - drawWidth) / 2;
+      const offsetY = (this.dino.height - drawHeight) / 2;
 
-// 绘制恐龙图像时保持比例
-this.ctx.drawImage(
-  dinoImage,
-  this.dino.x + offsetX, 
-  this.dino.y + offsetY,
-  drawWidth, 
-  drawHeight
-);
+      // 绘制恐龙图像时保持比例
+      this.ctx.drawImage(
+        dinoImage,
+        this.dino.x + offsetX, 
+        this.dino.y + offsetY,
+        drawWidth, 
+        drawHeight
+      );
 
-this.ctx.restore();
+      this.ctx.restore();
     } else {
       // 备用绘制 - 绘制一个灰色恐龙形状
       this.ctx.fillStyle = '#535353';
@@ -1023,6 +1125,45 @@ this.ctx.restore();
           );
       }
     }
+    // 3. 绘制前面的云朵 (高zIndex)
+  if (this.cloudEffect.active && this.cloudEffect.clouds.length > 0) {
+    for (const cloud of this.cloudEffect.clouds) {
+      // 只绘制zIndex >= 5的云朵(恐龙前面的云)
+      if (cloud.zIndex >= 5) {
+        this.ctx.save();
+        this.ctx.globalAlpha = cloud.opacity;
+        
+        if (this.cloudEffect.image && this.cloudEffect.image.complete) {
+          this.ctx.drawImage(
+            this.cloudEffect.image,
+            cloud.x, cloud.y,
+            cloud.width * cloud.scale, cloud.height * cloud.scale
+          );
+        } else {
+          // 备用绘制方法
+          this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+          this.ctx.beginPath();
+          this.ctx.ellipse(
+            cloud.x + cloud.width/3, 
+            cloud.y + cloud.height/2, 
+            cloud.width/2 * cloud.scale, 
+            cloud.height/2 * cloud.scale, 
+            0, 0, Math.PI * 2
+          );
+          this.ctx.ellipse(
+            cloud.x + cloud.width*2/3, 
+            cloud.y + cloud.height/2, 
+            cloud.width/2 * cloud.scale, 
+            cloud.height/2 * cloud.scale, 
+            0, 0, Math.PI * 2
+          );
+          this.ctx.fill();
+        }
+        
+        this.ctx.restore();
+      }
+    }
+  }
     // 如果处于无敌状态，显示倒计时
     if (this.isInvincible) {
       const secondsLeft = Math.ceil((this.invincibleDuration - this.invincibleTimer) / 1000);
@@ -1195,7 +1336,9 @@ this.ctx.restore();
     // 更新按钮图标
     const playPauseIcon = document.getElementById('dino-play-pause-icon');
     if (playPauseIcon) playPauseIcon.src = './image/start.svg';
-    
+      // 重置云朵特效
+  this.cloudEffect.active = false;
+  this.cloudEffect.clouds = [];
     // 绘制重置后的画面
     this.draw();
   }
@@ -1339,6 +1482,20 @@ this.ctx.restore();
         this.dino.y = this.height - this.groundHeight - this.dino.height - 120; // 飞行高度
         this.dino.jumping = false; // 不是跳跃状态
         this.dino.isFlying = true; // 标记为飞行状态
+        
+        // 添加腾云驾雾特效 - 添加更多日志
+        console.log('激活云朵特效');
+        this.cloudEffect.active = true;
+        
+        // 确保云朵图像已加载
+        if (!this.cloudEffect.image || !this.cloudEffect.image.complete) {
+          console.warn('云朵图像未加载，重新加载');
+          this.cloudEffect.image = this.loadImage('./image/dino/cloud.svg');
+        }
+        
+        // 初始化云朵效果
+        this.initCloudEffect();
+        console.log('云朵效果初始化完成', this.cloudEffect.clouds.length);
         
         // 移除水果
         this.fruits.splice(i, 1);
@@ -1555,6 +1712,64 @@ this.ctx.restore();
     
     // 将模态框添加到页面
     document.body.appendChild(modal);
+  }
+  initCloudEffect() {
+    // 清空现有云朵
+    this.cloudEffect.clouds = [];
+    
+    // 调整为固定数量的云朵
+    const cloudCount = 5; // 固定为5朵云
+    
+    // 创建围绕恐龙脚下的云朵 - 固定大小
+    for (let i = 0; i < cloudCount; i++) {
+      // 使用固定大小和属性的云朵，只在脚下出现
+      this.cloudEffect.clouds.push({
+        // 水平均匀分布在恐龙周围
+        x: this.dino.x + this.dino.width/2 - 60 + (i - cloudCount/2) * 50,
+        // 固定在脚下位置
+        y: this.dino.y + this.dino.height + 10,
+        width: 120, // 固定宽度
+        height: 60, // 固定高度
+        offsetX: 40,  // 固定水平漂浮范围
+        offsetY: 15,  // 固定垂直漂浮范围
+        angle: i * (Math.PI * 2 / cloudCount), // 均匀分布初始角度
+        angleSpeed: 0.01, // 固定角速度
+        opacity: 0.8,  // 固定透明度
+        scale: 1.0,  // 固定比例
+        zIndex: i < cloudCount/2 ? 3 : 7 // 前一半在恐龙后面，后一半在恐龙前面
+      });
+    }
+    
+    console.log(`创建了 ${this.cloudEffect.clouds.length} 朵云朵，固定在恐龙脚下`);
+  }
+  
+  updateCloudEffect() {
+    if (!this.cloudEffect.active) return;
+    
+    // 更新每朵云的位置和状态
+    for (let i = 0; i < this.cloudEffect.clouds.length; i++) {
+      const cloud = this.cloudEffect.clouds[i];
+      
+      // 更新云朵角度
+      cloud.angle += cloud.angleSpeed;
+      
+      // 基础位置始终跟随恐龙
+      const baseX = this.dino.x + this.dino.width/2 - cloud.width/2;
+      const baseY = this.dino.y + this.dino.height + 10; // 固定在脚下位置
+      
+      // 根据角度添加小幅度波动
+      cloud.x = baseX + Math.sin(cloud.angle) * cloud.offsetX;
+      cloud.y = baseY + Math.cos(cloud.angle) * cloud.offsetY;
+      
+      // 添加小幅度偏移，营造更自然的感觉
+      cloud.x += Math.sin(this.frameCount * 0.01 + i * 0.5) * 3;
+    }
+    
+    // 如果无敌状态结束，停止云朵效果
+    if (!this.isInvincible) {
+      this.cloudEffect.active = false;
+      this.cloudEffect.clouds = [];
+    }
   }
 }
 
