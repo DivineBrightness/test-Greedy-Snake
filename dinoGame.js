@@ -588,7 +588,7 @@ class DinoGame {
   update() {
     // 增加分数和距离
     this.distance += this.speed;
-    // this.score = Math.floor(this.distance / 10);
+    
     // 检查是否有障碍物被跳过
     for (const obstacle of this.obstacles) {
       // 判断恐龙是否已经越过障碍物的右边界(障碍物完全在恐龙左侧)
@@ -602,59 +602,68 @@ class DinoGame {
         console.log('跳过障碍物得分！当前分数：', this.score);
       }
     }
-// 更新无敌状态计时器
-if (this.isInvincible) {
-  this.invincibleTimer += 16; // 假设16ms为一帧
-  
-  // 无敌状态下保持飞行状态
-  this.dino.isFlying = true;
-  
-  // 添加边界检测，防止飞出屏幕
-  const topBoundary = 20; // 距离顶部最小距离
-  const bottomBoundary = this.height - this.groundHeight - this.dino.height; // 距离地面最小距离
-  
-  if (this.dino.y < topBoundary) {
-    this.dino.y = topBoundary;
-  } else if (this.dino.y > bottomBoundary) {
-    this.dino.y = bottomBoundary;
-  }
-  
-  // 更新云朵特效
-  this.updateCloudEffect();
-  
-  // 无敌状态结束时处理
-  if (this.invincibleTimer > this.invincibleDuration) {
-    console.log('无敌状态结束，进入保护状态');
     
-    // 标记无敌状态结束
-    this.isInvincible = false;
-    this.invincibleTimer = 0;
-    this.dino.isFlying = false;
-    this.cloudEffect.active = false;
+    // 关键部分：保护状态处理必须先于障碍碰撞检测
     
-    // 恢复恐龙原始大小
-    this.dino.width = this.originalDinoSize.width;
-    this.dino.height = this.originalDinoSize.height;
-    this.dino.y = this.height - this.groundHeight - this.dino.height;
+    // 1. 更新无敌状态计时器
+    if (this.isInvincible) {
+      this.invincibleTimer += 16; // 假设16ms为一帧
+      
+      // 无敌状态下保持飞行状态
+      this.dino.isFlying = true;
+      
+      // 添加边界检测，防止飞出屏幕
+      const topBoundary = 20; // 距离顶部最小距离
+      const bottomBoundary = this.height - this.groundHeight - this.dino.height; // 距离地面最小距离
+      
+      if (this.dino.y < topBoundary) {
+        this.dino.y = topBoundary;
+      } else if (this.dino.y > bottomBoundary) {
+        this.dino.y = bottomBoundary;
+      }
+      
+      // 更新云朵特效
+      this.updateCloudEffect();
+      
+      // 无敌状态结束时处理
+      if (this.invincibleTimer >= this.invincibleDuration) {
+        console.log('无敌状态结束，进入保护状态');
+        
+        // 标记无敌状态结束
+        this.isInvincible = false;
+        this.invincibleTimer = 0;
+        this.dino.isFlying = false;
+        this.cloudEffect.active = false;
+        this.cloudEffect.clouds = []; // 确保清空云朵数组
+        
+        // 恢复恐龙原始大小
+        this.dino.width = this.originalDinoSize.width;
+        this.dino.height = this.originalDinoSize.height;
+        
+        // 安全着陆 - 防止接触地面时发生碰撞
+        this.dino.y = this.height - this.groundHeight - this.dino.height;
+        
+        // 立即激活保护状态 - 确保设置为true
+        this.isProtected = true;
+        this.protectionTimer = 0;
+      }
+    }
     
-    // 立即激活保护状态
-    this.isProtected = true;
-    this.protectionTimer = 0;
-  }
-}
-
-// 更新保护状态计时器
-if (this.isProtected) {
-  this.protectionTimer += 16; // 假设16ms为一帧
-  console.log('保护状态计时器:', this.protectionTimer, '/', this.protectionDuration);
-  
-  // 保护状态结束
-  if (this.protectionTimer > this.protectionDuration) {
-    this.isProtected = false;
-    this.protectionTimer = 0;
-    console.log('保护状态结束，恢复正常状态');
-  }
-}
+    // 2. 更新保护状态计时器
+    if (this.isProtected) {
+      this.protectionTimer += 16; // 假设16ms为一帧
+      console.log('保护状态计时器:', this.protectionTimer, '/', this.protectionDuration);
+      
+      // 保护状态结束
+      if (this.protectionTimer >= this.protectionDuration) {
+        this.isProtected = false;
+        this.protectionTimer = 0;
+        console.log('保护状态结束，恢复正常状态');
+      }
+    }
+    
+    // 3. 更新水果和障碍物位置
+    
     // 增加速度
     if (this.speed < this.maxSpeed) {
       this.speed += this.acceleration;
@@ -705,13 +714,13 @@ if (this.isProtected) {
       }
     }
     
-    // 随机生成新的云朵 - 进一步放大
+    // 随机生成新的云朵
     if (Math.random() < 0.005) {
       this.clouds.push({
         x: this.width,
         y: Math.random() * (this.height / 2 - 120),
-        width: 180, // 恢复为原始宽度
-        height: 120  // 恢复为原始高度
+        width: 180,
+        height: 120
       });
     }
     
@@ -726,7 +735,6 @@ if (this.isProtected) {
       }
     }
     
-    
     // 生成新的障碍物
     const now = Date.now();
     if (now - this.lastObstacleTime > this.obstacleInterval) {
@@ -740,17 +748,18 @@ if (this.isProtected) {
         this.obstacleInterval = Math.max(800, 1500 - this.score / 10);
       }
     }
-
-        // 更新水果位置
-        for (let i = 0; i < this.fruits.length; i++) {
-          this.fruits[i].x -= this.speed;
-          
-          // 如果水果移出屏幕，将其删除
-          if (this.fruits[i].x + this.fruits[i].width < 0) {
-            this.fruits.splice(i, 1);
-            i--;
-          }
-        }
+    
+    // 更新水果位置
+    for (let i = 0; i < this.fruits.length; i++) {
+      this.fruits[i].x -= this.speed;
+      
+      // 如果水果移出屏幕，将其删除
+      if (this.fruits[i].x + this.fruits[i].width < 0) {
+        this.fruits.splice(i, 1);
+        i--;
+      }
+    }
+    
     // 生成新的水果
     if (now - this.lastFruitTime > this.fruitInterval) {
       if (Math.random() < this.fruitType.probability) {
@@ -758,9 +767,13 @@ if (this.isProtected) {
         this.lastFruitTime = now;
       }
     }
-    // 检测恐龙与水果的碰撞
+    
+    // 4. 关键检测部分：先检查水果碰撞，再检查障碍物碰撞
+    
+    // 检测恐龙与水果的碰撞 - 可能触发无敌状态
     this.checkFruitCollisions();
-    // 检测碰撞
+    
+    // 检测障碍物碰撞 - 必须在所有状态更新之后
     this.checkCollisions();
     
     // 更新日/夜状态
@@ -1308,32 +1321,33 @@ checkCollisions() {
     this.ctx.fillText(`无敌: ${secondsLeft}秒`, 20, 50);
   }
   
-  // 如果处于保护状态，显示提示和闪烁效果
-  if (this.isProtected) {
-    // 每150ms闪烁一次
-    if (Math.floor(this.protectionTimer / 150) % 2 === 0) {
-      // 绘制保护状态提示文字
-      const secondsLeft = Math.ceil((this.protectionDuration - this.protectionTimer) / 1000);
-      this.ctx.font = '18px Arial';
-      this.ctx.fillStyle = '#FF6347'; // 橙红色字体
-      this.ctx.textAlign = 'left';
-      this.ctx.fillText(`保护: ${secondsLeft}秒`, 20, 80);
-      
-      // 绘制保护状态光环
-      this.ctx.save();
-      this.ctx.beginPath();
-      this.ctx.arc(
-        this.dino.x + this.dino.width / 2,
-        this.dino.y + this.dino.height / 2,
-        Math.max(this.dino.width, this.dino.height) * 0.7,
-        0, Math.PI * 2
-      );
-      this.ctx.strokeStyle = 'rgba(255, 99, 71, 0.5)'; // 半透明橙红色
-      this.ctx.lineWidth = 3;
-      this.ctx.stroke();
-      this.ctx.restore();
-    }
+// 如果处于保护状态，显示提示和闪烁效果
+if (this.isProtected) {
+  // 每150ms闪烁一次
+  if (Math.floor(this.protectionTimer / 150) % 2 === 0) {
+    // 绘制保护状态提示文字
+    const secondsLeft = Math.ceil((this.protectionDuration - this.protectionTimer) / 1000);
+    this.ctx.font = '18px Arial';
+    this.ctx.fillStyle = '#FF6347'; // 橙红色字体
+    this.ctx.textAlign = 'left';
+    this.ctx.fillText(`保护: ${secondsLeft}秒`, 20, 80);
+    
+    // 绘制保护状态光环 - 使用不同颜色区分无敌状态
+    this.ctx.save();
+    this.ctx.beginPath();
+    this.ctx.arc(
+      this.dino.x + this.dino.width / 2,
+      this.dino.y + this.dino.height / 2,
+      Math.max(this.dino.width, this.dino.height) * 0.7,
+      0, Math.PI * 2
+    );
+    this.ctx.strokeStyle = 'rgba(255, 99, 71, 0.7)'; // 更明显的橙红色
+    this.ctx.lineWidth = 4; // 加粗线条
+    this.ctx.setLineDash([8, 4]); // 添加虚线效果，区分无敌状态
+    this.ctx.stroke();
+    this.ctx.restore();
   }
+}
     // 用于调试的碰撞盒绘制
     if (false) { // 设置为true可以显示碰撞盒
       const box = this.getCollisionBox(this.dino);
@@ -1673,48 +1687,6 @@ checkFruitCollisions() {
   }
 }
   
-  checkCollisions() {
-    // 获取恐龙碰撞盒
-    const dinoBox = this.getCollisionBox(this.dino);
-    
-    // 对每个障碍物进行碰撞检测
-    for (let i = 0; i < this.obstacles.length; i++) {
-      const obstacle = this.obstacles[i];
-      const obstacleBox = this.getCollisionBox(obstacle);
-      
-      // 如果发生碰撞
-      if (this.isColliding(dinoBox, obstacleBox)) {
-        if (this.isInvincible) {
-          // 无敌状态下，撞飞障碍物
-          obstacle.x = -obstacle.width; // 直接移出屏幕
-          this.score += 1; // 额外加分
-          this.scoreElement.textContent = this.score;
-          continue;
-        }
-        
-        // 非无敌状态下，游戏结束
-        this.gameOver = true;
-        this.isPlaying = false;
-        
-        // 更新最高分
-        if (this.score > this.highScore) {
-          this.highScore = this.score;
-          this.highScoreElement.textContent = this.highScore;
-          localStorage.setItem('dinoHighScore', this.highScore);
-        }
-        
-        // 停止游戏循环
-        if (this.animationFrameId) {
-          cancelAnimationFrame(this.animationFrameId);
-          this.animationFrameId = null;
-        }
-        
-        // 绘制游戏结束画面
-        this.drawGameOver();
-        return;
-      }
-    }
-  }
   // 获取角色图片路径的辅助方法
   getCharacterPath(characterId) {
     const character = this.characters.find(char => char.id === characterId);
