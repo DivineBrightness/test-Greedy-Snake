@@ -1803,7 +1803,7 @@ class DinoGame {
         // 水平均匀分布在恐龙周围
         x: this.dino.x + this.dino.width/2 - 60 + (i - cloudCount/2) * 50,
         // 固定在脚下位置
-        y: this.dino.y + this.dino.height + 10,
+        y: this.dino.y + this.dino.height-5,
         width: 120, // 固定宽度
         height: 60, // 固定高度
         offsetX: 40,  // 固定水平漂浮范围
@@ -1833,7 +1833,7 @@ class DinoGame {
       
       // 基础位置始终跟随恐龙
       const baseX = this.dino.x + this.dino.width/2 - cloud.width/2;
-      const baseY = this.dino.y + this.dino.height + 10; // 固定在脚下位置
+      const baseY = this.dino.y + this.dino.height-5; // 固定在脚下位置
       
       // 根据角度添加小幅度波动
       cloud.x = baseX + Math.sin(cloud.angle) * cloud.offsetX;
