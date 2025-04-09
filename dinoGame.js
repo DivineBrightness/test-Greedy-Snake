@@ -949,7 +949,7 @@ class DinoGame {
         this.ctx.fill();
       }
     }
-    // 1. 绘制后面的云朵 (低zIndex)
+    // 绘制后面的云朵 (低zIndex)
     if (this.cloudEffect.active && this.cloudEffect.clouds.length > 0) {
       for (const cloud of this.cloudEffect.clouds) {
         // 只绘制zIndex < 5的云朵(恐龙后面的云)
@@ -957,14 +957,52 @@ class DinoGame {
           this.ctx.save();
           this.ctx.globalAlpha = cloud.opacity;
           
+          // 添加金色辉光效果
+          this.ctx.shadowColor = 'rgba(255, 215, 0, 0.8)'; // 金色阴影
+          this.ctx.shadowBlur = 15; // 阴影模糊程度
+          this.ctx.shadowOffsetX = 0;
+          this.ctx.shadowOffsetY = 0;
+          
           if (this.cloudEffect.image && this.cloudEffect.image.complete) {
+            // 在绘制前，先绘制金色光晕底层
+            this.ctx.globalAlpha = 0.4; // 降低透明度，使光晕效果更柔和
+            this.ctx.drawImage(
+              this.cloudEffect.image,
+              cloud.x - 5, cloud.y - 5, // 稍微偏移
+              (cloud.width + 10) * cloud.scale, // 扩大尺寸，创造光晕效果
+              (cloud.height + 10) * cloud.scale
+            );
+            
+            // 恢复原始透明度，绘制主要云朵图像
+            this.ctx.globalAlpha = cloud.opacity;
             this.ctx.drawImage(
               this.cloudEffect.image,
               cloud.x, cloud.y,
-              cloud.width * cloud.scale, cloud.height * cloud.scale
+              cloud.width * cloud.scale, 
+              cloud.height * cloud.scale
             );
           } else {
             // 备用绘制方法
+            // 先绘制金色光晕
+            this.ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+            this.ctx.beginPath();
+            this.ctx.ellipse(
+              cloud.x + cloud.width/3, 
+              cloud.y + cloud.height/2, 
+              (cloud.width/2 + 5) * cloud.scale, 
+              (cloud.height/2 + 5) * cloud.scale, 
+              0, 0, Math.PI * 2
+            );
+            this.ctx.ellipse(
+              cloud.x + cloud.width*2/3, 
+              cloud.y + cloud.height/2, 
+              (cloud.width/2 + 5) * cloud.scale, 
+              (cloud.height/2 + 5) * cloud.scale, 
+              0, 0, Math.PI * 2
+            );
+            this.ctx.fill();
+            
+            // 然后绘制主要云朵
             this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
             this.ctx.beginPath();
             this.ctx.ellipse(
@@ -1126,44 +1164,82 @@ class DinoGame {
       }
     }
     // 3. 绘制前面的云朵 (高zIndex)
-  if (this.cloudEffect.active && this.cloudEffect.clouds.length > 0) {
-    for (const cloud of this.cloudEffect.clouds) {
-      // 只绘制zIndex >= 5的云朵(恐龙前面的云)
-      if (cloud.zIndex >= 5) {
-        this.ctx.save();
-        this.ctx.globalAlpha = cloud.opacity;
-        
-        if (this.cloudEffect.image && this.cloudEffect.image.complete) {
-          this.ctx.drawImage(
-            this.cloudEffect.image,
-            cloud.x, cloud.y,
-            cloud.width * cloud.scale, cloud.height * cloud.scale
-          );
-        } else {
-          // 备用绘制方法
-          this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-          this.ctx.beginPath();
-          this.ctx.ellipse(
-            cloud.x + cloud.width/3, 
-            cloud.y + cloud.height/2, 
-            cloud.width/2 * cloud.scale, 
-            cloud.height/2 * cloud.scale, 
-            0, 0, Math.PI * 2
-          );
-          this.ctx.ellipse(
-            cloud.x + cloud.width*2/3, 
-            cloud.y + cloud.height/2, 
-            cloud.width/2 * cloud.scale, 
-            cloud.height/2 * cloud.scale, 
-            0, 0, Math.PI * 2
-          );
-          this.ctx.fill();
+    if (this.cloudEffect.active && this.cloudEffect.clouds.length > 0) {
+      for (const cloud of this.cloudEffect.clouds) {
+        // 只绘制zIndex >= 5的云朵(恐龙前面的云)
+        if (cloud.zIndex >= 5) {
+          this.ctx.save();
+          this.ctx.globalAlpha = cloud.opacity;
+          
+          // 添加金色辉光效果
+          this.ctx.shadowColor = 'rgba(255, 215, 0, 0.8)'; // 金色阴影
+          this.ctx.shadowBlur = 15; // 阴影模糊程度
+          this.ctx.shadowOffsetX = 0;
+          this.ctx.shadowOffsetY = 0;
+          
+          if (this.cloudEffect.image && this.cloudEffect.image.complete) {
+            // 在绘制前，先绘制金色光晕底层
+            this.ctx.globalAlpha = 0.4; // 降低透明度，使光晕效果更柔和
+            this.ctx.drawImage(
+              this.cloudEffect.image,
+              cloud.x - 5, cloud.y - 5, // 稍微偏移
+              (cloud.width + 10) * cloud.scale, // 扩大尺寸，创造光晕效果
+              (cloud.height + 10) * cloud.scale
+            );
+            
+            // 恢复原始透明度，绘制主要云朵图像
+            this.ctx.globalAlpha = cloud.opacity;
+            this.ctx.drawImage(
+              this.cloudEffect.image,
+              cloud.x, cloud.y,
+              cloud.width * cloud.scale, 
+              cloud.height * cloud.scale
+            );
+          } else {
+            // 备用绘制方法，同上
+            // 先绘制金色光晕
+            this.ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+            this.ctx.beginPath();
+            this.ctx.ellipse(
+              cloud.x + cloud.width/3, 
+              cloud.y + cloud.height/2, 
+              (cloud.width/2 + 5) * cloud.scale, 
+              (cloud.height/2 + 5) * cloud.scale, 
+              0, 0, Math.PI * 2
+            );
+            this.ctx.ellipse(
+              cloud.x + cloud.width*2/3, 
+              cloud.y + cloud.height/2, 
+              (cloud.width/2 + 5) * cloud.scale, 
+              (cloud.height/2 + 5) * cloud.scale, 
+              0, 0, Math.PI * 2
+            );
+            this.ctx.fill();
+            
+            // 然后绘制主要云朵
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            this.ctx.beginPath();
+            this.ctx.ellipse(
+              cloud.x + cloud.width/3, 
+              cloud.y + cloud.height/2, 
+              cloud.width/2 * cloud.scale, 
+              cloud.height/2 * cloud.scale, 
+              0, 0, Math.PI * 2
+            );
+            this.ctx.ellipse(
+              cloud.x + cloud.width*2/3, 
+              cloud.y + cloud.height/2, 
+              cloud.width/2 * cloud.scale, 
+              cloud.height/2 * cloud.scale, 
+              0, 0, Math.PI * 2
+            );
+            this.ctx.fill();
+          }
+          
+          this.ctx.restore();
         }
-        
-        this.ctx.restore();
       }
     }
-  }
     // 如果处于无敌状态，显示倒计时
     if (this.isInvincible) {
       const secondsLeft = Math.ceil((this.invincibleDuration - this.invincibleTimer) / 1000);
@@ -1736,7 +1812,9 @@ class DinoGame {
         angleSpeed: 0.01, // 固定角速度
         opacity: 0.8,  // 固定透明度
         scale: 1.0,  // 固定比例
-        zIndex: i < cloudCount/2 ? 3 : 7 // 前一半在恐龙后面，后一半在恐龙前面
+        zIndex: i < cloudCount/2 ? 3 : 7, // 前一半在恐龙后面，后一半在恐龙前面
+        pulsateOffset: i * (Math.PI / 2.5), // 每个云朵的脉动相位不同，创造波浪效果
+        pulsateSpeed: 0.05 // 脉动速度
       });
     }
     
@@ -1763,6 +1841,13 @@ class DinoGame {
       
       // 添加小幅度偏移，营造更自然的感觉
       cloud.x += Math.sin(this.frameCount * 0.01 + i * 0.5) * 3;
+      
+      // 更新脉动相位，制造金色辉光的脉动效果
+      cloud.pulsateOffset += cloud.pulsateSpeed;
+      // 让opacity有轻微变化，范围在0.7到0.9之间
+      cloud.opacity = 0.7 + 0.2 * Math.sin(cloud.pulsateOffset);
+      // 让scale有轻微变化，范围在0.95到1.05之间
+      cloud.scale = 1.0 + 0.05 * Math.sin(cloud.pulsateOffset * 1.3);
     }
     
     // 如果无敌状态结束，停止云朵效果
