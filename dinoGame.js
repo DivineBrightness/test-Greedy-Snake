@@ -4,9 +4,12 @@ class DinoGame {
     this.characters = [
       { id: "恐龙", name: "恐龙", path: "./image/dino/character/恐龙.svg" },
       { id: "奶龙", name: "小恐龙", path: "./image/dino/character/奶龙.svg" },
+      { id: "皮卡丘", name: "皮卡丘", path: "./image/dino/character/皮卡丘.svg" },
       { id: "杰尼龟", name: "杰尼龟", path: "./image/dino/character/杰尼龟.svg" },
       { id: "波克比", name: "波克比", path: "./image/dino/character/波克比.svg" },
       { id: "妙蛙种子", name: "妙蛙种子", path: "./image/dino/character/妙蛙种子.svg" },
+      { id: "可达鸭", name: "可达鸭", path: "./image/dino/character/可达鸭.svg" },
+      { id: "小火龙", name: "小火龙", path: "./image/dino/character/小火龙.svg" },
     ];
     // 从localStorage加载选择的角色或使用默认角色
     this.selectedCharacter = localStorage.getItem('dinoCharacter') || "杰尼龟";
