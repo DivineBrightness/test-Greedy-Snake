@@ -10,6 +10,7 @@ class DinoGame {
       { id: "妙蛙种子", name: "妙蛙种子", path: "./image/dino/character/妙蛙种子.svg" },
       { id: "可达鸭", name: "可达鸭", path: "./image/dino/character/可达鸭.svg" },
       { id: "小火龙", name: "小火龙", path: "./image/dino/character/小火龙.svg" },
+      { id: "菊草叶", name: "菊草叶", path: "./image/dino/character/菊草叶.svg" },
     ];
     // 从localStorage加载选择的角色或使用默认角色
     this.selectedCharacter = localStorage.getItem('dinoCharacter') || "杰尼龟";
