@@ -89,6 +89,9 @@
 如有问题或建议，请提交 [Issue](https://github.com/DivineBrightness/test-Greedy-Snake/issues)。
 
 ## 更新日志
+### 版本 1.5.4 - 2025年4月11日
+- **调整**：
+  - 手机页面加宽
 ### 版本 1.5.3 - 2025年4月9日
 - **调整**：
   - 小恐龙样式
