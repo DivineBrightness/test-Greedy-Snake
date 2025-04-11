@@ -130,7 +130,7 @@ class DinoGame {
     this.distance = 0;
     this.isNight = false; // 日/夜模式
     this.nightTimer = 0;
-    this.nightInterval = 30000; // 30秒切换一次日/夜
+    this.nightInterval = 60000; // 30秒切换一次日/夜
     
       // 添加星星相关属性
     this.stars = [];
