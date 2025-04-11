@@ -29,7 +29,8 @@ class SnakeGame {
       // 添加怪物图像
       this.monsterImg = new Image();
       // this.monsterImg.src = './image/monster.svg';
-      this.monsterImg.src = './image/avatar.svg';
+      // this.monsterImg.src = './image/avatar.svg';
+      this.monsterImg.src = './image/rooster.svg'; // 使用新的怪物图像
 
       // 添加怪物位置和移动属性
       const centerX = Math.floor(this.widthInBlocks / 2);
@@ -1045,7 +1046,7 @@ checkCollision(head) {
       const fireEndY = fireOriginY + direction.y * fireLength;
       
       // 调试信息
-      console.log(`检查火焰线 - 起点: (${fireOriginX}, ${fireOriginY}), 终点: (${fireEndX}, ${fireEndY})`);
+      // console.log(`检查火焰线 - 起点: (${fireOriginX}, ${fireOriginY}), 终点: (${fireEndX}, ${fireEndY})`);
       
       // 线段上的每个点进行检查 (使用光线投射算法)
       // 先计算两点之间的差值
