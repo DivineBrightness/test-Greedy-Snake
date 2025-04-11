@@ -97,6 +97,13 @@ class DinoGame {
     this.nightTimer = 0;
     this.nightInterval = 30000; // 30秒切换一次日/夜
     
+      // 添加星星相关属性
+    this.stars = [];
+    this.starCount = 50; // 星星数量
+    this.nightTransition = false;
+    this.nightTransitionProgress = 0;
+    this.nightTransitionDuration = 1000; // 过渡动画持续1秒
+
     // 云朵和地面装饰
     this.clouds = [];
     this.grounds = this.initGrounds();
@@ -799,12 +806,39 @@ class DinoGame {
     // 检测障碍物碰撞 - 必须在所有状态更新之后
     this.checkCollisions();
     
-    // 更新日/夜状态
-    this.nightTimer += 16; // 假设16ms为一帧
-    if (this.nightTimer > this.nightInterval) {
-      this.isNight = !this.isNight;
-      this.nightTimer = 0;
+  // 更新日/夜状态
+  this.nightTimer += 16; // 假设16ms为一帧
+  if (this.nightTimer > this.nightInterval) {
+    // 开始日夜切换过渡
+    this.isNight = !this.isNight;
+    this.nightTimer = 0;
+    this.nightTransition = true;
+    this.nightTransitionProgress = 0;
+    
+    // 如果切换到夜晚，生成星星
+    if (this.isNight) {
+      this.generateStars();
+    } else {
+      // 白天时清除星星
+      this.stars = [];
     }
+  }
+  
+  // 更新日夜过渡
+  if (this.nightTransition) {
+    this.nightTransitionProgress += 16;
+    if (this.nightTransitionProgress >= this.nightTransitionDuration) {
+      this.nightTransition = false;
+    }
+  }
+  
+  // 更新星星闪烁效果
+  if (this.isNight && this.stars.length > 0) {
+    for (const star of this.stars) {
+      // 更新闪烁状态
+      star.flicker = 0.5 + 0.5 * Math.sin(this.frameCount * star.flickerSpeed + star.flickerOffset);
+    }
+  }
   }
   
   generateObstacle() {
@@ -855,7 +889,20 @@ class DinoGame {
     this.obstacles.push(obstacle);
   }
   
-
+// 添加生成星星的方法
+generateStars() {
+  this.stars = [];
+  for (let i = 0; i < this.starCount; i++) {
+    this.stars.push({
+      x: Math.random() * this.width,
+      y: Math.random() * (this.height / 2), // 只在屏幕上半部分生成星星
+      size: Math.random() * 2 + 1, // 星星大小在1-3像素之间
+      flickerSpeed: Math.random() * 0.08 + 0.02, // 随机闪烁速度
+      flickerOffset: Math.random() * Math.PI * 2, // 随机初始相位
+      flicker: 1 // 当前亮度
+    });
+  }
+}
 // 修改 checkCollisions 方法，确保保护状态正确工作
 checkCollisions() {
   // 获取恐龙碰撞盒
@@ -934,21 +981,83 @@ checkCollisions() {
            box1.y + box1.height > box2.y;
   }
   
-  draw() {
-    // 清除画布
-    this.ctx.clearRect(0, 0, this.width, this.height);
+// 修改draw方法，添加星星和日夜过渡效果绘制
+draw() {
+  // 清除画布
+  this.ctx.clearRect(0, 0, this.width, this.height);
+  
+  // 设置颜色基于日/夜模式
+  const backgroundColor = this.isNight ? '#121224' : '#f7f7f7'; // 深化夜空颜色
+  const groundColor = this.isNight ? '#2d2d3f' : '#bcbcbc'; // 调整夜间地面颜色
+  const textColor = this.isNight ? '#f7f7f7' : '#535353';
+  
+  // 绘制背景
+  this.ctx.fillStyle = backgroundColor;
+  this.ctx.fillRect(0, 0, this.width, this.height);
+  
+  // 如果是夜晚，绘制星星
+  if (this.isNight) {
+    // 绘制渐变夜空背景
+    const gradient = this.ctx.createLinearGradient(0, 0, 0, this.height/2);
+    gradient.addColorStop(0, '#0a0a20'); // 接近黑色的深蓝色
+    gradient.addColorStop(1, '#1a1a30'); // 稍微亮一点的深蓝色
+    this.ctx.fillStyle = gradient;
+    this.ctx.fillRect(0, 0, this.width, this.height/2);
     
-    // 设置颜色基于日/夜模式
-    const backgroundColor = this.isNight ? '#292927' : '#f7f7f7';
-    const groundColor = this.isNight ? '#4a4a4a' : '#bcbcbc';
-    const textColor = this.isNight ? '#f7f7f7' : '#535353';
-    
-    // 绘制背景
-    this.ctx.fillStyle = backgroundColor;
+    // 绘制星星
+    for (const star of this.stars) {
+      this.ctx.save();
+      // 使用星星的闪烁值作为透明度
+      this.ctx.globalAlpha = star.flicker;
+      
+      // 添加星星的光晕效果
+      this.ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+      this.ctx.shadowBlur = 5;
+      
+      // 绘制星星
+      this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      this.ctx.beginPath();
+      this.ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+      this.ctx.fill();
+      
+      // 为一些星星添加十字光芒
+      if (star.size > 2) {
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        this.ctx.lineWidth = 0.5;
+        this.ctx.beginPath();
+        // 水平线
+        this.ctx.moveTo(star.x - star.size * 2, star.y);
+        this.ctx.lineTo(star.x + star.size * 2, star.y);
+        // 垂直线
+        this.ctx.moveTo(star.x, star.y - star.size * 2);
+        this.ctx.lineTo(star.x, star.y + star.size * 2);
+        this.ctx.stroke();
+      }
+      
+      this.ctx.restore();
+    }
+  }
+  
+  // 如果正在过渡，绘制过渡效果
+  if (this.nightTransition) {
+    const progress = this.nightTransitionProgress / this.nightTransitionDuration;
+    if (this.isNight) {
+      // 白天到黑夜的过渡
+      this.ctx.fillStyle = `rgba(18, 18, 36, ${progress})`;
+    } else {
+      // 黑夜到白天的过渡
+      this.ctx.fillStyle = `rgba(247, 247, 247, ${progress})`;
+    }
     this.ctx.fillRect(0, 0, this.width, this.height);
+  }
     
     // 绘制云朵 - 使用新的cloud2.svg图像
     for (const cloud of this.clouds) {
+    // 夜间模式下调整云朵颜色
+    if (this.isNight) {
+      this.ctx.globalAlpha = 0.6; // 夜间云朵更透明
+    }
+    
       if (this.images.backgroundCloud && this.images.backgroundCloud.complete && this.images.backgroundCloud.naturalWidth > 0) {
         // 使用加载的云朵图像，保持原始尺寸
         this.ctx.drawImage(
@@ -966,6 +1075,7 @@ checkCollisions() {
         this.ctx.arc(cloud.x + cloud.width*2/3, cloud.y + cloud.height/2, cloud.height/1.5, 0, Math.PI * 2);
         this.ctx.fill();
       }
+      this.ctx.globalAlpha = 1.0; // 恢复正常透明度
     }
   
   
