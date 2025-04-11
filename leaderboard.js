@@ -74,7 +74,7 @@ async function loadLeaderboard(game, elementId) {
       } else if (game === 'tetris') {
         gameTitle = '俄罗斯方块';
       } else if (game === 'dino') {
-        gameTitle = '恐龙跳跃';
+        gameTitle = '恐龙快跑';
       } else {
         gameTitle = '游戏';
       }
