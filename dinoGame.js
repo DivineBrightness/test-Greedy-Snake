@@ -14,6 +14,9 @@ class DinoGame {
     // 从localStorage加载选择的角色或使用默认角色
     this.selectedCharacter = localStorage.getItem('dinoCharacter') || "杰尼龟";
 
+
+
+
     // 添加飞天特效相关属性
     this.cloudEffect = {
       active: false,
@@ -57,9 +60,41 @@ class DinoGame {
     this.width = this.canvas.width;
     this.height = this.canvas.height;
     this.groundHeight = 60; // 地面高度
+
     this.speed = 5; // 初始速度
     this.maxSpeed = 36; // 最大速度
     this.acceleration = 0.01; // 加速度
+
+    
+      // 添加太阳和月亮相关属性
+  this.sun = {
+    x: this.width - 120,  // 右上角位置
+    y: 100,               // 顶部位置
+    width: 80,           // 宽度
+    height: 80,          // 高度
+    rotation: 0,         // 旋转角度
+    rotationSpeed: 0.002, // 旋转速度
+    image: null,         // 太阳图像
+    visible: !this.isNight // 白天可见
+  };
+  
+  this.moon = {
+    x: this.width - 120,  // 右上角位置 
+    y: 100,               // 顶部位置
+    width: 70,            // 宽度
+    height: 70,           // 高度
+    rotation: 0,          // 旋转角度
+    rotationSpeed: 0.001, // 旋转速度
+    image: null,          // 月亮图像
+    visible: this.isNight, // 夜晚可见
+    phase: 0              // 月相
+  };
+  
+  // 日月升降动画状态
+  this.sunRising = false;
+  this.sunSetting = false;
+  this.moonRising = false;
+  this.moonSetting = false;
     
     // 放大恐龙尺寸
     this.dino = {
@@ -122,6 +157,7 @@ class DinoGame {
   }
   
   loadImages() {
+    
     // 获取当前选择的角色路径
     const characterPath = this.getCharacterPath(this.selectedCharacter);
     
@@ -150,7 +186,7 @@ class DinoGame {
     
     // 简化图片加载计数
     this.imagesLoaded = 0;
-    this.totalImages = 8; // 增加1个图片计数，加入背景云朵
+    this.totalImages = 10; // 增加1个图片计数，加入背景云朵
     
     // 添加云朵图像加载，并加入控制台日志
     this.cloudEffect.image = this.loadImage('./image/dino/cloud.svg');
@@ -166,7 +202,20 @@ class DinoGame {
     } else {
       console.error('无法创建云朵图像对象');
     }
+    // 加载太阳和月亮图像
+    this.sun.image = this.loadImage('./image/dino/sun.svg');
+    this.moon.image = this.loadImage('./image/dino/moon.svg');
     
+    // 添加加载事件
+    if (this.sun.image) {
+      this.sun.image.onload = () => this.imageLoaded();
+      this.sun.image.onerror = () => this.imageLoaded();
+    }
+    
+    if (this.moon.image) {
+      this.moon.image.onload = () => this.imageLoaded();
+      this.moon.image.onerror = () => this.imageLoaded();
+    }
     // 添加图像加载完成事件
     if (this.images.dino.run1) {
       this.images.dino.run1.onload = () => this.imageLoaded();
@@ -806,6 +855,12 @@ class DinoGame {
     // 检测障碍物碰撞 - 必须在所有状态更新之后
     this.checkCollisions();
     
+    // 更新太阳旋转
+    this.sun.rotation += this.sun.rotationSpeed;
+  
+    // 更新月亮旋转
+    this.moon.rotation += this.moon.rotationSpeed;
+    
   // 更新日/夜状态
   this.nightTimer += 16; // 假设16ms为一帧
   if (this.nightTimer > this.nightInterval) {
@@ -818,9 +873,65 @@ class DinoGame {
     // 如果切换到夜晚，生成星星
     if (this.isNight) {
       this.generateStars();
+      
+      // 太阳下落，月亮升起
+      this.sunSetting = true;
+      this.moonRising = true;
+      
+      // 初始化月亮位置 (屏幕外)
+      this.moon.y = this.height + this.moon.height;
+      this.moon.visible = true; // 确保月亮可见性设置为true
+      // 不要立即隐藏太阳，让它慢慢落下
     } else {
       // 白天时清除星星
       this.stars = [];
+      
+      // 月亮下落，太阳升起
+      this.moonSetting = true;
+      this.sunRising = true;
+      
+      // 初始化太阳位置 (屏幕外)
+      this.sun.y = this.height + this.sun.height;
+      this.sun.visible = true; // 确保太阳可见性设置为true
+      // 不要立即隐藏月亮，让它慢慢落下
+    }
+  }
+  
+  // 太阳升起动画
+  if (this.sunRising) {
+    this.sun.y -= 8; // 太阳上升速度
+    if (this.sun.y <= 100) { // 目标高度
+      this.sun.y = 100;
+      this.sunRising = false;
+    }
+    this.sun.visible = true; // 确保在整个上升过程中太阳可见
+  }
+  
+  // 太阳下落动画
+  if (this.sunSetting) {
+    this.sun.y += 8; // 太阳下落速度
+    if (this.sun.y >= this.height + this.sun.height) {
+      this.sunSetting = false;
+      this.sun.visible = false; // 太阳完全落下后不可见
+    }
+  }
+  
+  // 月亮升起动画
+  if (this.moonRising) {
+    this.moon.y -= 8; // 月亮上升速度
+    if (this.moon.y <= 100) { // 目标高度
+      this.moon.y = 100;
+      this.moonRising = false;
+    }
+    this.moon.visible = true; // 确保在整个上升过程中月亮可见
+  }
+  
+  // 月亮下落动画
+  if (this.moonSetting) {
+    this.moon.y += 8; // 月亮下落速度
+    if (this.moon.y >= this.height + this.moon.height) {
+      this.moonSetting = false;
+      this.moon.visible = false; // 月亮完全落下后不可见
     }
   }
   
@@ -981,21 +1092,21 @@ checkCollisions() {
            box1.y + box1.height > box2.y;
   }
   
-// 修改draw方法，添加星星和日夜过渡效果绘制
+// 修改draw方法中的绘制顺序，确保月亮在夜空背景之上
 draw() {
   // 清除画布
   this.ctx.clearRect(0, 0, this.width, this.height);
   
   // 设置颜色基于日/夜模式
-  const backgroundColor = this.isNight ? '#121224' : '#f7f7f7'; // 深化夜空颜色
-  const groundColor = this.isNight ? '#2d2d3f' : '#bcbcbc'; // 调整夜间地面颜色
+  const backgroundColor = this.isNight ? '#121224' : '#f7f7f7';
+  const groundColor = this.isNight ? '#2d2d3f' : '#bcbcbc';
   const textColor = this.isNight ? '#f7f7f7' : '#535353';
   
   // 绘制背景
   this.ctx.fillStyle = backgroundColor;
   this.ctx.fillRect(0, 0, this.width, this.height);
   
-  // 如果是夜晚，绘制星星
+  // 如果是夜晚，先绘制渐变夜空背景
   if (this.isNight) {
     // 绘制渐变夜空背景
     const gradient = this.ctx.createLinearGradient(0, 0, 0, this.height/2);
@@ -1005,45 +1116,25 @@ draw() {
     this.ctx.fillRect(0, 0, this.width, this.height/2);
     
     // 绘制星星
-    for (const star of this.stars) {
-      this.ctx.save();
-      // 使用星星的闪烁值作为透明度
-      this.ctx.globalAlpha = star.flicker;
-      
-      // 添加星星的光晕效果
-      this.ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
-      this.ctx.shadowBlur = 5;
-      
-      // 绘制星星
-      this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-      this.ctx.beginPath();
-      this.ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-      this.ctx.fill();
-      
-      // 为一些星星添加十字光芒
-      if (star.size > 2) {
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-        this.ctx.lineWidth = 0.5;
-        this.ctx.beginPath();
-        // 水平线
-        this.ctx.moveTo(star.x - star.size * 2, star.y);
-        this.ctx.lineTo(star.x + star.size * 2, star.y);
-        // 垂直线
-        this.ctx.moveTo(star.x, star.y - star.size * 2);
-        this.ctx.lineTo(star.x, star.y + star.size * 2);
-        this.ctx.stroke();
-      }
-      
-      this.ctx.restore();
-    }
+    this.drawStars();
+  }
+  
+  // 绘制太阳 (改变绘制顺序，确保在夜空背景之后)
+  if (this.sun.visible) {
+    this.drawSun();
+  }
+  
+  // 绘制月亮 (确保在夜空背景之后)
+  if (this.moon.visible) {
+    this.drawMoon();
   }
   
   // 如果正在过渡，绘制过渡效果
   if (this.nightTransition) {
     const progress = this.nightTransitionProgress / this.nightTransitionDuration;
     if (this.isNight) {
-      // 白天到黑夜的过渡
-      this.ctx.fillStyle = `rgba(18, 18, 36, ${progress})`;
+      // 白天到黑夜的过渡 - 但不要完全不透明
+      this.ctx.fillStyle = `rgba(18, 18, 36, ${progress * 0.8})`;
     } else {
       // 黑夜到白天的过渡
       this.ctx.fillStyle = `rgba(247, 247, 247, ${progress})`;
@@ -1550,7 +1641,221 @@ if (this.isProtected) {
     this.ctx.textAlign = 'right';
     // this.ctx.fillText(`${this.score.toString().padStart(5, '0')}`, this.width - 20, 30);
   }
+  // 添加绘制太阳方法
+drawSun() {
+  this.ctx.save();
   
+  // 绘制发光效果
+  this.ctx.beginPath();
+  const gradient = this.ctx.createRadialGradient(
+    this.sun.x + this.sun.width/2, 
+    this.sun.y + this.sun.height/2, 
+    this.sun.width/2 * 0.7,
+    this.sun.x + this.sun.width/2, 
+    this.sun.y + this.sun.height/2, 
+    this.sun.width/2 * 1.5
+  );
+  gradient.addColorStop(0, 'rgba(255, 225, 125, 0.4)');
+  gradient.addColorStop(1, 'rgba(255, 225, 125, 0)');
+  
+  this.ctx.fillStyle = gradient;
+  this.ctx.arc(
+    this.sun.x + this.sun.width/2, 
+    this.sun.y + this.sun.height/2, 
+    this.sun.width/2 * 1.5, 
+    0, Math.PI * 2
+  );
+  this.ctx.fill();
+  
+  // 绘制太阳图像
+  if (this.sun.image && this.sun.image.complete && this.sun.image.naturalWidth > 0) {
+    // 绘制旋转的太阳
+    this.ctx.translate(
+      this.sun.x + this.sun.width/2, 
+      this.sun.y + this.sun.height/2
+    );
+    this.ctx.rotate(this.sun.rotation);
+    this.ctx.drawImage(
+      this.sun.image,
+      -this.sun.width/2, 
+      -this.sun.height/2,
+      this.sun.width, 
+      this.sun.height
+    );
+  } else {
+    // 备用绘制 - 简单的黄色圆形
+    this.ctx.fillStyle = '#FFD700';
+    this.ctx.beginPath();
+    this.ctx.arc(
+      this.sun.x + this.sun.width/2, 
+      this.sun.y + this.sun.height/2, 
+      this.sun.width/2, 
+      0, Math.PI * 2
+    );
+    this.ctx.fill();
+    
+    // 绘制阳光光芒
+    this.ctx.strokeStyle = '#FFD700';
+    this.ctx.lineWidth = 2;
+    
+    for (let i = 0; i < 12; i++) {
+      const angle = i * Math.PI / 6 + this.sun.rotation;
+      const innerRadius = this.sun.width/2;
+      const outerRadius = this.sun.width/2 * 1.3;
+      
+      this.ctx.beginPath();
+      this.ctx.moveTo(
+        this.sun.x + this.sun.width/2 + innerRadius * Math.cos(angle),
+        this.sun.y + this.sun.height/2 + innerRadius * Math.sin(angle)
+      );
+      this.ctx.lineTo(
+        this.sun.x + this.sun.width/2 + outerRadius * Math.cos(angle),
+        this.sun.y + this.sun.height/2 + outerRadius * Math.sin(angle)
+      );
+      this.ctx.stroke();
+    }
+  }
+  
+  this.ctx.restore();
+}
+// 提取星星绘制为单独方法，方便调整绘制顺序
+drawStars() {
+  if (!this.isNight || this.stars.length === 0) return;
+  
+  for (const star of this.stars) {
+    this.ctx.save();
+    // 使用星星的闪烁值作为透明度
+    this.ctx.globalAlpha = star.flicker;
+    
+    // 添加星星的光晕效果
+    this.ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+    this.ctx.shadowBlur = 5;
+    
+    // 绘制星星
+    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    this.ctx.beginPath();
+    this.ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+    this.ctx.fill();
+    
+    // 为一些星星添加十字光芒
+    if (star.size > 2) {
+      this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      this.ctx.lineWidth = 0.5;
+      this.ctx.beginPath();
+      this.ctx.moveTo(star.x - star.size * 2, star.y);
+      this.ctx.lineTo(star.x + star.size * 2, star.y);
+      this.ctx.moveTo(star.x, star.y - star.size * 2);
+      this.ctx.lineTo(star.x, star.y + star.size * 2);
+      this.ctx.stroke();
+    }
+    
+    this.ctx.restore();
+  }
+}
+
+// 修改 drawMoon 方法，添加错误处理和调试信息
+drawMoon() {
+  // 添加安全检查
+  if (isNaN(this.moon.x) || isNaN(this.moon.y) || 
+      !isFinite(this.moon.x) || !isFinite(this.moon.y) ||
+      this.moon.width <= 0 || this.moon.height <= 0) {
+    console.warn('无效的月亮位置或尺寸，跳过绘制', 
+      {x: this.moon.x, y: this.moon.y, w: this.moon.width, h: this.moon.height});
+    return;
+  }
+
+  this.ctx.save();
+  
+// 增强月亮的光晕效果
+this.ctx.beginPath();
+const gradient = this.ctx.createRadialGradient(
+  this.moon.x + this.moon.width/2, 
+  this.moon.y + this.moon.height/2, 
+  this.moon.width/2 * 0.5, // 稍微缩小内圈
+  this.moon.x + this.moon.width/2, 
+  this.moon.y + this.moon.height/2, 
+  this.moon.width/2 * 2.0  // 扩大外圈
+);
+gradient.addColorStop(0, 'rgba(230, 245, 255, 0.8)'); // 更亮、更不透明
+gradient.addColorStop(0.5, 'rgba(200, 225, 255, 0.3)');
+gradient.addColorStop(1, 'rgba(200, 225, 255, 0)');
+
+this.ctx.fillStyle = gradient;
+this.ctx.arc(
+  this.moon.x + this.moon.width/2, 
+  this.moon.y + this.moon.height/2, 
+  this.moon.width/2 * 2.0, // 扩大绘制范围
+  0, Math.PI * 2
+);
+this.ctx.fill();
+
+// 添加额外的白色边缘光晕
+this.ctx.shadowColor = 'white';
+this.ctx.shadowBlur = 20;
+
+// 绘制月亮图像 - 增加亮度
+if (this.moon.image && this.moon.image.complete && this.moon.image.naturalWidth > 0) {
+  // 确保月亮在任何背景下都明显可见
+  this.ctx.globalCompositeOperation = 'lighter'; // 使用"变亮"混合模式
+  
+  this.ctx.translate(
+    this.moon.x + this.moon.width/2, 
+    this.moon.y + this.moon.height/2
+  );
+  this.ctx.rotate(this.moon.rotation);
+  
+  // 先绘制一个白色背景圆形
+  this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+  this.ctx.beginPath();
+  this.ctx.arc(0, 0, this.moon.width/2 * 0.95, 0, Math.PI * 2);
+  this.ctx.fill();
+  
+  // 然后绘制月亮图像
+  this.ctx.drawImage(
+    this.moon.image,
+    -this.moon.width/2, 
+    -this.moon.height/2,
+    this.moon.width, 
+    this.moon.height
+  );
+} else {
+  // 备用绘制 - 使更明亮
+  this.ctx.fillStyle = '#FFFFFF'; // 纯白色
+  this.ctx.beginPath();
+  this.ctx.arc(
+    this.moon.x + this.moon.width/2, 
+    this.moon.y + this.moon.height/2, 
+    this.moon.width/2, 
+    0, Math.PI * 2
+  );
+  this.ctx.fill();
+  
+  // 添加简易月面纹理 - 灰色偏蓝
+  this.ctx.fillStyle = 'rgba(200, 210, 235, 0.5)';
+  
+  // 月面环形山
+  this.ctx.beginPath();
+  this.ctx.arc(
+    this.moon.x + this.moon.width/2 - this.moon.width/6, 
+    this.moon.y + this.moon.height/2 - this.moon.height/6, 
+    this.moon.width/10, 
+    0, Math.PI * 2
+  );
+  this.ctx.fill();
+  
+  this.ctx.beginPath();
+  this.ctx.arc(
+    this.moon.x + this.moon.width/2 + this.moon.width/7, 
+    this.moon.y + this.moon.height/2 + this.moon.height/7, 
+    this.moon.width/12, 
+    0, Math.PI * 2
+  );
+  this.ctx.fill();
+}
+  
+  this.ctx.restore();
+}
+
   drawGameOver() {
     // 绘制游戏结束状态
     this.draw();
@@ -1683,7 +1988,17 @@ if (this.isProtected) {
     this.dino.width = this.originalDinoSize.width;
     this.dino.height = this.originalDinoSize.height;
     this.dino.isFlying = false; // 重置飞行状态
- 
+  // 重置日月状态 - 修正逻辑以匹配当前日夜状态
+  this.isNight = false; // 默认从白天开始
+  this.nightTimer = 0;
+  this.sun.visible = true; // 白天时太阳可见
+  this.moon.visible = false; // 白天时月亮不可见
+  this.sun.y = 100;
+  this.moon.y = 100;
+  this.sunRising = false;
+  this.sunSetting = false;
+  this.moonRising = false;
+  this.moonSetting = false;
 
     // 清除动画帧
     if (this.animationFrameId) {
