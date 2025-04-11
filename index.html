@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="./snakeGame.css?v=1.5.1">
   <link rel="stylesheet" href="./cardGame.css?v=1.5.2">
   <link rel="stylesheet" href="./heartMoments.css?v=1.4.1">
-  <link rel="stylesheet" href="./dinoGame.css?v=1.5.2">
+  <link rel="stylesheet" href="./dinoGame.css?v=1.5.3">
   <script src="./lottie.min.js?v=1.0.1"></script>
 </head>
 <body class="spring">
@@ -211,7 +211,7 @@
   <button class="play-pause-btn fixed-btn" id="dino-play-pause-btn">
     <img src="./image/start.svg" alt="开始/暂停" id="dino-play-pause-icon">
   </button>
-  <h2>恐龙跳跃</h2>
+  <h2>恐龙快跑</h2>
   <div class="dino-game-info">
     <div class="dino-score-container">
       <div class="dino-game-score">分数: <span id="dino-score">0</span></div>
@@ -240,9 +240,6 @@
     <button class="dino-control-btn" id="dino-jump-btn">
       <img src="./image/up.svg" alt="跳跃" class="dino-control-icon">
     </button>
-    <button class="dino-control-btn" id="dino-crouch-btn">
-      <img src="./image/down.svg" alt="蹲下" class="dino-control-icon">
-    </button>
   </div>
 </div>
     
@@ -259,7 +256,7 @@
   <!-- <script src="./cq.js?v=1.5.1"></script> -->
   <script defer src="./cardGame.js?v=1.5.3"></script>
   <script defer src="./daily.js?v=1.0.1"></script>
-  <script defer src="./dinoGame.js?v=1.5.3"></script>
+  <script defer src="./dinoGame.js?v=1.5.4"></script>
   <script>
     // 页面加载完成后发送访问记录
     document.addEventListener('DOMContentLoaded', () => {
@@ -299,7 +296,7 @@
 
         <div class="game-instruction-section">
           <h3>恐龙快跑</h3>
-          <p>按空格键、上箭头或点击画面使恐龙跳跃，按下箭头使恐龙低头，躲避前方的仙人掌和飞鸟。随着分数增加，游戏速度会逐渐加快。</p>
+          <p>按空格键、上箭头或点击画面使恐龙快跑，按下箭头使恐龙低头，躲避前方的仙人掌和飞鸟。随着分数增加，游戏速度会逐渐加快。</p>
           <p>P键可暂停/继续游戏。游戏具有日夜交替场景变化。</p>
         </div>
       </div>
