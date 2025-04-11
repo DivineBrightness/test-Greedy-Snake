@@ -1046,7 +1046,7 @@ checkCollision(head) {
       const fireEndY = fireOriginY + direction.y * fireLength;
       
       // 调试信息
-      console.log(`检查火焰线 - 起点: (${fireOriginX}, ${fireOriginY}), 终点: (${fireEndX}, ${fireEndY})`);
+      // console.log(`检查火焰线 - 起点: (${fireOriginX}, ${fireOriginY}), 终点: (${fireEndX}, ${fireEndY})`);
       
       // 线段上的每个点进行检查 (使用光线投射算法)
       // 先计算两点之间的差值
