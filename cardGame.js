@@ -1,1056 +1,1040 @@
-const bombGame = {
+const dragonGame = {
+  // 现有属性保持不变
   isOpen: false,
   deckId: null,
-  gamePhase: "idle", // idle, betting, showdown
-  playerChips: 1000,
-  pot: 0,
-  currentBet: 0,
-  minBet: 20,
+  gamePhase: "idle", // idle, playing, finished
   players: [
-      { id: 0, name: "你", isPlayer: true, hand: [], chips: 1000, bet: 0, folded: false, looked: false },
-      { id: 1, name: "南宫问天", isPlayer: false, hand: [], chips: 1000, bet: 0, folded: false, looked: false },
-      { id: 2, name: "喜羊羊", isPlayer: false, hand: [], chips: 1000, bet: 0, folded: false, looked: false }
+    { id: 0, name: "你", isPlayer: true, hand: [], collected: 0, isEliminated: false },
+    { id: 1, name: "图图", isPlayer: false, hand: [], collected: 0, isEliminated: false },
+    { id: 2, name: "喜羊羊", isPlayer: false, hand: [], collected: 0, isEliminated: false }
   ],
   activePlayerIndex: 0,
-  playersInHand: 3,
+  river: [], // 中间牌河
+  playersInGame: 3,
   
-  // 核心函数
+  // 添加分数相关属性
+  score: 0,
+  highScore: 0,
+  
+  // 初始化方法 - 添加加载高分和排行榜功能
   init: function() {
+    // 加载本地存储的高分
+    this.highScore = localStorage.getItem('dragonHighScore') || 0;
+    
     // 创建游戏界面
     this.createGameInterface();
-    // 应用样式
-    this.applyStyles();
+    
     // 设置事件监听器
     this.setupEventListeners();
-    // 初始化游戏状态
-    this.resetGame();
     
-    console.log('炸金花游戏已初始化');
-  },
-  
-  show: function() {
-    const container = document.querySelector('.bomb-game-container');
-    if (container) {
-      container.style.display = 'block';
-      this.isOpen = true;
-      
-      if (this.gamePhase === "idle") {
-        this.startNewGame();
-      }
-    }
-  },
-  
-  hide: function() {
-    const container = document.querySelector('.bomb-game-container');
-    if (container) {
-      container.style.display = 'none';
-      this.isOpen = false;
-    }
-  },
-  
-  applyStyles: function() {
-    // 在这里可以动态应用样式
-    // 例如根据屏幕尺寸调整元素大小
-    const gameContainer = document.querySelector('.bomb-game-container');
-    if (!gameContainer) return;
-    
-    gameContainer.style.position = 'fixed';
-    gameContainer.style.top = '0';
-    gameContainer.style.left = '0';
-    gameContainer.style.width = '100%';
-    gameContainer.style.height = '100%';
-    gameContainer.style.backgroundColor = 'rgba(0, 32, 63, 0.95)';
-    gameContainer.style.zIndex = '1000';
-    gameContainer.style.display = 'none'; // 初始隐藏
-  },
-  
-  setupEventListeners: function() {
-    // 设置游戏按钮的事件监听器
-    const lookBtn = document.getElementById('look-btn');
-    const followBtn = document.getElementById('follow-btn');
-    const raiseBtn = document.getElementById('raise-btn');
-    const foldBtn = document.getElementById('fold-btn');
-    const betSlider = document.getElementById('bet-slider');
-    
-    if (lookBtn) lookBtn.addEventListener('click', () => this.playerLook());
-    if (followBtn) followBtn.addEventListener('click', () => this.playerFollow());
-    if (raiseBtn) raiseBtn.addEventListener('click', () => this.playerRaise());
-    if (foldBtn) foldBtn.addEventListener('click', () => this.playerFold());
-    
-    if (betSlider) {
-      betSlider.addEventListener('input', (e) => {
-        const betAmount = document.getElementById('bet-amount');
-        if (betAmount) {
-          betAmount.textContent = e.target.value;
-        }
-      });
-    }
-    
-      // 修改ESC键处理
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && this.isOpen) {
-          this.hide();
-          if (typeof window.backFromCardGame === 'function') {
-            window.backFromCardGame();
-          }
-        }
-      });
+    // 加载排行榜
+    this.loadLeaderboard();
   },
   
   // 创建游戏界面
   createGameInterface: function() {
-    // 检查是否已存在游戏容器
-    if (document.querySelector('.bomb-game-container')) return;
+    // 创建游戏容器
+    const gameContainer = document.createElement('div');
+    gameContainer.className = 'dragon-game-container';
+    gameContainer.id = 'dragon-game-container';
     
-    // 创建主容器
-    const container = document.createElement('div');
-    container.className = 'bomb-game-container';
-    
-    // 创建游戏内容
-    container.innerHTML = `
-      <div class="bomb-game-content">
-      <!-- 添加返回按钮 -->
-      <button class="back-btn" id="bomb-game-back-btn"></button>
-        <div class="bomb-game-header">
-          <h2>炸金花</h2>
-          <div class="game-info">
-            <span>底注: ${this.minBet}</span> | 
-            <span>彩池: <span id="pot-amount">0</span></span>
-          </div>
-        </div>
-        <div class="bomb-game-body">
-          <div class="bomb-table-container">
-            <div class="bomb-table">
-              <div class="bomb-table-rim"></div>
-              <div class="table-pot" id="table-pot"></div>
-            </div>
-          </div>
-          
-          <!-- 玩家位置 -->
-          <div class="player-position player-position-0" id="player-position-0">
-            <div class="player-box" id="player-0">
-              <div class="player-info">
-                <div class="player-name">${this.players[0].name}</div>
-                <div class="player-chips">${this.players[0].chips}</div>
-                <div class="player-bet">下注: 0</div>
-              </div>
-              <div class="player-cards" id="player-cards-0"></div>
-            </div>
-          </div>
-          
-          <div class="player-position player-position-1" id="player-position-1">
-            <div class="player-box" id="player-1">
-              <div class="player-info">
-                <div class="player-name">${this.players[1].name}</div>
-                <div class="player-chips">${this.players[1].chips}</div>
-                <div class="player-bet">下注: 0</div>
-              </div>
-              <div class="player-cards" id="player-cards-1"></div>
-            </div>
-          </div>
-          
-          <div class="player-position player-position-2" id="player-position-2">
-            <div class="player-box" id="player-2">
-              <div class="player-info">
-                <div class="player-name">${this.players[2].name}</div>
-                <div class="player-chips">${this.players[2].chips}</div>
-                <div class="player-bet">下注: 0</div>
-              </div>
-              <div class="player-cards" id="player-cards-2"></div>
-            </div>
-          </div>
-          
-          <!-- 控制面板 -->
-          <div class="control-panel">
-            <div class="bomb-controls">
-              <button id="look-btn" class="bomb-btn secondary">看牌</button>
-              <button id="follow-btn" class="bomb-btn secondary">跟注</button>
-              <button id="raise-btn" class="bomb-btn primary">加注</button>
-              <button id="fold-btn" class="bomb-btn secondary">弃牌</button>
-              <div class="bet-controls">
-                <input type="range" id="bet-slider" min="${this.minBet}" max="1000" step="10" value="${this.minBet}">
-                <div class="bet-amount" id="bet-amount">${this.minBet}</div>
-              </div>
+  // 添加游戏内容
+  gameContainer.innerHTML = `
+    <div class="dragon-game-content">
+      <div class="dragon-game-header">
+        <button class="back-btn" id="dragon-back-btn"></button>
+        <h2>斗龙牌</h2>
+        <div class="game-info">
+          <div class="game-score">得分: <span id="dragon-score">0</span></div>
+          <div class="game-high-score">最高分: <span id="dragon-high-score">${this.highScore}</span></div>
+          <div class="dragon-leaderboard">
+            <button class="leaderboard-btn" id="dragon-leaderboard-btn">排行榜</button>
+            <div class="leaderboard-panel" id="dragon-leaderboard-content" style="display: none;">
+              <!-- 排行榜内容将由JavaScript动态生成 -->
             </div>
           </div>
         </div>
       </div>
+        
+        <div class="dragon-game-body">
+          <div class="dragon-table-container">
+            <div class="dragon-table">
+              <div class="dragon-card-river"></div>
+              
+              <!-- 玩家位置 -->
+              <div class="player-position player-position-0">
+                <div class="player-box" id="player-box-0">
+                  <div class="player-info">
+                    <div class="player-name">你</div>
+                    <div class="player-cards-count">手牌: <span>0</span></div>
+                    <div class="player-collected">已收集: <span>0</span></div>
+                  </div>
+                  <div class="player-hand">
+                    <div class="hand-container" id="player-hand-0"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="player-position player-position-1">
+                <div class="player-box" id="player-box-1">
+                  <div class="player-info">
+                    <div class="player-name">图图</div>
+                    <div class="player-cards-count">手牌: <span>0</span></div>
+                    <div class="player-collected">已收集: <span>0</span></div>
+                  </div>
+                  <div class="player-hand">
+                    <div class="hand-container" id="player-hand-1"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="player-position player-position-2">
+                <div class="player-box" id="player-box-2">
+                  <div class="player-info">
+                    <div class="player-name">喜羊羊</div>
+                    <div class="player-cards-count">手牌: <span>0</span></div>
+                    <div class="player-collected">已收集: <span>0</span></div>
+                  </div>
+                  <div class="player-hand">
+                    <div class="hand-container" id="player-hand-2"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="control-panel">
+          <div class="dragon-controls">
+            <button class="dragon-btn primary" id="dragon-start-btn">开始游戏</button>
+            <button class="dragon-btn secondary" id="dragon-reset-btn" disabled>重置</button>
+          </div>
+        </div>
+        
+        <div class="game-message" id="dragon-message"></div>
+      </div>
     `;
     
-    document.body.appendChild(container);
+    // 添加游戏结束模态框
+    const modal = document.createElement('div');
+    modal.id = 'dragon-modal';
+    modal.style.display = 'none';
+    modal.innerHTML = `
+      <div>
+        <button class="modal-close-btn"><img src="./image/x-circle.svg" alt="关闭" class="close-icon"></button>
+        <div class="modal-header">
+          <h2 style="color: rgb(3, 93, 61); margin-bottom: 15px; font-size: 24px;">游戏结束!</h2>
+        </div>
+        <p style="font-size: 20px; margin-bottom: 20px;">最终得分: <strong id="dragon-final-score">0</strong></p>
+        <p style="margin-bottom: 15px;">选择你的名字提交成绩:</p>
+        <select id="dragon-player-select">
+          <option value="">请选择</option>
+        </select>
+        <div class="custom-name-container">
+          <span>或者</span>
+          <input type="text" id="dragon-custom-name" placeholder="输入自定义名字" maxlength="20">
+        </div>
+        <button id="dragon-submit-btn">提交成绩</button>
+      </div>
+    `;
+    
+    // 将游戏容器和模态框添加到页面
+    document.body.appendChild(gameContainer);
+    document.body.appendChild(modal);
+  },
   
-    // 添加返回按钮事件（直接使用全局函数）
-    const backBtn = document.getElementById('bomb-game-back-btn');
+  // 设置事件监听器
+  setupEventListeners: function() {
+    // 后退按钮
+    const backBtn = document.getElementById('dragon-back-btn');
     if (backBtn) {
-      backBtn.addEventListener('click', function() {
-        bombGame.hide();
+      backBtn.addEventListener('click', () => {
+        this.hide();
         if (typeof window.backFromCardGame === 'function') {
           window.backFromCardGame();
         }
       });
     }
-  
-  // 添加新游戏按钮
-  this.addNewGameButton();
-},
-
-  // 游戏逻辑
-  startNewGame: function() {
-    console.log('开始新游戏');
-    this.resetGame();
     
-    // 创建新的牌组并发牌
-    this.createNewDeck()
-      .then(() => {
-        this.dealCards()
-          .then(() => {
-            // 游戏开始后进入下注阶段
-            this.gamePhase = "betting";
-            this.updateGameInfo();
-            
-            // 设置第一个行动的玩家
-            this.activePlayerIndex = 0;
-            this.highlightActivePlayer();
-            this.enablePlayerActions();
-            
-            // 每个玩家下最小注
-            this.players.forEach(player => {
-              player.chips -= this.minBet;
-              player.bet = this.minBet;
-              this.pot += this.minBet;
-            });
-            
-            this.currentBet = this.minBet;
-            this.updatePlayerInfo();
-            this.updateGameInfo();
-          });
+    // 开始游戏按钮
+    const startBtn = document.getElementById('dragon-start-btn');
+    if (startBtn) {
+      startBtn.addEventListener('click', () => {
+        this.startNewGame();
       });
+    }
+    
+    // 重置按钮
+    const resetBtn = document.getElementById('dragon-reset-btn');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        this.resetGame();
+      });
+    }
+    
+    // ESC键返回
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.isOpen) {
+        this.hide();
+        if (typeof window.backFromCardGame === 'function') {
+          window.backFromCardGame();
+        }
+      }
+    });
+    
+    // 排行榜按钮 - 修复事件绑定
+    const leaderboardBtn = document.getElementById('dragon-leaderboard-btn');
+    const leaderboardContent = document.getElementById('dragon-leaderboard-content');
+    
+    if (leaderboardBtn && leaderboardContent) {
+      // 使用一个明确的点击处理函数
+      leaderboardBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // 阻止事件冒泡
+        
+        // 切换排行榜面板显示状态
+        if (leaderboardContent.style.display === 'block') {
+          leaderboardContent.style.display = 'none';
+        } else {
+          leaderboardContent.style.display = 'block';
+          // 加载排行榜数据
+          this.loadLeaderboard();
+        }
+      });
+      
+      // 点击排行榜外部关闭
+      document.addEventListener('click', (e) => {
+        if (leaderboardContent.style.display === 'block' && 
+            !leaderboardContent.contains(e.target) && 
+            e.target !== leaderboardBtn) {
+          leaderboardContent.style.display = 'none';
+        }
+      });
+      
+      // 确保排行榜关闭按钮也能工作
+      const closeBtn = leaderboardContent.querySelector('.leaderboard-close-btn');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          leaderboardContent.style.display = 'none';
+        });
+      }
+    }
+    
+    // 游戏结束模态框关闭按钮
+    const modalCloseBtn = document.querySelector('#dragon-modal .modal-close-btn');
+    if (modalCloseBtn) {
+      modalCloseBtn.addEventListener('click', () => {
+        document.getElementById('dragon-modal').style.display = 'none';
+      });
+    }
+    
+    // 提交分数按钮
+    const submitBtn = document.getElementById('dragon-submit-btn');
+    if (submitBtn) {
+      submitBtn.addEventListener('click', () => {
+        // 获取玩家名称
+        const selectElement = document.getElementById('dragon-player-select');
+        const customNameElement = document.getElementById('dragon-custom-name');
+        let playerName = customNameElement.value.trim() || selectElement.value;
+        
+        if (!playerName) {
+          alert('请选择或输入一个名字');
+          return;
+        }
+        
+        // 提交分数
+        this.submitScore(playerName, this.score);
+      });
+    }
   },
   
-  resetGame: function() {
-    console.log('重置游戏');
-    
+  // 显示游戏界面
+  show: function() {
+    const gameContainer = document.getElementById('dragon-game-container');
+    if (gameContainer) {
+      gameContainer.style.display = 'block';
+      this.isOpen = true;
+      
+      // 加载排行榜
+      this.loadLeaderboard();
+    }
+  },
+  
+  // 隐藏游戏界面
+  hide: function() {
+    const gameContainer = document.getElementById('dragon-game-container');
+    if (gameContainer) {
+      gameContainer.style.display = 'none';
+      this.isOpen = false;
+    }
+  },
+  
+  // 开始新游戏
+  startNewGame: function() {
     // 重置游戏状态
-    this.gamePhase = "idle";
-    this.pot = 0;
-    this.currentBet = 0;
+    this.resetGame();
+    
+    // 更新游戏阶段
+    this.gamePhase = "playing";
+    
+    // 启用/禁用按钮
+    document.getElementById('dragon-start-btn').disabled = true;
+    document.getElementById('dragon-reset-btn').disabled = false;
+    
+    // 创建新牌组
+    this.createNewDeck();
+    
+    // 发牌
+    this.dealCards();
+    
+    // 高亮当前玩家
+    this.highlightActivePlayer();
+    
+    // 启用玩家操作
+    if (this.activePlayerIndex === 0) {
+      this.enablePlayerActions();
+    } else {
+      this.processAIAction();
+    }
+  },
+  
+  // 重置游戏状态
+  resetGame: function() {
+    // 重置分数
+    this.score = 0;
+    document.getElementById('dragon-score').textContent = '0';
     
     // 重置玩家状态
     this.players.forEach(player => {
       player.hand = [];
-      player.bet = 0;
-      player.folded = false;
-      player.looked = false;
-      // 如果玩家筹码耗尽，补充筹码
-      if (player.chips <= 0) {
-        player.chips = 1000;
-      }
+      player.collected = 0;
+      player.isEliminated = false;
     });
     
-    // 重置UI
+    // 清空牌河
+    this.river = [];
+    
+    // 重置玩家数量
+    this.playersInGame = 3;
+    
+    // 重置活动玩家
+    this.activePlayerIndex = 0;
+    
+    // 重置游戏阶段
+    this.gamePhase = "idle";
+    
+    // 更新UI
+    this.updateRiver();
     this.players.forEach(player => {
-      const playerBox = document.getElementById(`player-${player.id}`);
-      if (playerBox) {
-        playerBox.classList.remove('active', 'folded', 'looked');
-      }
-      
-      const cardsContainer = document.getElementById(`player-cards-${player.id}`);
-      if (cardsContainer) {
-        cardsContainer.innerHTML = '';
-      }
+      this.updatePlayerHand(player.id);
+      this.updatePlayerInfo();
     });
+    this.highlightActivePlayer();
     
-    this.playersInHand = this.players.length;
-    this.updatePlayerInfo();
-    this.updateGameInfo();
+    // 禁用玩家操作
+    this.disablePlayerActions();
     
-    // 重置下注滑块
-    const betSlider = document.getElementById('bet-slider');
-    const betAmount = document.getElementById('bet-amount');
-    if (betSlider && betAmount) {
-      betSlider.value = this.minBet;
-      betSlider.min = this.minBet;
-      betAmount.textContent = this.minBet;
-    }
+    // 启用/禁用按钮
+    document.getElementById('dragon-start-btn').disabled = false;
+    document.getElementById('dragon-reset-btn').disabled = true;
   },
   
+  // 创建新牌组和洗牌
   createNewDeck: function() {
-    console.log('创建新牌组');
+    // 创建标准52张牌
+    const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+    const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
     
-    // 这里可以使用真实的API创建牌组，例如 deckofcardsapi.com
-    // 为了简化，我们直接使用本地模拟
-    return new Promise((resolve) => {
-      this.deckId = 'local_deck_' + Date.now();
-      setTimeout(resolve, 500); // 模拟网络延迟
-    });
+    let deck = [];
+    for (let suit of suits) {
+      for (let value of values) {
+        deck.push({
+          suit: suit,
+          value: value,
+          numericValue: this.getCardNumericValue(value)
+        });
+      }
+    }
+    
+    // 洗牌
+    for (let i = deck.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+    
+    return deck;
   },
   
+  // 获取牌的数值
+  getCardNumericValue: function(value) {
+    if (value === 'A') return 1;
+    if (value === 'J') return 11;
+    if (value === 'Q') return 12;
+    if (value === 'K') return 13;
+    return parseInt(value);
+  },
+  
+  // 发牌
   dealCards: function() {
-    console.log('发牌');
+    const deck = this.createNewDeck();
     
-    return new Promise((resolve) => {
-      // 生成牌
-      const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
-      const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
-      const deck = [];
-      
-      // 创建一副完整的牌
-      for (let suit of suits) {
-        for (let value of values) {
-          deck.push({suit, value});
-        }
-      }
-      
-      // 洗牌
-      for (let i = deck.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [deck[i], deck[j]] = [deck[j], deck[i]];
-      }
-      
-      // 给每个玩家发3张牌
-      this.players.forEach(player => {
-        player.hand = deck.splice(0, 3);
-      });
-      
-      // 更新UI，显示牌
-      this.players.forEach(player => {
-        if (player.isPlayer) {
-          this.showPlayerCards(player.id);
-        } else {
-          this.showOpponentCardBacks(player.id);
-        }
-      });
-      
-      setTimeout(resolve, 1000); // 模拟发牌动画时间
+    // 均分牌给所有玩家
+    const cardsPerPlayer = Math.floor(deck.length / this.players.length);
+    
+    for (let i = 0; i < this.players.length; i++) {
+      this.players[i].hand = deck.slice(i * cardsPerPlayer, (i + 1) * cardsPerPlayer);
+    }
+    
+    // 更新玩家手牌显示
+    this.players.forEach(player => {
+      this.updatePlayerHand(player.id);
     });
-  },
-  
-  // 玩家操作
-  playerLook: function() {
-    console.log('玩家看牌');
     
-    // 确保是玩家的回合
-    if (this.activePlayerIndex !== 0 || this.gamePhase !== "betting") return;
-    
-    const player = this.players[0]; // 玩家总是索引0
-    
-    // 如果已经看过牌，不能再次看牌
-    if (player.looked) {
-      this.showMessage("您已经看过牌了");
-      return;
-    }
-    
-    // 标记玩家已看牌
-    player.looked = true;
-    const playerBox = document.getElementById(`player-${player.id}`);
-    if (playerBox) {
-      playerBox.classList.add('looked');
-    }
-    
-    // 显示玩家的牌面（实际上玩家已经能看到自己的牌）
-    this.showPlayerCards(player.id);
-    
-    // 继续游戏，轮到下一个玩家
-    this.nextPlayer();
-  },
-  
-  playerFollow: function() {
-    console.log('玩家跟注');
-    
-    // 确保是玩家的回合
-    if (this.activePlayerIndex !== 0 || this.gamePhase !== "betting") return;
-    
-    const player = this.players[0];
-    const betDifference = this.currentBet - player.bet;
-    
-    // 检查玩家是否有足够的筹码
-    if (betDifference > player.chips) {
-      this.showMessage("您的筹码不足以跟注");
-      return;
-    }
-    
-    // 更新玩家筹码和下注
-    player.chips -= betDifference;
-    player.bet = this.currentBet;
-    this.pot += betDifference;
-    
-    // 更新UI
+    // 更新玩家信息
     this.updatePlayerInfo();
-    this.updateGameInfo();
-    
-    // 继续游戏，轮到下一个玩家
-    this.nextPlayer();
   },
   
-  playerRaise: function() {
-    console.log('玩家加注');
-    
-    // 确保是玩家的回合
-    if (this.activePlayerIndex !== 0 || this.gamePhase !== "betting") return;
+  // 玩家出牌
+  playerPlayCard: function(cardIndex) {
+    if (this.gamePhase !== "playing" || this.activePlayerIndex !== 0) return;
     
     const player = this.players[0];
+    if (cardIndex >= player.hand.length) return;
     
-    // 获取加注金额
-    const raiseAmount = parseInt(document.getElementById('bet-slider').value);
+    // 从玩家手牌中取出一张牌
+    const card = player.hand.splice(cardIndex, 1)[0];
     
-    // 检查加注金额是否有效
-    if (raiseAmount <= this.currentBet) {
-      this.showMessage("加注金额必须大于当前注码");
-      return;
-    }
+    // 添加到牌河
+    this.river.push({
+      card: card,
+      playerId: player.id
+    });
     
-    // 计算需要增加的筹码
-    const chipsDifference = raiseAmount - player.bet;
+    // 更新牌河显示
+    this.updateRiver();
     
-    // 检查玩家是否有足够的筹码
-    if (chipsDifference > player.chips) {
-      this.showMessage("您的筹码不足以加这么多注");
-      return;
-    }
+    // 更新玩家手牌显示
+    this.updatePlayerHand(player.id);
     
-    // 更新玩家筹码和下注
-    player.chips -= chipsDifference;
-    player.bet = raiseAmount;
-    this.pot += chipsDifference;
-    this.currentBet = raiseAmount;
+    // 检查是否有匹配
+    const matchIndex = this.checkMatch(card);
     
-    // 更新UI
-    this.updatePlayerInfo();
-    this.updateGameInfo();
-    
-    // 继续游戏，轮到下一个玩家
-    this.nextPlayer();
-  },
-  
-  playerFold: function() {
-    console.log('玩家弃牌');
-    
-    // 确保是玩家的回合
-    if (this.activePlayerIndex !== 0 || this.gamePhase !== "betting") return;
-    
-    const player = this.players[0];
-    
-    // 标记玩家已弃牌
-    player.folded = true;
-    this.playersInHand--;
-    
-    const playerBox = document.getElementById(`player-${player.id}`);
-    if (playerBox) {
-      playerBox.classList.add('folded');
-    }
-    
-    // 检查是否只剩一名玩家未弃牌
-    if (this.playersInHand === 1) {
-      // 游戏结束，确定赢家
-      this.determineWinner();
-      return;
-    }
-    
-    // 继续游戏，轮到下一个玩家
-    this.nextPlayer();
-  },
-  // AI决策
-processAIAction: function() {
-  console.log('AI开始行动');
-  
-  // 禁用玩家控制
-  this.disablePlayerActions();
-  
-  // 获取当前AI玩家
-  const aiPlayer = this.players[this.activePlayerIndex];
-  
-  // 显示AI玩家正在思考
-  this.showMessage(`${aiPlayer.name}正在思考...`);
-  
-  // 延迟执行，模拟思考过程
-  setTimeout(() => {
-    // 获取AI决策
-    const action = this.getAIAction(aiPlayer);
-    
-    // 执行AI决策
-    switch (action.type) {
-      case 'look':
-        this.aiLook(aiPlayer);
-        break;
-      case 'follow':
-        this.aiFollow(aiPlayer);
-        break;
-      case 'raise':
-        this.aiRaise(aiPlayer, action.amount);
-        break;
-      case 'fold':
-        this.aiFold(aiPlayer);
-        break;
-    }
-    
-    // 检查游戏状态
-    if (this.gamePhase === "betting") {
-      // 继续下一玩家
+    if (matchIndex !== -1) {
+      // 匹配成功，收集牌
+      this.collectCards(player.id, matchIndex);
+      
+      // 增加分数
+      this.addScore(this.river.length);
+    } else {
+      // 没有匹配，轮到下一个玩家
       this.nextPlayer();
     }
-  }, 1500);
-},
-
-getAIAction: function(aiPlayer) {
-  console.log(`获取${aiPlayer.name}的决策`);
-  
-  // 50%随机决策的简单AI
-  // 在实际游戏中，这里可以添加更复杂的策略逻辑
-  
-  const randomValue = Math.random();
-  
-  // 如果AI还未看牌，有30%概率看牌
-  if (!aiPlayer.looked && randomValue < 0.3) {
-    return { type: 'look' };
-  }
-  
-  // 处理各种情况
-  if (this.currentBet > aiPlayer.bet) {
-    // 需要跟注或弃牌
-    // 如果差距太大，有30%概率弃牌
-    const betDifference = this.currentBet - aiPlayer.bet;
-    if (betDifference > aiPlayer.chips * 0.3 && randomValue < 0.3) {
-      return { type: 'fold' };
-    }
     
-    // 60%概率跟注，10%概率加注
-    if (randomValue < 0.6) {
-      return { type: 'follow' };
+    // 检查游戏是否结束
+    this.checkGameOver();
+  },
+  
+  // AI出牌
+  aiPlayCard: function(aiPlayer) {
+    if (this.gamePhase !== "playing") return;
+    
+    // 简单AI策略：随机出牌
+    const cardIndex = Math.floor(Math.random() * aiPlayer.hand.length);
+    const card = aiPlayer.hand.splice(cardIndex, 1)[0];
+    
+    // 添加到牌河
+    this.river.push({
+      card: card,
+      playerId: aiPlayer.id
+    });
+    
+    // 更新牌河显示
+    this.updateRiver();
+    
+    // 更新AI手牌显示
+    this.updatePlayerHand(aiPlayer.id);
+    
+    // 检查是否有匹配
+    const matchIndex = this.checkMatch(card);
+    
+    if (matchIndex !== -1) {
+      // 匹配成功，收集牌
+      this.collectCards(aiPlayer.id, matchIndex);
     } else {
-      // 加注，金额为当前注码的1.5到2.5倍之间
-      const multiplier = 1.5 + Math.random();
-      const raiseAmount = Math.min(
-        Math.floor(this.currentBet * multiplier),
-        aiPlayer.chips + aiPlayer.bet
-      );
-      return { type: 'raise', amount: raiseAmount };
+      // 没有匹配，轮到下一个玩家
+      this.nextPlayer();
     }
-  } else {
-    // 可以让牌(check)或加注
-    if (randomValue < 0.5) {
-      return { type: 'follow' }; // 在炸金花中相当于让牌
+    
+    // 检查游戏是否结束
+    this.checkGameOver();
+  },
+  
+  // 处理AI行动
+  processAIAction: function() {
+    if (this.gamePhase !== "playing") return;
+    
+    const aiPlayer = this.players[this.activePlayerIndex];
+    
+    // 添加延迟，使AI行动更自然
+    setTimeout(() => {
+      this.aiPlayCard(aiPlayer);
+    }, 1000);
+  },
+  
+  // 轮到下一个玩家
+  nextPlayer: function() {
+    if (this.gamePhase !== "playing") return;
+    
+    do {
+      this.activePlayerIndex = (this.activePlayerIndex + 1) % this.players.length;
+    } while (this.players[this.activePlayerIndex].isEliminated);
+    
+    // 高亮当前玩家
+    this.highlightActivePlayer();
+    
+    // 如果是玩家，启用操作；如果是AI，处理AI行动
+    if (this.activePlayerIndex === 0) {
+      this.enablePlayerActions();
     } else {
-      // 加注，金额为当前最小注的1.5到3倍之间
-      const multiplier = 1.5 + Math.random() * 1.5;
-      const raiseAmount = Math.min(
-        Math.floor(this.minBet * multiplier),
-        aiPlayer.chips + aiPlayer.bet
-      );
-      return { type: 'raise', amount: raiseAmount };
+      this.processAIAction();
     }
-  }
-},
-
-// AI动作实现
-aiLook: function(aiPlayer) {
-  console.log(`${aiPlayer.name}看牌`);
+  },
   
-  aiPlayer.looked = true;
-  
-  const playerBox = document.getElementById(`player-${aiPlayer.id}`);
-  if (playerBox) {
-    playerBox.classList.add('looked');
-  }
-  
-  this.showMessage(`${aiPlayer.name}看了自己的牌`);
-},
-
-aiFollow: function(aiPlayer) {
-  console.log(`${aiPlayer.name}跟注`);
-  
-  const betDifference = this.currentBet - aiPlayer.bet;
-  
-  // 更新玩家筹码和下注
-  aiPlayer.chips -= betDifference;
-  aiPlayer.bet = this.currentBet;
-  this.pot += betDifference;
-  
-  // 更新UI
-  this.updatePlayerInfo();
-  this.updateGameInfo();
-  
-  this.showMessage(`${aiPlayer.name}跟注 ${betDifference} 筹码`);
-},
-
-aiRaise: function(aiPlayer, raiseAmount) {
-  console.log(`${aiPlayer.name}加注`);
-  
-  // 计算需要增加的筹码
-  const chipsDifference = raiseAmount - aiPlayer.bet;
-  
-  // 更新玩家筹码和下注
-  aiPlayer.chips -= chipsDifference;
-  aiPlayer.bet = raiseAmount;
-  this.pot += chipsDifference;
-  this.currentBet = raiseAmount;
-  
-  // 更新UI
-  this.updatePlayerInfo();
-  this.updateGameInfo();
-  
-  this.showMessage(`${aiPlayer.name}加注到 ${raiseAmount} 筹码`);
-},
-
-aiFold: function(aiPlayer) {
-  console.log(`${aiPlayer.name}弃牌`);
-  
-  // 标记玩家已弃牌
-  aiPlayer.folded = true;
-  this.playersInHand--;
-  
-  const playerBox = document.getElementById(`player-${aiPlayer.id}`);
-  if (playerBox) {
-    playerBox.classList.add('folded');
-  }
-  
-  this.showMessage(`${aiPlayer.name}弃牌了`);
-  
-  // 检查是否只剩一名玩家未弃牌
-  if (this.playersInHand === 1) {
-    // 游戏结束，确定赢家
-    this.determineWinner();
-  }
-},
-
-// 修改nextPlayer函数中的回合结束检查
-nextPlayer: function() {
-  console.log('轮到下一个玩家');
-  
-  // 查找下一个未弃牌的玩家
-  let nextPlayerIndex = this.activePlayerIndex;
-  do {
-    nextPlayerIndex = (nextPlayerIndex + 1) % this.players.length;
-  } while (this.players[nextPlayerIndex].folded && nextPlayerIndex !== this.activePlayerIndex);
-  
-  // 更新当前玩家索引
-  this.activePlayerIndex = nextPlayerIndex;
-  
-  // 如果所有玩家都下过注了，且注码相同，则一轮结束
-  if (this.checkRoundComplete()) {
-    this.showdown();
-    return;
-  }
-  
-  // 高亮显示当前玩家
-  this.highlightActivePlayer();
-  
-  // 如果是玩家的回合，启用控制按钮
-  if (nextPlayerIndex === 0) {
-    this.enablePlayerActions();
-  } else {
-    // AI玩家的回合，处理AI行动
-    this.processAIAction();
-  }
-},
-
-checkRoundComplete: function() {
-  console.log('检查当前回合是否完成');
-  
-  // 获取所有未弃牌的玩家
-  const activePlayers = this.players.filter(player => !player.folded);
-  
-  // 如果只有一个活跃玩家，回合完成
-  if (activePlayers.length === 1) {
-    return true;
-  }
-  
-  // 检查所有未弃牌的玩家是否下注相同
-  const firstPlayerBet = activePlayers[0].bet;
-  
-  // 如果回合已经过了一轮（每个玩家都有机会操作）并且所有人下注相同
-  let allBetsEqual = true;
-  let passedFullRound = false;
-  
-  // 判断是否已经过了完整的一轮
-  if (this.activePlayerIndex === 0 || this.activePlayerIndex >= activePlayers.length - 1) {
-    passedFullRound = true;
-  }
-  
-  // 判断所有玩家下注是否相同
-  for (const player of activePlayers) {
-    if (player.bet !== firstPlayerBet) {
-      allBetsEqual = false;
-      break;
-    }
-  }
-  
-  return passedFullRound && allBetsEqual;
-},
-
-// 修改showdown函数
-showdown: function() {
-  console.log('摊牌阶段');
-  
-  this.gamePhase = "showdown";
-  this.disablePlayerActions();
-  
-  // 显示所有未弃牌玩家的牌
-  this.players.forEach(player => {
-    if (!player.folded) {
-      this.showOpponentCards(player.id); // 使用showOpponentCards确保所有玩家的牌都显示
-    }
-  });
-  
-  // 计算牌型大小并确定赢家
-  setTimeout(() => {
-    this.evaluateHands();
-    this.determineWinner();
-  }, 2000);
-},
-// 添加新的游戏控制函数
-addNewGameButton: function() {
-  // 创建新游戏按钮，允许玩家随时开始新一局
-  const controlPanel = document.querySelector('.bomb-controls');
-  if (!controlPanel) return;
-  
-  // 检查是否已存在新游戏按钮
-  if (document.getElementById('new-game-btn')) return;
-  
-  const newGameBtn = document.createElement('button');
-  newGameBtn.id = 'new-game-btn';
-  newGameBtn.className = 'bomb-btn primary';
-  newGameBtn.textContent = '新游戏';
-  newGameBtn.addEventListener('click', () => this.resetForNextHand());
-  
-  // 添加到控制面板的开始位置
-  controlPanel.insertBefore(newGameBtn, controlPanel.firstChild);
-},
-// 牌型评估
-evaluateHands: function() {
-  console.log('评估牌型');
-  
-  // 牌型值从大到小: 豹子(6) > 同花顺(5) > 同花(4) > 顺子(3) > 对子(2) > 单牌(1)
-  this.players.forEach(player => {
-    if (player.folded) {
-      player.handRank = { type: 0, value: 0 }; // 弃牌玩家
-      return;
+  // 检查是否有匹配的牌
+  checkMatch: function(playedCard) {
+    if (this.river.length <= 1) return -1;
+    
+    // 检查牌河中是否有数值相同的牌
+    for (let i = 0; i < this.river.length - 1; i++) {
+      if (this.river[i].card.numericValue === playedCard.numericValue) {
+        return i;
+      }
     }
     
-    // 复制手牌以便排序
-    const cards = [...player.hand];
-    
-    // 按照牌面值排序（A最大）
-    const valueOrder = {'2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, '10':10, 'J':11, 'Q':12, 'K':13, 'A':14};
-    cards.sort((a, b) => valueOrder[b.value] - valueOrder[a.value]);
-    
-    // 检查是否有豹子（三张相同点数）
-    const isTrips = cards[0].value === cards[1].value && cards[1].value === cards[2].value;
-    if (isTrips) {
-      player.handRank = { type: 6, value: valueOrder[cards[0].value] };
-      player.handName = "豹子";
-      return;
-    }
-    
-    // 检查是否同花（三张同一花色）
-    const isFlush = cards[0].suit === cards[1].suit && cards[1].suit === cards[2].suit;
-    
-    // 检查是否顺子（三张连续牌）
-    const isStraight = 
-      valueOrder[cards[0].value] === valueOrder[cards[1].value] + 1 && 
-      valueOrder[cards[1].value] === valueOrder[cards[2].value] + 1;
-    
-    // 特殊情况：A-2-3 顺子
-    const isA23Straight = 
-      valueOrder[cards[0].value] === 14 && // A
-      valueOrder[cards[1].value] === 3 &&  // 3
-      valueOrder[cards[2].value] === 2;    // 2
-    
-    // 同花顺
-    if ((isStraight || isA23Straight) && isFlush) {
-      player.handRank = { type: 5, value: isStraight ? valueOrder[cards[0].value] : 3 };
-      player.handName = "同花顺";
-      return;
-    }
-    
-    // 同花
-    if (isFlush) {
-      player.handRank = { 
-        type: 4, 
-        value: valueOrder[cards[0].value] * 10000 + valueOrder[cards[1].value] * 100 + valueOrder[cards[2].value]
-      };
-      player.handName = "同花";
-      return;
-    }
-    
-    // 顺子
-    if (isStraight || isA23Straight) {
-      player.handRank = { type: 3, value: isStraight ? valueOrder[cards[0].value] : 3 };
-      player.handName = "顺子";
-      return;
-    }
-    
-    // 检查是否对子
-    const isPair1 = cards[0].value === cards[1].value;
-    const isPair2 = cards[1].value === cards[2].value;
-    
-    if (isPair1 || isPair2) {
-      const pairValue = isPair1 ? valueOrder[cards[0].value] : valueOrder[cards[1].value];
-      const kickerValue = isPair1 ? valueOrder[cards[2].value] : valueOrder[cards[0].value];
-      player.handRank = { type: 2, value: pairValue * 100 + kickerValue };
-      player.handName = "对子";
-      return;
-    }
-    
-    // 单牌
-    player.handRank = { 
-      type: 1, 
-      value: valueOrder[cards[0].value] * 10000 + valueOrder[cards[1].value] * 100 + valueOrder[cards[2].value]
-    };
-    player.handName = "高牌";
-  });
-},
-
-determineWinner: function() {
-  console.log('确定赢家');
+    return -1;
+  },
   
-  // 筛选出未弃牌的玩家
-  const activePlayers = this.players.filter(player => !player.folded);
-  
-  // 如果只有一个活跃玩家，他就是赢家
-  if (activePlayers.length === 1) {
-    const winner = activePlayers[0];
+  // 收集牌
+  collectCards: function(playerIndex, matchIndex) {
+    const player = this.players.find(p => p.id === playerIndex);
+    if (!player) return;
     
-    // 将底池加入赢家筹码
-    winner.chips += this.pot;
+    // 收集从匹配位置到最后一张牌
+    const collectedCards = this.river.splice(matchIndex);
     
-    // 更新UI
+    // 增加玩家收集的牌数
+    player.collected += collectedCards.length;
+    
+    // 更新玩家信息
     this.updatePlayerInfo();
     
-    // 显示赢家信息
-    this.showMessage(`${winner.name} 获胜，赢得 ${this.pot} 筹码！`);
+    // 更新牌河显示
+    this.updateRiver();
     
-    // 在短暂延迟后重置游戏
-    setTimeout(() => {
-      this.resetForNextHand();
-    }, 3000);
+    // 播放收集动画
+    this.showAnimation('collect', collectedCards);
     
-    return;
-  }
-  
-  // 按照牌型大小排序玩家
-  activePlayers.sort((a, b) => {
-    // 先比较牌型类型
-    if (a.handRank.type !== b.handRank.type) {
-      return b.handRank.type - a.handRank.type;
+    // 显示匹配消息
+    this.showMessage(`${player.name} 匹配成功，收集了 ${collectedCards.length} 张牌!`, 2000);
+    
+    // 轮到该玩家继续行动
+    this.activePlayerIndex = playerIndex;
+    this.highlightActivePlayer();
+    
+    // 如果是玩家，启用操作；如果是AI，处理AI行动
+    if (this.activePlayerIndex === 0) {
+      this.enablePlayerActions();
+    } else {
+      this.processAIAction();
     }
-    // 同一牌型，比较牌值
-    return b.handRank.value - a.handRank.value;
-  });
+  },
   
-  // 第一个玩家就是赢家
-  const winner = activePlayers[0];
-  
-  // 将底池加入赢家筹码
-  winner.chips += this.pot;
-  
-  // 更新UI
-  this.updatePlayerInfo();
-  
-  // 显示赢家信息和牌型
-  this.showMessage(`${winner.name} 以 ${winner.handName} 获胜，赢得 ${this.pot} 筹码！`);
-  
-  // 延迟后重置游戏
-  setTimeout(() => {
-    this.resetForNextHand();
-  }, 3000);
-},
-
-resetForNextHand: function() {
-  // 准备下一轮游戏
-  this.gamePhase = "idle";
-  this.startNewGame();
-},
-
-// UI更新
-showPlayerCards: function(playerId) {
-  console.log(`显示玩家${playerId}的牌`);
-  
-  const player = this.players.find(p => p.id === playerId);
-  if (!player || player.hand.length === 0) return;
-  
-  const cardsContainer = document.getElementById(`player-cards-${playerId}`);
-  if (!cardsContainer) return;
-  
-  // 清空容器
-  cardsContainer.innerHTML = '';
-  
-  // 创建并添加牌元素
-  player.hand.forEach(card => {
-    const cardElement = document.createElement('div');
-    cardElement.className = `card ${card.suit}`;
-    
-    const valueElement = document.createElement('div');
-    valueElement.className = 'value';
-    valueElement.textContent = card.value;
-    
-    const suitElement = document.createElement('div');
-    suitElement.className = 'suit';
-    // 根据花色添加符号
-    switch (card.suit) {
-      case 'hearts': suitElement.textContent = '♥'; break;
-      case 'diamonds': suitElement.textContent = '♦'; break;
-      case 'clubs': suitElement.textContent = '♣'; break;
-      case 'spades': suitElement.textContent = '♠'; break;
+  // 检查游戏是否结束
+  checkGameOver: function() {
+    // 检查是否有玩家没有牌了
+    for (let i = 0; i < this.players.length; i++) {
+      if (this.players[i].hand.length === 0 && !this.players[i].isEliminated) {
+        // 标记玩家为已出局
+        this.players[i].isEliminated = true;
+        this.playersInGame--;
+        
+        // 更新玩家UI
+        const playerBox = document.getElementById(`player-box-${this.players[i].id}`);
+        if (playerBox) {
+          playerBox.classList.add('eliminated');
+        }
+        
+        // 显示出局消息
+        this.showMessage(`${this.players[i].name} 已出局!`, 2000);
+      }
     }
     
-    cardElement.appendChild(valueElement);
-    cardElement.appendChild(suitElement);
-    cardsContainer.appendChild(cardElement);
-  });
-},
+    // 如果只剩一名玩家，游戏结束
+    if (this.playersInGame <= 1) {
+      this.gamePhase = "finished";
+      
+      // 找出胜利者
+      const winner = this.determineWinner();
+      
+      // 显示游戏结束消息
+      this.showMessage(`游戏结束! ${winner.name} 获胜!`, 3000);
+      
+      // 如果玩家获胜，增加奖励分数
+      if (winner.isPlayer) {
+        // 增加胜利奖励
+        this.addScore(50);
+      }
+      
+      // 显示游戏结束模态框
+      this.showGameOverModal();
+      
+      // 启用/禁用按钮
+      document.getElementById('dragon-start-btn').disabled = false;
+      document.getElementById('dragon-reset-btn').disabled = false;
+    }
+  },
+  
+  // 确定胜利者
+  determineWinner: function() {
+    // 找出未出局的玩家
+    const remainingPlayers = this.players.filter(p => !p.isEliminated);
+    
+    if (remainingPlayers.length === 1) {
+      return remainingPlayers[0];
+    }
+    
+    // 如果都出局了，比较收集的牌数
+    return this.players.reduce((prev, current) => 
+      (prev.collected > current.collected) ? prev : current
+    );
+  },
+  
+  // 增加分数
+  addScore: function(points) {
+    this.score += points;
+    document.getElementById('dragon-score').textContent = this.score;
+    
+    // 更新最高分
+    if (this.score > this.highScore) {
+      this.highScore = this.score;
+      document.getElementById('dragon-high-score').textContent = this.highScore;
+      localStorage.setItem('dragonHighScore', this.highScore);
+    }
+  },
+  
+  // 显示游戏结束模态框
+  showGameOverModal: function() {
+    const modal = document.getElementById('dragon-modal');
+    if (!modal) return;
+    
+    // 设置最终分数
+    document.getElementById('dragon-final-score').textContent = this.score;
+    
+    // 填充玩家选择器
+    this.populatePlayerSelect();
+    
+    // 显示模态框
+    modal.style.display = 'flex';
+  },
+  
+  // 填充玩家选择器
+  populatePlayerSelect: function() {
+    const playerSelect = document.getElementById('dragon-player-select');
+    if (!playerSelect) return;
+    
+    // 清空现有选项
+    playerSelect.innerHTML = '<option value="">请选择</option>';
+    
+    // 添加预设玩家名
+    const presetNames = ['风花雪月', '天外飞仙', '神雕侠侣', '倚天屠龙', '碧血剑'];
+    
+    presetNames.forEach(name => {
+      const option = document.createElement('option');
+      option.value = name;
+      option.textContent = name;
+      playerSelect.appendChild(option);
+    });
+  },
+  
+  // 提交分数到排行榜
+  submitScore: function(playerName, score) {
+    const submitBtn = document.getElementById('dragon-submit-btn');
+    if (submitBtn) submitBtn.disabled = true;
+    
+    // 显示提交状态
+    const statusElement = document.createElement('div');
+    statusElement.className = 'submit-status';
+    statusElement.textContent = "提交中...";
+    
+    // 找到模态框内容区域
+    const modalContent = document.querySelector('#dragon-modal > div');
+    if (modalContent) {
+      // 添加状态元素到模态框
+      modalContent.appendChild(statusElement);
+    }
+    
+    // 使用leaderboard.js中的submitScore函数
+    // 注意：需要确保游戏名称为'dragon'
+    if (typeof window.submitScore === 'function') {
+      window.submitScore('dragon', playerName, score)
+        .then(() => {
+          // 提交成功
+          statusElement.textContent = "提交成功！";
+          statusElement.style.color = "green";
+          
+          // 重新加载排行榜
+          this.loadLeaderboard();
+          
+          // 3秒后关闭模态框
+          setTimeout(() => {
+            document.getElementById('dragon-modal').style.display = 'none';
+            
+            // 移除状态信息
+            if (statusElement.parentNode) {
+              statusElement.parentNode.removeChild(statusElement);
+            }
+            
+            if (submitBtn) submitBtn.disabled = false;
+          }, 3000);
+        })
+        .catch(error => {
+          // 提交失败
+          statusElement.textContent = `提交失败：${error.message}`;
+          statusElement.style.color = "red";
+          
+          if (submitBtn) submitBtn.disabled = false;
+        });
+    } else {
+      // 如果submitScore函数不存在
+      statusElement.textContent = "提交失败：排行榜功能不可用";
+      statusElement.style.color = "red";
+      
+      if (submitBtn) submitBtn.disabled = false;
+    }
+  },
+  
+  // 加载排行榜
+  loadLeaderboard: function() {
+    const leaderboardContent = document.getElementById('dragon-leaderboard-content');
+    if (!leaderboardContent) return;
+    
+    // 使用leaderboard.js中的loadLeaderboard函数
+    if (typeof window.loadLeaderboard === 'function') {
+      window.loadLeaderboard('dragon', 'dragon-leaderboard-content');
+    } else {
+      // 如果loadLeaderboard函数不存在，显示错误信息
+      leaderboardContent.innerHTML = `
+        <div class="leaderboard-header">
+          <h3>斗龙牌 - 排行榜</h3>
+          <button class="leaderboard-close-btn">&times;</button>
+        </div>
+        <div class="leaderboard-table">
+          <div class="leaderboard-row header">
+            <div class="rank">排名</div>
+            <div class="player">玩家</div>
+            <div class="score">分数</div>
+            <div class="date">日期</div>
+          </div>
+          <div class="leaderboard-body">
+            <div class="error">排行榜功能不可用</div>
+          </div>
+        </div>
+      `;
+      
+      // 添加关闭按钮事件
+      const closeBtn = leaderboardContent.querySelector('.leaderboard-close-btn');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          leaderboardContent.style.display = 'none';
+        });
+      }
+    }
+  },
+  
+  updateRiver: function() {
+    const riverElement = document.querySelector('.dragon-card-river');
+    if (!riverElement) return;
+    
+    riverElement.innerHTML = '';
+    
+    // 显示牌河中的牌 - 最多显示最新的12张牌
+    const visibleCards = this.river.slice(-12);
+    
+    visibleCards.forEach((item, index) => {
+      const cardElement = document.createElement('div');
+      cardElement.className = `card ${item.card.suit}`;
+      
+      // 添加牌面内容
+      cardElement.innerHTML = `
+        <div class="card-value">${item.card.value}</div>
+        <div class="card-suit"></div>
+        <div class="card-value-bottom">${item.card.value}</div>
+      `;
+      
+      // 为超出预设位置的牌设置自定义属性
+      if (index >= 7) {
+        const extraIndex = index - 7;
+        cardElement.style.setProperty('--rot', `${(extraIndex * 2)}deg`);
+        cardElement.style.setProperty('--x', `${extraIndex * 5}px`);
+        cardElement.style.setProperty('--z', extraIndex);
+      }
+      
+      // 添加到牌河
+      riverElement.appendChild(cardElement);
+    });
+    
+    // 如果牌河中有很多牌，添加牌数指示器
+    if (this.river.length > 12) {
+      const countIndicator = document.createElement('div');
+      countIndicator.className = 'river-count';
+      countIndicator.textContent = `共 ${this.river.length} 张牌`;
+      countIndicator.style.position = 'absolute';
+      countIndicator.style.top = '5px';
+      countIndicator.style.right = '5px';
+      countIndicator.style.background = 'rgba(0,0,0,0.6)';
+      countIndicator.style.color = 'white';
+      countIndicator.style.padding = '2px 8px';
+      countIndicator.style.borderRadius = '10px';
+      countIndicator.style.fontSize = '12px';
+      countIndicator.style.zIndex = '100';
+      riverElement.appendChild(countIndicator);
+    }
+  },
+  
+  updatePlayerHand: function(playerId) {
+    const player = this.players.find(p => p.id === playerId);
+    if (!player) return;
+    
+    const handElement = document.getElementById(`player-hand-${playerId}`);
+    if (!handElement) return;
+    
+    handElement.innerHTML = '';
+    
+    if (player.isPlayer) {
+      // 如果是玩家自己，显示详细的牌面并采用扇形排列
+      const totalCards = player.hand.length;
+      
+      // 根据卡牌数量调整重叠度
+      let overlap = 40;
+      if (totalCards > 10) overlap = 45;
+      if (totalCards > 15) overlap = 48;
+      
+      // 计算扇形的总宽度
+      const cardWidth = 60; // 卡牌宽度
+      const totalWidth = cardWidth + (cardWidth - overlap) * (totalCards - 1);
+      
+      player.hand.forEach((card, index) => {
+        const cardElement = document.createElement('div');
+        cardElement.className = `card ${card.suit}`;
+        
+        // 添加牌面内容
+        cardElement.innerHTML = `
+          <div class="card-value">${card.value}</div>
+          <div class="card-suit"></div>
+          <div class="card-value-bottom">${card.value}</div>
+        `;
+        
+        // 添加点击事件
+        cardElement.addEventListener('click', () => {
+          this.playerPlayCard(index);
+        });
+        
+        // 添加到手牌区域
+        handElement.appendChild(cardElement);
+        
+        // 修改叠放布局
+        if (totalCards > 1) {
+          const centerOffset = totalWidth / 2;
+          const posX = (index * (cardWidth - overlap));
+          const horizontalShift = posX - centerOffset + cardWidth/2;
+          
+          // 创建微妙的弧形效果
+          const arcHeight = 5; // 弧度高度
+          const arcPos = (index / (totalCards - 1)) * Math.PI; // 0到π的范围
+          const verticalShift = Math.sin(arcPos) * arcHeight;
+          
+          // 计算旋转角度：中间牌0度，两侧递增
+          const angle = (index / (totalCards - 1) - 0.5) * 30; // -15到15度范围
+          
+          cardElement.style.transform = `
+            translateX(${horizontalShift}px) 
+            translateY(${-verticalShift}px)
+            rotate(${angle}deg)
+          `;
+          cardElement.style.zIndex = index + 1;
+        }
+      });
+    } else {
+      // AI玩家展示代码保持不变
+      if (player.hand.length > 0) {
+        // 创建卡牌堆容器
+        const cardStackElement = document.createElement('div');
+        cardStackElement.className = 'card-stack';
+        
+        // 添加底层卡牌指示器
+        const stackIndicator = document.createElement('div');
+        stackIndicator.className = 'stack-indicator';
+        cardStackElement.appendChild(stackIndicator);
+        
+        // 添加主卡牌背面
+        const cardElement = document.createElement('div');
+        cardElement.className = 'card back';
+        cardStackElement.appendChild(cardElement);
+        
+        // 添加卡牌数量指示器
+        if (player.hand.length > 1) {
+          const countIndicator = document.createElement('div');
+          countIndicator.className = 'cards-count-indicator';
+          countIndicator.textContent = player.hand.length;
+          cardStackElement.appendChild(countIndicator);
+        }
+        
+        // 添加到手牌区域
+        handElement.appendChild(cardStackElement);
+      } else {
+        // 没有牌时显示空状态
+        const emptyElement = document.createElement('div');
+        emptyElement.className = 'empty-hand';
+        emptyElement.textContent = '无牌';
+        emptyElement.style.color = '#999';
+        emptyElement.style.fontSize = '12px';
+        handElement.appendChild(emptyElement);
+      }
+    }
+  },
 
-showOpponentCardBacks: function(playerId) {
-  console.log(`显示玩家${playerId}的牌背`);
-  
-  const player = this.players.find(p => p.id === playerId);
-  if (!player || player.hand.length === 0) return;
-  
-  const cardsContainer = document.getElementById(`player-cards-${playerId}`);
-  if (!cardsContainer) return;
-  
-  // 清空容器
-  cardsContainer.innerHTML = '';
-  
-  // 创建并添加牌背元素
-  for (let i = 0; i < player.hand.length; i++) {
-    const cardElement = document.createElement('div');
-    cardElement.className = 'card back';
-    cardsContainer.appendChild(cardElement);
-  }
-},
-
-showOpponentCards: function(playerId) {
-  // 与showPlayerCards相同，但是用于显示AI玩家的牌
-  this.showPlayerCards(playerId);
-},
-
+  // 添加 updatePlayerInfo 函数，它在代码中被调用但未定义
 updatePlayerInfo: function() {
-  console.log('更新玩家信息');
-  
   this.players.forEach(player => {
-    const playerBox = document.getElementById(`player-${player.id}`);
+    const playerBox = document.getElementById(`player-box-${player.id}`);
     if (!playerBox) return;
     
-    const chipsElement = playerBox.querySelector('.player-chips');
-    const betElement = playerBox.querySelector('.player-bet');
-    
-    if (chipsElement) {
-      chipsElement.textContent = `${player.chips} 筹码`;
+    // 更新手牌数
+    const cardsCountElement = playerBox.querySelector('.player-cards-count span');
+    if (cardsCountElement) {
+      cardsCountElement.textContent = player.hand.length;
     }
     
-    if (betElement) {
-      betElement.textContent = `下注: ${player.bet}`;
+    // 更新收集数
+    const collectedElement = playerBox.querySelector('.player-collected span');
+    if (collectedElement) {
+      collectedElement.textContent = player.collected;
+    }
+    
+    // 更新已出局状态
+    if (player.isEliminated) {
+      playerBox.classList.add('eliminated');
+    } else {
+      playerBox.classList.remove('eliminated');
     }
   });
 },
-
-updateGameInfo: function() {
-  console.log('更新游戏信息');
   
-  const potAmount = document.getElementById('pot-amount');
-  if (potAmount) {
-    potAmount.textContent = this.pot;
-  }
-  
-  const tablePot = document.getElementById('table-pot');
-  if (tablePot) {
-    tablePot.textContent = `彩池: ${this.pot}`;
-  }
-},
-
-highlightActivePlayer: function() {
-  console.log('高亮当前行动玩家');
-  
-  // 首先移除所有玩家的高亮
-  this.players.forEach(player => {
-    const playerBox = document.getElementById(`player-${player.id}`);
-    if (playerBox) {
-      playerBox.classList.remove('active');
+  highlightActivePlayer: function() {
+    // 移除所有高亮
+    this.players.forEach(player => {
+      const playerBox = document.getElementById(`player-box-${player.id}`);
+      if (playerBox) {
+        playerBox.classList.remove('active');
+      }
+    });
+    
+    // 高亮当前玩家
+    const activePlayerBox = document.getElementById(`player-box-${this.activePlayerIndex}`);
+    if (activePlayerBox) {
+      activePlayerBox.classList.add('active');
     }
-  });
+  },
   
-  // 高亮当前玩家
-  const activePlayer = this.players[this.activePlayerIndex];
-  const playerBox = document.getElementById(`player-${activePlayer.id}`);
-  if (playerBox) {
-    playerBox.classList.add('active');
+  enablePlayerActions: function() {
+    // 只有轮到玩家时才启用操作
+    if (this.activePlayerIndex === 0 && this.gamePhase === "playing") {
+      const playerHandElement = document.getElementById('player-hand-0');
+      if (playerHandElement) {
+        const cards = playerHandElement.querySelectorAll('.card');
+        cards.forEach(card => {
+          card.style.cursor = 'pointer';
+          card.classList.add('enabled');
+        });
+      }
+    }
+  },
+  
+  disablePlayerActions: function() {
+    const playerHandElement = document.getElementById('player-hand-0');
+    if (playerHandElement) {
+      const cards = playerHandElement.querySelectorAll('.card');
+      cards.forEach(card => {
+        card.style.cursor = 'default';
+        card.classList.remove('enabled');
+      });
+    }
+  },
+  
+  showMessage: function(message, duration = 2000) {
+    const messageElement = document.getElementById('dragon-message');
+    if (!messageElement) return;
+    
+    messageElement.textContent = message;
+    messageElement.classList.add('show');
+    
+    // 设置定时器，自动隐藏消息
+    setTimeout(() => {
+      messageElement.classList.remove('show');
+    }, duration);
+  },
+  
+  showAnimation: function(type, elements) {
+    if (type === 'collect') {
+      // 收集牌的动画效果
+      const riverElement = document.querySelector('.dragon-card-river');
+      if (!riverElement) return;
+      
+      // 选择要添加动画的牌元素
+      const cardElements = riverElement.querySelectorAll('.card');
+      if (!cardElements.length) return;
+      
+      // 为牌元素添加匹配和收集动画类
+      cardElements.forEach((card, index) => {
+        card.classList.add('matched');
+        
+        // 延迟添加收集动画类
+        setTimeout(() => {
+          card.classList.add('collected');
+        }, 300);
+      });
+    }
   }
-},
-
-enablePlayerActions: function() {
-  console.log('启用玩家操作按钮');
-  
-  const player = this.players[0]; // 玩家总是索引0
-  const lookBtn = document.getElementById('look-btn');
-  const followBtn = document.getElementById('follow-btn');
-  const raiseBtn = document.getElementById('raise-btn');
-  const foldBtn = document.getElementById('fold-btn');
-  
-  // 看牌按钮：只有未看牌时可用
-  if (lookBtn) {
-    lookBtn.disabled = player.looked;
-  }
-  
-  // 跟注按钮：任何时候都可用
-  if (followBtn) {
-    followBtn.disabled = false;
-  }
-  
-  // 加注按钮：如果有足够筹码可用
-  if (raiseBtn) {
-    raiseBtn.disabled = player.chips <= 0;
-  }
-  
-  // 弃牌按钮：任何时候都可用
-  if (foldBtn) {
-    foldBtn.disabled = false;
-  }
-},
-
-disablePlayerActions: function() {
-  console.log('禁用玩家操作按钮');
-  
-  const lookBtn = document.getElementById('look-btn');
-  const followBtn = document.getElementById('follow-btn');
-  const raiseBtn = document.getElementById('raise-btn');
-  const foldBtn = document.getElementById('fold-btn');
-  
-  if (lookBtn) lookBtn.disabled = true;
-  if (followBtn) followBtn.disabled = true;
-  if (raiseBtn) raiseBtn.disabled = true;
-  if (foldBtn) foldBtn.disabled = true;
-},
-
-showMessage: function(message, duration = 2000) {
-  console.log('显示消息:', message);
-  
-  // 查找或创建消息元素
-  let messageElement = document.getElementById('game-message');
-  
-  if (!messageElement) {
-    messageElement = document.createElement('div');
-    messageElement.id = 'game-message';
-    messageElement.className = 'game-message';
-    document.querySelector('.bomb-game-body').appendChild(messageElement);
-  }
-  
-  // 设置消息内容并显示
-  messageElement.textContent = message;
-  messageElement.classList.add('show');
-  
-  // 设置计时器，自动隐藏消息
-  setTimeout(() => {
-    messageElement.classList.remove('show');
-  }, duration);
-}
 };
 
-// 添加此行，将bombGame对象作为全局cardGame对象导出
-window.cardGame = bombGame;
+// 确保游戏对象可以从全局访问
+window.cardGame = dragonGame;
 
 // 确保DOM加载完成后初始化游戏
 document.addEventListener('DOMContentLoaded', () => {
-  // 初始化游戏，但不立即显示
-  bombGame.init();
-  console.log('炸金花游戏已初始化并准备就绪');
+  dragonGame.init();
 });
+
+// 确保populateSelect函数可用于斗龙牌游戏
+function populateSelect(selectId) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  
+  // 清空现有选项
+  select.innerHTML = '<option value="">请选择</option>';
+  
+  // 添加预设玩家名
+  const names = ['风花雪月', '天外飞仙', '神雕侠侣', '倚天屠龙', '碧血剑', 
+                '梦幻西游', '剑侠情缘', '诛仙世界', '仙剑奇侠', '侠客行'];
+  
+  names.forEach(name => {
+    const option = document.createElement('option');
+    option.value = name;
+    option.textContent = name;
+    select.appendChild(option);
+  });
+}
+
+// 如果该函数不存在，则添加到全局作用域
+if (typeof window.populateSelect !== 'function') {
+  window.populateSelect = populateSelect;
+}
