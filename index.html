@@ -7,7 +7,7 @@
   <link rel="icon" href="./favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="./styles.css?v=1.4.2">
   <link rel="stylesheet" href="./snakeGame.css?v=1.5.1">
-  <link rel="stylesheet" href="./cardGame.css?v=1.5.2">
+  <link rel="stylesheet" href="./cardGame.css?v=1.5.4">
   <link rel="stylesheet" href="./heartMoments.css?v=1.4.1">
   <link rel="stylesheet" href="./dinoGame.css?v=1.5.3">
   <script src="./lottie.min.js?v=1.0.1"></script>
@@ -204,48 +204,47 @@
         </div>
       </div>
     </div>
-    
-<!-- 添加恐龙游戏界面 -->
-<div id="dino-game" style="display: none;">
-  <button class="back-btn" id="dino-back-btn"></button>
-  <button class="play-pause-btn fixed-btn" id="dino-play-pause-btn">
-    <img src="./image/start.svg" alt="开始/暂停" id="dino-play-pause-icon">
-  </button>
-  <h2>恐龙快跑</h2>
-  <div class="dino-game-info">
-    <div class="dino-score-container">
-      <div class="dino-game-score">分数: <span id="dino-score">0</span></div>
-      <div class="dino-game-high-score">最高分: <span id="dino-high-score">0</span></div>
-    </div>
-    <button class="dino-character-btn" id="dino-character-btn">角色</button>
+    <!-- 添加恐龙游戏界面 -->
+    <div id="dino-game" style="display: none;">
+      <button class="back-btn" id="dino-back-btn"></button>
+      <button class="play-pause-btn fixed-btn" id="dino-play-pause-btn">
+        <img src="./image/start.svg" alt="开始/暂停" id="dino-play-pause-icon">
+      </button>
+      <h2>恐龙快跑</h2>
+      <div class="dino-game-info">
+        <div class="dino-score-container">
+          <div class="dino-game-score">分数: <span id="dino-score">0</span></div>
+          <div class="dino-game-high-score">最高分: <span id="dino-high-score">0</span></div>
+        </div>
+        <button class="dino-character-btn" id="dino-character-btn">角色</button>
 
-    <div class="dino-leaderboard">
-            <button class="dino-leaderboard-btn" id="dino-leaderboard-btn">排行榜</button>
-      <div class="leaderboard-panel" id="dino-leaderboard-content" style="display: none;">
-        <!-- 排行榜内容 -->
+        <div class="dino-leaderboard">
+                <button class="dino-leaderboard-btn" id="dino-leaderboard-btn">排行榜</button>
+          <div class="leaderboard-panel" id="dino-leaderboard-content" style="display: none;">
+            <!-- 排行榜内容 -->
+          </div>
+        </div>
+      </div>
+      <canvas id="dino-canvas" width="1200" height="600"></canvas>
+      
+      <!-- 恐龙游戏模态框 - 修复版 -->
+      <div id="dino-modal" style="display: none;">
+        <div>
+          <!-- 空白结构，内容将由JavaScript动态生成 -->
+        </div>
+      </div>
+      
+      <!-- 移动端控制按钮 - 移到正确的位置内 -->
+      <div class="dino-mobile-controls">
+        <button class="dino-control-btn" id="dino-jump-btn">
+          <img src="./image/up.svg" alt="跳跃" class="dino-control-icon">
+        </button>
       </div>
     </div>
-  </div>
-  <canvas id="dino-canvas" width="1200" height="600"></canvas>
-  
-  <!-- 恐龙游戏模态框 - 修复版 -->
-  <div id="dino-modal" style="display: none;">
-    <div>
-      <!-- 空白结构，内容将由JavaScript动态生成 -->
-    </div>
-  </div>
-  
-  <!-- 移动端控制按钮 - 移到正确的位置内 -->
-  <div class="dino-mobile-controls">
-    <button class="dino-control-btn" id="dino-jump-btn">
-      <img src="./image/up.svg" alt="跳跃" class="dino-control-icon">
-    </button>
-  </div>
-</div>
     
     <footer>© 2025 四季 | 小游戏集合 & 赏析</footer>
   </div>
-  <script src="./leaderboard.js?v=1.5.0"></script>
+  <script src="./leaderboard.js?v=1.5.4"></script>
   <script src="./scenes.js?v=1.5.1"></script>
   <script src="./treasureBox.js?v=1.4.2"></script>
   <script src="./heartMoments.js?v=1.4.1"></script>
@@ -254,7 +253,7 @@
   <script src="./floatingFruits.js?v=1.4.1"></script>
   <script src="./script.js?v=1.5.3"></script>
   <!-- <script src="./cq.js?v=1.5.1"></script> -->
-  <script defer src="./cardGame.js?v=1.5.3"></script>
+  <script defer src="./cardGame.js?v=1.5.4"></script>
   <script defer src="./daily.js?v=1.0.1"></script>
   <script defer src="./dinoGame.js?v=1.5.5"></script>
   <script>
