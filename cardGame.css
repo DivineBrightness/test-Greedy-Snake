@@ -11,12 +11,13 @@
   overflow: hidden;
 }
 
+/* 修改游戏容器，确保有足够空间显示完整内容 */
 .dragon-game-content {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
+  padding-bottom: 70px; /* 增加底部内边距 */
   position: relative;
+  height: 100vh;
+  overflow-y: auto; /* 允许在内容溢出时滚动 */
+  -webkit-overflow-scrolling: touch; /* 增强移动端滚动体验 */
 }
 
 .dragon-game-header {
@@ -33,47 +34,31 @@
 }
 
 .dragon-game-body {
-  flex: 1;
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  padding: 0 10px;
 }
 
-/* 牌桌设计 */
+/* 确保游戏桌面有足够的空间 */
 .dragon-table-container {
   position: absolute;
   width: 100%;
-  height: 100%;
+  height: calc(100% - 150px); /* 预留顶部和底部空间 */
+  top: 80px; /* 从顶部留出空间 */
   display: flex;
   justify-content: center;
-  align-items: center;
 }
 
+/* 修改牌桌布局，让更多空间用于游戏区域 */
 .dragon-table {
-  width: 80%;
-  height: 70%;
-  background-color: #2c7873;
-  border-radius: 15px;
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+  width: 90%; /* 增大桌面使用空间 */
+  height: 80%;
 }
 
-/* 改进牌河样式 */
+/* 调整牌河样式，使其更好适应移动设备 */
 .dragon-card-river {
-  width: 90%;
-  height: 150px;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  padding: 0 20px;
-  overflow-x: auto;
-  position: relative;
-  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
+  width: 95%;
+  height: 120px;
+  padding: 0 10px;
+  margin: 0 auto;
 }
 .dragon-card-river .card {
   margin: 0 5px;
@@ -89,26 +74,31 @@
   height: 200px;
 }
 
+/* 调整主玩家位置，将其更靠上 */
 .player-position-0 {
-  bottom: 20px;
+  bottom: 100px; /* 从80px增加到100px，让手牌更靠上 */
   left: 50%;
   transform: translateX(-50%);
+  width: 300px;
+  height: 140px; /* 略微减小高度，集中手牌 */
+  z-index: 100; /* 确保不被其他元素遮挡 */
 }
-/* 调整AI玩家的位置 - 放置到左上角和右上角 */
+/* 修改AI玩家位置到左右两侧而非顶部 */
 .player-position-1 {
-  top: 30px;  /* 从40%改为固定像素值，放到顶部 */
-  left: 40px; /* 改为left位置，放到左上角 */
-  right: auto; /* 移除right值 */
-  transform: none; /* 不需要Y轴居中，移除translateY */
-  width: 200px;
+  top: 50%;  /* 垂直居中 */
+  left: 10px; /* 靠左侧 */
+  transform: translateY(-50%);
+  width: 180px;
+  height: auto;
 }
 
 .player-position-2 {
-  top: 30px; /* 从40%改为固定像素值，放到顶部 */
-  right: 40px; /* 保持右侧位置，放到右上角 */
-  left: auto; /* 确保不使用left定位 */
-  transform: none; /* 不需要Y轴居中，移除translateY */
-  width: 200px;
+  top: 50%; /* 垂直居中 */
+  right: 10px; /* 靠右侧 */
+  left: auto;
+  transform: translateY(-50%);
+  width: 180px;
+  height: auto;
 }
 
 .player-box {
@@ -252,17 +242,17 @@
 }
 
 
-/* 控制面板 */
+/* 调整控制面板位置，确保不会遮挡手牌 */
 .control-panel {
   position: fixed;
   bottom: 0;
   left: 0;
   width: 100%;
   background-color: rgba(0, 0, 0, 0.7);
-  padding: 10px;
+  padding: 5px; /* 减小内边距 */
   display: flex;
   justify-content: center;
-  z-index: 100;
+  z-index: 90; /* 确保在手牌下方 */
 }
 
 .dragon-controls {
@@ -706,17 +696,17 @@
 }
 /* 调整AI玩家在移动设备上的位置，避免重叠 */
 @media (max-width: 768px) {
-  /* 小屏幕设备上的玩家位置 */
+  /* 在大屏幕上将玩家一二移到顶部 */
   .player-position-1 {
-    top: 30px;
-    left: 20px;
-    width: 150px;
+    top: 80px; /* 从50%改为固定80px，靠近顶部 */
+    left: 30px;
+    transform: none; /* 移除垂直居中 */
   }
   
   .player-position-2 {
-    top: 30px;
-    right: 20px;
-    width: 150px;
+    top: 80px; /* 从50%改为固定80px，靠近顶部 */
+    right: 30px;
+    transform: none; /* 移除垂直居中 */
   }
   
   /* 缩小玩家框和信息区 */
@@ -777,14 +767,12 @@
     right: -5px;
   }
 }
-/* 玩家手牌扇形排列样式 */
+/* 减小手牌扇形高度，确保不会超出屏幕 */
 #player-hand-0 {
-  display: flex;
-  justify-content: center;
-  position: relative;
-  height: 130px; /* 增加高度以容纳扇形排列 */
-  margin-top: 10px;
-  perspective: 1000px; /* 添加3D视角效果 */
+  height: 110px; /* 从130px减小到110px */
+  margin-top: 0; /* 减少顶部边距 */
+  margin-bottom: 10px; /* 增加底部边距 */
+  transform: translateY(-20px); /* 向上移动20px */
 }
 
 /* 扇形排列的卡牌基础样式 */
@@ -817,4 +805,100 @@
   display: flex;
   justify-content: center;
   align-items: flex-end;
+}
+/* 移动设备上的玩家手牌调整 */
+@media (max-width: 768px) {
+  /* 减小扇形牌的角度和大小 */
+  #player-hand-0 {
+    height: 100px; /* 减小高度 */
+    margin-top: 5px;
+  }
+  
+  #player-hand-0 .card {
+    width: 45px; /* 减小牌宽度 */
+    height: 68px; /* 保持宽高比 */
+    margin-bottom: 5px; /* 确保有足够空间显示 */
+  }
+  
+  .player-position-0 {
+    width: 90%; /* 使用百分比宽度 */
+    height: 120px;
+    bottom: 70px;
+  }
+  
+  .player-box#player-box-0 {
+    padding: 5px;
+    min-height: 0;
+  }
+  
+  /* 改进手牌悬停效果，减小上升高度 */
+  #player-hand-0 .card:hover {
+    transform: translateY(-10px) scale(1.05) !important;
+  }
+}
+
+/* 超小屏设备额外优化 */
+@media (max-width: 480px) {
+  #player-hand-0 {
+    height: 80px;
+  }
+  
+  #player-hand-0 .card {
+    width: 35px;
+    height: 53px;
+    font-size: 12px; /* 减小字体 */
+  }
+  
+  /* 缩小花色图标 */
+  #player-hand-0 .card .card-suit {
+    font-size: 20px;
+  }
+  
+  /* 缩小牌值文字 */
+  #player-hand-0 .card .card-value,
+  #player-hand-0 .card .card-value-bottom {
+    font-size: 12px;
+  }
+}
+@media (max-width: 768px) {
+  .dragon-card-river {
+    height: 100px;
+  }
+  
+  /* 调整牌河中的卡牌大小 */
+  .dragon-card-river .card {
+    width: 45px;
+    height: 68px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dragon-card-river {
+    height: 80px;
+  }
+  
+  .dragon-card-river .card {
+    width: 35px;
+    height: 53px;
+  }
+  
+  .dragon-card-river .card .card-value,
+  .dragon-card-river .card .card-value-bottom {
+    font-size: 12px;
+  }
+  
+  .dragon-card-river .card .card-suit {
+    font-size: 20px;
+  }
+}
+/* 修复控制面板在移动设备上的显示 */
+@media (max-width: 768px) {
+  .control-panel {
+    padding: 5px;
+  }
+  
+  .dragon-btn {
+    padding: 6px 12px;
+    font-size: 14px;
+  }
 }
