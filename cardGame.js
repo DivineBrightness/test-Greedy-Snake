@@ -777,25 +777,6 @@ const dragonGame = {
     });
   },
   
-  updatePlayerInfo: function() {
-    this.players.forEach(player => {
-      const playerBox = document.getElementById(`player-box-${player.id}`);
-      if (!playerBox) return;
-      
-      // 更新手牌数
-      const cardsCountElement = playerBox.querySelector('.player-cards-count span');
-      if (cardsCountElement) {
-        cardsCountElement.textContent = player.hand.length;
-      }
-      
-      // 更新收集数
-      const collectedElement = playerBox.querySelector('.player-collected span');
-      if (collectedElement) {
-        collectedElement.textContent = player.collected;
-      }
-    });
-  },
-  
   updatePlayerHand: function(playerId) {
     const player = this.players.find(p => p.id === playerId);
     if (!player) return;
@@ -828,27 +809,70 @@ const dragonGame = {
         handElement.appendChild(cardElement);
       });
     } else {
-      // 如果是AI玩家，只显示牌背和数量
-      for (let i = 0; i < player.hand.length; i++) {
+      // 如果是AI玩家，只显示单张牌背和数量标记
+      if (player.hand.length > 0) {
+        // 创建卡牌堆容器
+        const cardStackElement = document.createElement('div');
+        cardStackElement.className = 'card-stack';
+        
+        // 添加底层卡牌指示器
+        const stackIndicator = document.createElement('div');
+        stackIndicator.className = 'stack-indicator';
+        cardStackElement.appendChild(stackIndicator);
+        
+        // 添加主卡牌背面
         const cardElement = document.createElement('div');
         cardElement.className = 'card back';
-        handElement.appendChild(cardElement);
+        cardStackElement.appendChild(cardElement);
         
-        // 限制最大显示数量，避免太多牌挤在一起
-        if (i >= 7 && player.hand.length > 10) {
-          const remainingCount = document.createElement('div');
-          remainingCount.className = 'remaining-cards';
-          remainingCount.textContent = `+${player.hand.length - 7}张`;
-          remainingCount.style.color = 'white';
-          remainingCount.style.fontWeight = 'bold';
-          remainingCount.style.marginLeft = '5px';
-          remainingCount.style.alignSelf = 'center';
-          handElement.appendChild(remainingCount);
-          break;
+        // 添加卡牌数量指示器
+        if (player.hand.length > 1) {
+          const countIndicator = document.createElement('div');
+          countIndicator.className = 'cards-count-indicator';
+          countIndicator.textContent = player.hand.length;
+          cardStackElement.appendChild(countIndicator);
         }
+        
+        // 添加到手牌区域
+        handElement.appendChild(cardStackElement);
+      } else {
+        // 没有牌时显示空状态
+        const emptyElement = document.createElement('div');
+        emptyElement.className = 'empty-hand';
+        emptyElement.textContent = '无牌';
+        emptyElement.style.color = '#999';
+        emptyElement.style.fontSize = '12px';
+        handElement.appendChild(emptyElement);
       }
     }
   },
+
+  // 添加 updatePlayerInfo 函数，它在代码中被调用但未定义
+updatePlayerInfo: function() {
+  this.players.forEach(player => {
+    const playerBox = document.getElementById(`player-box-${player.id}`);
+    if (!playerBox) return;
+    
+    // 更新手牌数
+    const cardsCountElement = playerBox.querySelector('.player-cards-count span');
+    if (cardsCountElement) {
+      cardsCountElement.textContent = player.hand.length;
+    }
+    
+    // 更新收集数
+    const collectedElement = playerBox.querySelector('.player-collected span');
+    if (collectedElement) {
+      collectedElement.textContent = player.collected;
+    }
+    
+    // 更新已出局状态
+    if (player.isEliminated) {
+      playerBox.classList.add('eliminated');
+    } else {
+      playerBox.classList.remove('eliminated');
+    }
+  });
+},
   
   highlightActivePlayer: function() {
     // 移除所有高亮

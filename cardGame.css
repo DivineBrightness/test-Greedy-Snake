@@ -94,17 +94,19 @@
   left: 50%;
   transform: translateX(-50%);
 }
-
+/* 调整AI玩家的位置 - 让它们更靠近牌桌中心 */
 .player-position-1 {
-  top: 50%;
-  right: 20px;
+  top: 40%;
+  right: 40px;
   transform: translateY(-50%);
+  width: 200px; /* 加宽容器 */
 }
 
 .player-position-2 {
-  top: 50%;
-  left: 20px;
+  top: 40%; 
+  left: 40px;
   transform: translateY(-50%);
+  width: 200px; /* 加宽容器 */
 }
 
 .player-box {
@@ -582,4 +584,121 @@
 
 .card.collected {
   animation: collectAnimation 0.8s forwards;
+}
+
+/* 修改AI玩家的玩家框样式 - 使其更紧凑 */
+.player-box#player-box-1, 
+.player-box#player-box-2 {
+  flex-direction: row;
+  height: auto;
+  min-height: 10px;
+  padding: 1px;
+  align-items: center;
+}
+/* 修改AI玩家信息区样式 */
+#player-box-1 .player-info,
+#player-box-2 .player-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-left: 15px;
+  flex: 1;
+}
+/* 修改AI玩家手牌区域 - 只显示一张代表性牌背 */
+#player-box-1 .player-hand,
+#player-box-2 .player-hand {
+  width: auto;
+  position: relative;
+}
+/* 简化AI玩家手牌容器 */
+#player-hand-1, 
+#player-hand-2 {
+  display: flex;
+  position: relative;
+  justify-content: center;
+  margin-right: 10px;
+  width: 50px;
+}
+/* 制作有层叠感的单卡牌背 */
+#player-hand-1 .card-stack, 
+#player-hand-2 .card-stack {
+  position: relative;
+  width: 50px;
+  height: 70px;
+}
+/* 主牌背 */
+#player-hand-1 .card-stack .card.back, 
+#player-hand-2 .card-stack .card.back {
+  position: absolute;
+  width: 50px;
+  height: 70px;
+  margin: 0;
+  transform: rotate(0deg);
+  transition: transform 0.2s ease;
+}
+/* 层叠效果牌 */
+#player-hand-1 .card-stack .stack-indicator, 
+#player-hand-2 .card-stack .stack-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50px;
+  height: 70px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+  transform: rotate(5deg) translateX(-5px) translateY(-3px);
+  z-index: -1;
+}
+/* 牌数指示器 */
+.cards-count-indicator {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background-color: #e74c3c;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+/* AI玩家名称样式增强 */
+#player-box-1 .player-name, 
+#player-box-2 .player-name {
+  font-weight: bold;
+  font-size: 16px;
+  margin-bottom: 5px;
+  color: gold;
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+}
+/* AI玩家状态信息样式 */
+#player-box-1 .player-cards-count,
+#player-box-1 .player-collected,
+#player-box-2 .player-cards-count,
+#player-box-2 .player-collected {
+  font-size: 14px;
+  margin: 2px 0;
+}
+
+/* 高亮状态下增强AI玩家框显示 */
+.player-box#player-box-1.active, 
+.player-box#player-box-2.active {
+  box-shadow: 0 0 20px 8px gold;
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+/* 活跃玩家的牌背动画效果 */
+.player-box.active .card-stack .card.back {
+  animation: activeCardPulse 1.5s infinite;
+}
+
+@keyframes activeCardPulse {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(5deg) scale(1.1); }
+  100% { transform: rotate(0deg) scale(1); }
 }
