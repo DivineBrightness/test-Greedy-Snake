@@ -94,19 +94,21 @@
   left: 50%;
   transform: translateX(-50%);
 }
-/* 调整AI玩家的位置 - 让它们更靠近牌桌中心 */
+/* 调整AI玩家的位置 - 放置到左上角和右上角 */
 .player-position-1 {
-  top: 40%;
-  right: 40px;
-  transform: translateY(-50%);
-  width: 200px; /* 加宽容器 */
+  top: 30px;  /* 从40%改为固定像素值，放到顶部 */
+  left: 40px; /* 改为left位置，放到左上角 */
+  right: auto; /* 移除right值 */
+  transform: none; /* 不需要Y轴居中，移除translateY */
+  width: 200px;
 }
 
 .player-position-2 {
-  top: 40%; 
-  left: 40px;
-  transform: translateY(-50%);
-  width: 200px; /* 加宽容器 */
+  top: 30px; /* 从40%改为固定像素值，放到顶部 */
+  right: 40px; /* 保持右侧位置，放到右上角 */
+  left: auto; /* 确保不使用left定位 */
+  transform: none; /* 不需要Y轴居中，移除translateY */
+  width: 200px;
 }
 
 .player-box {
@@ -701,4 +703,118 @@
   0% { transform: rotate(0deg) scale(1); }
   50% { transform: rotate(5deg) scale(1.1); }
   100% { transform: rotate(0deg) scale(1); }
+}
+/* 调整AI玩家在移动设备上的位置，避免重叠 */
+@media (max-width: 768px) {
+  /* 小屏幕设备上的玩家位置 */
+  .player-position-1 {
+    top: 30px;
+    left: 20px;
+    width: 150px;
+  }
+  
+  .player-position-2 {
+    top: 30px;
+    right: 20px;
+    width: 150px;
+  }
+  
+  /* 缩小玩家框和信息区 */
+  .player-box#player-box-1, 
+  .player-box#player-box-2 {
+    padding: 5px;
+    min-height: 0;
+  }
+  
+  #player-box-1 .player-name, 
+  #player-box-2 .player-name {
+    font-size: 14px;
+  }
+  
+  #player-box-1 .player-cards-count,
+  #player-box-1 .player-collected,
+  #player-box-2 .player-cards-count,
+  #player-box-2 .player-collected {
+    font-size: 12px;
+  }
+}
+
+/* 超小屏幕设备的更极端调整 */
+@media (max-width: 480px) {
+  /* 将玩家一放在左上角，玩家二放在右上角，保持足够距离 */
+  .player-position-1 {
+    top: 10px;
+    left: 10px;
+    width: 120px;
+  }
+  
+  .player-position-2 {
+    top: 10px;
+    right: 10px;
+    width: 120px;
+  }
+  
+  /* 简化玩家信息显示 */
+  .player-box#player-box-1 .player-info, 
+  .player-box#player-box-2 .player-info {
+    margin-left: 5px;
+  }
+  
+  /* 调整手牌大小和标记 */
+  #player-hand-1 .card-stack, 
+  #player-hand-2 .card-stack,
+  #player-hand-1 .card-stack .card.back, 
+  #player-hand-2 .card-stack .card.back {
+    width: 40px;
+    height: 56px;
+  }
+  
+  .cards-count-indicator {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+    top: -5px;
+    right: -5px;
+  }
+}
+/* 玩家手牌扇形排列样式 */
+#player-hand-0 {
+  display: flex;
+  justify-content: center;
+  position: relative;
+  height: 130px; /* 增加高度以容纳扇形排列 */
+  margin-top: 10px;
+  perspective: 1000px; /* 添加3D视角效果 */
+}
+
+/* 扇形排列的卡牌基础样式 */
+#player-hand-0 .card {
+  position: absolute;
+  bottom: 0;
+  transform-origin: bottom center;
+  transition: all 0.3s ease;
+  margin: 0; /* 覆盖之前的margin */
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2); /* 增强卡牌阴影 */
+}
+
+/* 设置扇形排列效果的悬停状态 */
+#player-hand-0 .card:hover {
+  transform: translateY(-20px) scale(1.1) !important;
+  z-index: 100 !important; /* 确保悬停卡牌在最上层 */
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 15px rgba(255, 215, 0, 0.6);
+}
+
+/* 玩家手牌容器的调整 */
+.player-position-0 .player-hand {
+  width: 100%;
+  overflow: visible; /* 允许卡牌扇形展开 */
+}
+
+.hand-container#player-hand-0 {
+  overflow: visible;
+  max-height: none;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
 }

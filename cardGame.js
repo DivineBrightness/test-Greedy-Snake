@@ -5,7 +5,7 @@ const dragonGame = {
   gamePhase: "idle", // idle, playing, finished
   players: [
     { id: 0, name: "你", isPlayer: true, hand: [], collected: 0, isEliminated: false },
-    { id: 1, name: "南宫问天", isPlayer: false, hand: [], collected: 0, isEliminated: false },
+    { id: 1, name: "图图", isPlayer: false, hand: [], collected: 0, isEliminated: false },
     { id: 2, name: "喜羊羊", isPlayer: false, hand: [], collected: 0, isEliminated: false }
   ],
   activePlayerIndex: 0,
@@ -78,7 +78,7 @@ const dragonGame = {
               <div class="player-position player-position-1">
                 <div class="player-box" id="player-box-1">
                   <div class="player-info">
-                    <div class="player-name">南宫问天</div>
+                    <div class="player-name">图图</div>
                     <div class="player-cards-count">手牌: <span>0</span></div>
                     <div class="player-collected">已收集: <span>0</span></div>
                   </div>
@@ -788,12 +788,15 @@ const dragonGame = {
     
     // 显示玩家手牌
     if (player.isPlayer) {
-      // 如果是玩家自己，显示详细的牌面
+      // 如果是玩家自己，显示详细的牌面并采用扇形排列
+      const totalCards = player.hand.length;
+      const maxAngle = Math.min(40, totalCards * 5); // 最大角度，根据牌数调整，但不超过40度
+      
       player.hand.forEach((card, index) => {
         const cardElement = document.createElement('div');
         cardElement.className = `card ${card.suit}`;
         
-        // 添加牌面内容 - 改进显示效果
+        // 添加牌面内容
         cardElement.innerHTML = `
           <div class="card-value">${card.value}</div>
           <div class="card-suit"></div>
@@ -807,9 +810,26 @@ const dragonGame = {
         
         // 添加到手牌区域
         handElement.appendChild(cardElement);
+        
+        // 计算扇形布局位置
+        if (totalCards > 1) {
+          // 角度从左到右递增
+          const angle = -maxAngle/2 + (maxAngle/(totalCards-1)) * index;
+          // 根据角度计算横向位移
+          const cardWidth = 60; // 卡牌宽度
+          const overlap = Math.min(25, 30 - totalCards); // 卡牌重叠程度，卡牌越多重叠越大
+          const horizontalShift = (index - (totalCards-1)/2) * (cardWidth - overlap);
+          // 应用旋转和位移
+          cardElement.style.transform = `
+            translateX(${horizontalShift}px) 
+            translateY(${Math.abs(angle) * 0.5}px)
+            rotate(${angle}deg)
+          `;
+          cardElement.style.zIndex = index + 1; // 确保从左到右叠放
+        }
       });
     } else {
-      // 如果是AI玩家，只显示单张牌背和数量标记
+      // AI玩家展示代码保持不变
       if (player.hand.length > 0) {
         // 创建卡牌堆容器
         const cardStackElement = document.createElement('div');
