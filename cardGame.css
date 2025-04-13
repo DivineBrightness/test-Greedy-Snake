@@ -5,12 +5,16 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 32, 63, 0.95);
+  background-color: rgba(0, 32, 63, 0.85); /* 改为0.85的透明度，使背景更亮一些 */
   z-index: 1000;
   display: none;
   overflow: hidden;
 }
-
+/* 提高字体可见度 */
+.player-info {
+  color: #ffffff; /* 确保文字为纯白色 */
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.8); /* 添加文字阴影提高对比度 */
+}
 /* 修改游戏容器，确保有足够空间显示完整内容 */
 .dragon-game-content {
   padding-bottom: 70px; /* 增加底部内边距 */
@@ -59,6 +63,7 @@
   height: 150px;
   padding: 10px;
   margin: 0 auto;
+  margin-top: 80px; /* 向下移动牌河 */
   position: relative;
   background-color: rgba(0, 50, 80, 0.3);
   border-radius: 15px;
@@ -337,7 +342,7 @@
 /* 修改排行榜按钮和容器的相对定位 */
 .dragon-leaderboard {
   position: relative;
-  margin-top: 15px;
+  margin-top: 0px;
   /* 确保容器有足够的宽度和可见性 */
   z-index: 200;
   display: inline-block;
@@ -735,8 +740,9 @@
   /* 缩小玩家框和信息区 */
   .player-box#player-box-1, 
   .player-box#player-box-2 {
+    min-height: 50px; /* 在移动设备上使用较小但仍足够的高度 */
     padding: 5px;
-    min-height: 0;
+    background-color: rgba(231, 180, 180, 0.7); /* 更深的背景 */
   }
   
   #player-box-1 .player-name, 
@@ -835,36 +841,41 @@
 }
 /* 移动设备上的玩家手牌调整 */
 @media (max-width: 768px) {
-  /* 减小扇形牌的角度和大小 */
+  /* 增加手牌区域高度 */
   #player-hand-0 {
-    height: 100px; /* 减小高度 */
-    margin-top: 5px;
+    height: 120px; /* 从100px增加到120px */
   }
   
   #player-hand-0 .card {
-    width: 45px; /* 减小牌宽度 */
-    height: 68px; /* 保持宽高比 */
-    margin-bottom: 5px; /* 确保有足够空间显示 */
+    width: 55px; /* 增加牌宽度从45px到55px */
+    height: 83px; /* 相应调整高度 */
+    margin-bottom: 5px;
   }
   
+  
+  /* 调整整个玩家区域 */
   .player-position-0 {
-    width: 90%; /* 使用百分比宽度 */
-    height: 120px;
-    bottom: 70px;
-  }
-  
-  .player-box#player-box-0 {
+    bottom: 80px; /* 稍微上移，留出更多空间给手牌 */
+    height: 140px; /* 增加高度 */
+    }
+
+    .player-box#player-box-0 {
     padding: 5px;
     min-height: 0;
-  }
-  
-  /* 改进手牌悬停效果，减小上升高度 */
-  #player-hand-0 .card:hover {
-    transform: translateY(-10px) scale(1.05) !important;
-  }
-}
+    width: 60%;
+    height: 60%;
+    margin-left: auto; /* Center horizontally */
+    margin-right: auto; /* Center horizontally */
+    /* If vertical centering is also needed within player-position-0, more complex flex/grid might be required depending on parent setup */
+    }
 
-/* 超小屏设备额外优化 */
+    /* 改进手牌悬停效果，减小上升高度 */
+    #player-hand-0 .card:hover {
+    transform: translateY(-10px) scale(1.05) !important;
+    }
+  }
+
+  /* 超小屏设备额外优化 */
 @media (max-width: 480px) {
   #player-hand-0 {
     height: 80px;
