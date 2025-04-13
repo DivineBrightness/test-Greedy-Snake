@@ -53,17 +53,40 @@
   height: 80%;
 }
 
-/* 调整牌河样式，使其更好适应移动设备 */
+/* 改进牌河布局为居中叠放式 */
 .dragon-card-river {
-  width: 95%;
-  height: 120px;
-  padding: 0 10px;
+  width: 70%;
+  height: 150px;
+  padding: 10px;
   margin: 0 auto;
+  position: relative;
+  background-color: rgba(0, 50, 80, 0.3);
+  border-radius: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
+/* 牌河中的卡牌叠放效果 */
 .dragon-card-river .card {
-  margin: 0 5px;
-  flex-shrink: 0;
-  transform-origin: center bottom;
+  position: absolute;
+  margin: 0;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s ease;
+}
+/* 中心轴叠放效果 - 每张牌错开一点位置 */
+.dragon-card-river .card:nth-child(1) { transform: rotate(-15deg) translateX(-80px); z-index: 1; }
+.dragon-card-river .card:nth-child(2) { transform: rotate(-10deg) translateX(-60px); z-index: 2; }
+.dragon-card-river .card:nth-child(3) { transform: rotate(-5deg) translateX(-30px); z-index: 3; }
+.dragon-card-river .card:nth-child(4) { transform: rotate(0deg) translateX(0); z-index: 4; }
+.dragon-card-river .card:nth-child(5) { transform: rotate(5deg) translateX(30px); z-index: 5; }
+.dragon-card-river .card:nth-child(6) { transform: rotate(10deg) translateX(60px); z-index: 6; }
+.dragon-card-river .card:nth-child(7) { transform: rotate(15deg) translateX(80px); z-index: 7; }
+
+/* 更多的牌只显示最近的几张 */
+.dragon-card-river .card:nth-child(n+8) {
+  opacity: 0.8;
+  transform: rotate(calc(15deg + var(--rot, 0deg))) translateX(calc(80px + var(--x, 0px)));
+  z-index: calc(7 + var(--z, 0));
 }
 
 
@@ -767,44 +790,48 @@
     right: -5px;
   }
 }
-/* 减小手牌扇形高度，确保不会超出屏幕 */
+/* 优化玩家手牌，增加交叠效果 */
 #player-hand-0 {
-  height: 110px; /* 从130px减小到110px */
-  margin-top: 0; /* 减少顶部边距 */
-  margin-bottom: 10px; /* 增加底部边距 */
-  transform: translateY(-20px); /* 向上移动20px */
+  height: 110px;
+  margin-top: 0;
+  margin-bottom: 10px;
+  transform: translateY(-20px);
+  position: relative;
+  width: 100%;
 }
 
-/* 扇形排列的卡牌基础样式 */
+/* 增加手牌交叠效果 */
 #player-hand-0 .card {
   position: absolute;
   bottom: 0;
   transform-origin: bottom center;
   transition: all 0.3s ease;
-  margin: 0; /* 覆盖之前的margin */
-  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2); /* 增强卡牌阴影 */
+  margin: 0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  /* 默认增加更多重叠 */
+  --overlap: 35px;
 }
 
-/* 设置扇形排列效果的悬停状态 */
+/* 悬停时提升卡牌 */
 #player-hand-0 .card:hover {
-  transform: translateY(-20px) scale(1.1) !important;
-  z-index: 100 !important; /* 确保悬停卡牌在最上层 */
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 15px rgba(255, 215, 0, 0.6);
+  transform: translateY(-20px) !important;
+  z-index: 100 !important;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3), 0 0 15px rgba(255, 215, 0, 0.6);
 }
 
-/* 玩家手牌容器的调整 */
+/* 更新玩家手牌容器 */
 .player-position-0 .player-hand {
   width: 100%;
-  overflow: visible; /* 允许卡牌扇形展开 */
+  overflow: visible;
 }
 
 .hand-container#player-hand-0 {
+  position: relative;
   overflow: visible;
-  max-height: none;
+  height: 110px;
   width: 100%;
   display: flex;
   justify-content: center;
-  align-items: flex-end;
 }
 /* 移动设备上的玩家手牌调整 */
 @media (max-width: 768px) {
@@ -900,5 +927,68 @@
   .dragon-btn {
     padding: 6px 12px;
     font-size: 14px;
+  }
+}
+/* 移动设备上的牌河优化 */
+@media (max-width: 768px) {
+  .dragon-card-river {
+    width: 85%;
+    height: 130px;
+  }
+  
+  /* 调整叠放距离 */
+  .dragon-card-river .card:nth-child(1) { transform: rotate(-15deg) translateX(-50px); }
+  .dragon-card-river .card:nth-child(2) { transform: rotate(-10deg) translateX(-40px); }
+  .dragon-card-river .card:nth-child(3) { transform: rotate(-5deg) translateX(-20px); }
+  .dragon-card-river .card:nth-child(4) { transform: rotate(0deg) translateX(0); }
+  .dragon-card-river .card:nth-child(5) { transform: rotate(5deg) translateX(20px); }
+  .dragon-card-river .card:nth-child(6) { transform: rotate(10deg) translateX(40px); }
+  .dragon-card-river .card:nth-child(7) { transform: rotate(15deg) translateX(50px); }
+  
+  .dragon-card-river .card:nth-child(n+8) {
+    transform: rotate(calc(15deg + var(--rot, 0deg))) translateX(calc(50px + var(--x, 0px)));
+  }
+  
+  /* 减小卡牌大小 */
+  .dragon-card-river .card {
+    width: 45px;
+    height: 68px;
+  }
+  
+  /* 手牌交叠优化 */
+  #player-hand-0 .card {
+    --overlap: 40px; /* 增加重叠度 */
+  }
+}
+
+/* 超小屏幕设备的极限优化 */
+@media (max-width: 480px) {
+  .dragon-card-river {
+    width: 90%;
+    height: 110px;
+  }
+  
+  /* 调整叠放距离 */
+  .dragon-card-river .card:nth-child(1) { transform: rotate(-15deg) translateX(-35px); }
+  .dragon-card-river .card:nth-child(2) { transform: rotate(-10deg) translateX(-25px); }
+  .dragon-card-river .card:nth-child(3) { transform: rotate(-5deg) translateX(-15px); }
+  .dragon-card-river .card:nth-child(4) { transform: rotate(0deg) translateX(0); }
+  .dragon-card-river .card:nth-child(5) { transform: rotate(5deg) translateX(15px); }
+  .dragon-card-river .card:nth-child(6) { transform: rotate(10deg) translateX(25px); }
+  .dragon-card-river .card:nth-child(7) { transform: rotate(15deg) translateX(35px); }
+  
+  .dragon-card-river .card:nth-child(n+8) {
+    transform: rotate(calc(15deg + var(--rot, 0deg))) translateX(calc(35px + var(--x, 0px)));
+  }
+  
+  /* 减小卡牌大小 */
+  .dragon-card-river .card {
+    width: 35px;
+    height: 53px;
+  }
+  
+  /* 手牌交叠优化 */
+  #player-hand-0 .card {
+    --overlap: 45px; /* 更大的重叠度 */
   }
 }

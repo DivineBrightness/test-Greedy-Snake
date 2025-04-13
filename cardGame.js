@@ -756,25 +756,48 @@ const dragonGame = {
     
     riverElement.innerHTML = '';
     
-    // 显示牌河中的牌
-    this.river.forEach((item, index) => {
+    // 显示牌河中的牌 - 最多显示最新的12张牌
+    const visibleCards = this.river.slice(-12);
+    
+    visibleCards.forEach((item, index) => {
       const cardElement = document.createElement('div');
       cardElement.className = `card ${item.card.suit}`;
       
-      // 添加牌面内容 - 改进显示效果
+      // 添加牌面内容
       cardElement.innerHTML = `
         <div class="card-value">${item.card.value}</div>
         <div class="card-suit"></div>
         <div class="card-value-bottom">${item.card.value}</div>
       `;
       
-      // 随机轻微旋转角度，让牌河看起来更自然
-      const rotation = Math.random() * 6 - 3;
-      cardElement.style.transform = `rotate(${rotation}deg)`;
+      // 为超出预设位置的牌设置自定义属性
+      if (index >= 7) {
+        const extraIndex = index - 7;
+        cardElement.style.setProperty('--rot', `${(extraIndex * 2)}deg`);
+        cardElement.style.setProperty('--x', `${extraIndex * 5}px`);
+        cardElement.style.setProperty('--z', extraIndex);
+      }
       
       // 添加到牌河
       riverElement.appendChild(cardElement);
     });
+    
+    // 如果牌河中有很多牌，添加牌数指示器
+    if (this.river.length > 12) {
+      const countIndicator = document.createElement('div');
+      countIndicator.className = 'river-count';
+      countIndicator.textContent = `共 ${this.river.length} 张牌`;
+      countIndicator.style.position = 'absolute';
+      countIndicator.style.top = '5px';
+      countIndicator.style.right = '5px';
+      countIndicator.style.background = 'rgba(0,0,0,0.6)';
+      countIndicator.style.color = 'white';
+      countIndicator.style.padding = '2px 8px';
+      countIndicator.style.borderRadius = '10px';
+      countIndicator.style.fontSize = '12px';
+      countIndicator.style.zIndex = '100';
+      riverElement.appendChild(countIndicator);
+    }
   },
   
   updatePlayerHand: function(playerId) {
@@ -786,56 +809,61 @@ const dragonGame = {
     
     handElement.innerHTML = '';
     
-  // 在calculateFanLayout函数中，调整扇形布局算法中的牌的位置计算
-  if (player.isPlayer) {
-    // 如果是玩家自己，显示详细的牌面并采用扇形排列
-    const totalCards = player.hand.length;
-    
-    // 限制最大角度，防止扇形过大
-    const maxAngle = Math.min(30, totalCards * 3); // 降低角度
-    
-    player.hand.forEach((card, index) => {
-      const cardElement = document.createElement('div');
-      cardElement.className = `card ${card.suit}`;
+    if (player.isPlayer) {
+      // 如果是玩家自己，显示详细的牌面并采用扇形排列
+      const totalCards = player.hand.length;
       
-      // 添加牌面内容
-      cardElement.innerHTML = `
-        <div class="card-value">${card.value}</div>
-        <div class="card-suit"></div>
-        <div class="card-value-bottom">${card.value}</div>
-      `;
+      // 根据卡牌数量调整重叠度
+      let overlap = 40;
+      if (totalCards > 10) overlap = 45;
+      if (totalCards > 15) overlap = 48;
       
-      // 添加点击事件
-      cardElement.addEventListener('click', () => {
-        this.playerPlayCard(index);
-      });
+      // 计算扇形的总宽度
+      const cardWidth = 60; // 卡牌宽度
+      const totalWidth = cardWidth + (cardWidth - overlap) * (totalCards - 1);
       
-      // 添加到手牌区域
-      handElement.appendChild(cardElement);
-      
-      // 计算扇形布局位置
-      if (totalCards > 1) {
-        // 角度从左到右递增
-        const angle = -maxAngle/2 + (maxAngle/(totalCards-1)) * index;
+      player.hand.forEach((card, index) => {
+        const cardElement = document.createElement('div');
+        cardElement.className = `card ${card.suit}`;
         
-        // 计算重叠度 - 卡牌越多重叠越大
-        const cardWidth = 60;
-        const overlap = Math.min(35, 40 - totalCards); // 增大重叠度
-        const horizontalShift = (index - (totalCards-1)/2) * (cardWidth - overlap);
-        
-        // 垂直偏移量保持较小，防止超出屏幕
-        const verticalShift = Math.abs(angle) * 0.2; // 减小垂直偏移量
-        
-        // 应用变换 - 减小Y轴偏移量，确保牌不会太靠底部
-        cardElement.style.transform = `
-          translateX(${horizontalShift}px) 
-          translateY(${verticalShift}px)
-          rotate(${angle}deg)
+        // 添加牌面内容
+        cardElement.innerHTML = `
+          <div class="card-value">${card.value}</div>
+          <div class="card-suit"></div>
+          <div class="card-value-bottom">${card.value}</div>
         `;
-        cardElement.style.zIndex = index + 1;
-      }
-    });
-  } else {
+        
+        // 添加点击事件
+        cardElement.addEventListener('click', () => {
+          this.playerPlayCard(index);
+        });
+        
+        // 添加到手牌区域
+        handElement.appendChild(cardElement);
+        
+        // 修改叠放布局
+        if (totalCards > 1) {
+          const centerOffset = totalWidth / 2;
+          const posX = (index * (cardWidth - overlap));
+          const horizontalShift = posX - centerOffset + cardWidth/2;
+          
+          // 创建微妙的弧形效果
+          const arcHeight = 5; // 弧度高度
+          const arcPos = (index / (totalCards - 1)) * Math.PI; // 0到π的范围
+          const verticalShift = Math.sin(arcPos) * arcHeight;
+          
+          // 计算旋转角度：中间牌0度，两侧递增
+          const angle = (index / (totalCards - 1) - 0.5) * 30; // -15到15度范围
+          
+          cardElement.style.transform = `
+            translateX(${horizontalShift}px) 
+            translateY(${-verticalShift}px)
+            rotate(${angle}deg)
+          `;
+          cardElement.style.zIndex = index + 1;
+        }
+      });
+    } else {
       // AI玩家展示代码保持不变
       if (player.hand.length > 0) {
         // 创建卡牌堆容器
