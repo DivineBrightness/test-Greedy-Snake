@@ -750,7 +750,6 @@ const dragonGame = {
     }
   },
   
-  // UI更新方法
   updateRiver: function() {
     const riverElement = document.querySelector('.dragon-card-river');
     if (!riverElement) return;
@@ -762,11 +761,16 @@ const dragonGame = {
       const cardElement = document.createElement('div');
       cardElement.className = `card ${item.card.suit}`;
       
-      // 添加牌面内容
+      // 添加牌面内容 - 改进显示效果
       cardElement.innerHTML = `
         <div class="card-value">${item.card.value}</div>
         <div class="card-suit"></div>
+        <div class="card-value-bottom">${item.card.value}</div>
       `;
+      
+      // 随机轻微旋转角度，让牌河看起来更自然
+      const rotation = Math.random() * 6 - 3;
+      cardElement.style.transform = `rotate(${rotation}deg)`;
       
       // 添加到牌河
       riverElement.appendChild(cardElement);
@@ -802,30 +806,48 @@ const dragonGame = {
     handElement.innerHTML = '';
     
     // 显示玩家手牌
-    player.hand.forEach((card, index) => {
-      const cardElement = document.createElement('div');
-      
-      // 如果是玩家自己，显示牌面；否则显示牌背
-      if (player.isPlayer) {
+    if (player.isPlayer) {
+      // 如果是玩家自己，显示详细的牌面
+      player.hand.forEach((card, index) => {
+        const cardElement = document.createElement('div');
         cardElement.className = `card ${card.suit}`;
         
-        // 添加牌面内容
+        // 添加牌面内容 - 改进显示效果
         cardElement.innerHTML = `
           <div class="card-value">${card.value}</div>
           <div class="card-suit"></div>
+          <div class="card-value-bottom">${card.value}</div>
         `;
         
         // 添加点击事件
         cardElement.addEventListener('click', () => {
           this.playerPlayCard(index);
         });
-      } else {
+        
+        // 添加到手牌区域
+        handElement.appendChild(cardElement);
+      });
+    } else {
+      // 如果是AI玩家，只显示牌背和数量
+      for (let i = 0; i < player.hand.length; i++) {
+        const cardElement = document.createElement('div');
         cardElement.className = 'card back';
+        handElement.appendChild(cardElement);
+        
+        // 限制最大显示数量，避免太多牌挤在一起
+        if (i >= 7 && player.hand.length > 10) {
+          const remainingCount = document.createElement('div');
+          remainingCount.className = 'remaining-cards';
+          remainingCount.textContent = `+${player.hand.length - 7}张`;
+          remainingCount.style.color = 'white';
+          remainingCount.style.fontWeight = 'bold';
+          remainingCount.style.marginLeft = '5px';
+          remainingCount.style.alignSelf = 'center';
+          handElement.appendChild(remainingCount);
+          break;
+        }
       }
-      
-      // 添加到手牌区域
-      handElement.appendChild(cardElement);
-    });
+    }
   },
   
   highlightActivePlayer: function() {

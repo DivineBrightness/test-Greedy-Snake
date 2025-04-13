@@ -62,10 +62,10 @@
   box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
 }
 
-/* 牌河 - 存放中间的牌序列 */
+/* 改进牌河样式 */
 .dragon-card-river {
   width: 90%;
-  height: 130px;
+  height: 150px;
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   display: flex;
@@ -73,7 +73,14 @@
   padding: 0 20px;
   overflow-x: auto;
   position: relative;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
 }
+.dragon-card-river .card {
+  margin: 0 5px;
+  flex-shrink: 0;
+  transform-origin: center bottom;
+}
+
 
 /* 玩家区域样式 */
 .player-position {
@@ -144,19 +151,95 @@
 
 /* 卡牌样式 */
 .card {
-  width: 40px;
-  height: 60px;
+  width: 60px;
+  height: 90px;
   background-color: white;
   border-radius: 5px;
   position: relative;
-  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
   cursor: pointer;
-  margin: 2px;
+  margin: 4px;
+  font-family: Arial, sans-serif;
+  overflow: hidden;
+}
+/* 牌面样式 */
+.card .card-value {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  font-size: 18px;
+  font-weight: bold;
+}
+.card .card-value-bottom {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  font-size: 18px;
+  font-weight: bold;
+  transform: rotate(180deg);
+}
+/* 牌花色样式 */
+.card .card-suit {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 30px;
+  line-height: 1;
+}
+/* 红色花色 */
+.card.hearts .card-value, 
+.card.hearts .card-value-bottom,
+.card.diamonds .card-value, 
+.card.diamonds .card-value-bottom {
+  color: #e74c3c;
+}
+/* 黑色花色 */
+.card.clubs .card-value,
+.card.clubs .card-value-bottom,
+.card.spades .card-value,
+.card.spades .card-value-bottom {
+  color: #2c3e50;
+}
+/* 花色符号 */
+.card.hearts .card-suit:before { content: "♥"; color: #e74c3c; }
+.card.diamonds .card-suit:before { content: "♦"; color: #e74c3c; }
+.card.clubs .card-suit:before { content: "♣"; color: #2c3e50; }
+.card.spades .card-suit:before { content: "♠"; color: #2c3e50; }
+
+/* 牌背样式 */
+.card.back {
+  background: linear-gradient(135deg, #6c5ce7, #4834d4);
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(255, 255, 255, 0.1) 10px,
+    rgba(255, 255, 255, 0.1) 20px
+  );
+}
+.card.back:after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
 }
 
+/* 改进卡牌悬停效果 */
 .card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-10px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.card.enabled:hover {
+  transform: translateY(-10px) scale(1.05);
+  box-shadow: 0 15px 25px rgba(0, 0, 0, 0.2), 0 0 10px rgba(255, 215, 0, 0.5);
+  z-index: 10;
 }
 
 .card.played {
@@ -164,19 +247,6 @@
   margin: 0 -10px 0 0;
 }
 
-.card.matched {
-  box-shadow: 0 0 15px gold;
-  z-index: 10;
-}
-
-.card.collected {
-  animation: collectAnimation 0.5s forwards;
-}
-
-@keyframes collectAnimation {
-  0% { transform: scale(1); opacity: 1; }
-  100% { transform: scale(0.1); opacity: 0; }
-}
 
 /* 控制面板 */
 .control-panel {
@@ -445,4 +515,57 @@
 
 #dragon-submit-btn:hover {
   background-color: #1a4d48;
+}
+
+/* 改进AI玩家手牌区域 */
+#player-hand-1, #player-hand-2 {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+#player-hand-1 .card.back, 
+#player-hand-2 .card.back {
+  width: 40px;
+  height: 60px;
+  margin: -5px;
+  transform: rotate(var(--rotation, 0deg));
+}
+
+#player-hand-1 .card.back:nth-child(odd) {
+  --rotation: -5deg;
+}
+
+#player-hand-1 .card.back:nth-child(even) {
+  --rotation: 5deg;
+}
+
+#player-hand-2 .card.back:nth-child(odd) {
+  --rotation: 5deg;
+}
+
+#player-hand-2 .card.back:nth-child(even) {
+  --rotation: -5deg;
+}
+
+/* 改进匹配和收集动画 */
+@keyframes matchedAnimation {
+  0% { transform: scale(1); box-shadow: 0 0 5px gold; }
+  50% { transform: scale(1.1); box-shadow: 0 0 25px gold; }
+  100% { transform: scale(1); box-shadow: 0 0 5px gold; }
+}
+
+.card.matched {
+  animation: matchedAnimation 0.8s ease infinite;
+  z-index: 10;
+}
+
+@keyframes collectAnimation {
+  0% { transform: scale(1); opacity: 1; }
+  20% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.1); opacity: 0; }
+}
+
+.card.collected {
+  animation: collectAnimation 0.8s forwards;
 }
