@@ -43,7 +43,7 @@ const dragonGame = {
     <div class="dragon-game-content">
       <div class="dragon-game-header">
         <button class="back-btn" id="dragon-back-btn"></button>
-        <h2>斗龙牌</h2>
+        <h2>翻斗扑克</h2>
         <div class="game-info">
           <div class="game-score">得分: <span id="dragon-score">0</span></div>
           <div class="game-high-score">最高分: <span id="dragon-high-score">${this.highScore}</span></div>
@@ -732,7 +732,7 @@ populatePlayerSelect: function() {
       // 如果loadLeaderboard函数不存在，显示错误信息
       leaderboardContent.innerHTML = `
         <div class="leaderboard-header">
-          <h3>斗龙牌 - 排行榜</h3>
+          <h3>翻斗扑克 - 排行榜</h3>
           <button class="leaderboard-close-btn">&times;</button>
         </div>
         <div class="leaderboard-table">

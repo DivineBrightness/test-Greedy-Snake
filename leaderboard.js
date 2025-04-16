@@ -76,7 +76,7 @@ async function loadLeaderboard(game, elementId) {
       } else if (game === 'dino') {
         gameTitle = '恐龙快跑';
       } else if (game === 'dragon') {
-        gameTitle = '斗龙牌';  // 添加对斗龙牌游戏的支持
+        gameTitle = '翻斗扑克';  // 添加对翻斗扑克游戏的支持
       } else {
         gameTitle = '游戏';
       }
