@@ -6,7 +6,7 @@ const dragonGame = {
   players: [
     { id: 0, name: "你", isPlayer: true, hand: [], collected: 0, isEliminated: false },
     { id: 1, name: "图图", isPlayer: false, hand: [], collected: 0, isEliminated: false },
-    { id: 2, name: "喜羊羊", isPlayer: false, hand: [], collected: 0, isEliminated: false }
+    { id: 2, name: "壮壮", isPlayer: false, hand: [], collected: 0, isEliminated: false }
   ],
   activePlayerIndex: 0,
   river: [], // 中间牌河
@@ -91,7 +91,7 @@ const dragonGame = {
               <div class="player-position player-position-2">
                 <div class="player-box" id="player-box-2">
                   <div class="player-info">
-                    <div class="player-name">喜羊羊</div>
+                    <div class="player-name">壮壮</div>
                     <div class="player-cards-count">手牌: <span>0</span></div>
                     <div class="player-collected">已收集: <span>0</span></div>
                   </div>
@@ -636,24 +636,32 @@ const dragonGame = {
     modal.style.display = 'flex';
   },
   
-  // 填充玩家选择器
-  populatePlayerSelect: function() {
+// 使用scenes.js中的通用populateSelect函数
+populatePlayerSelect: function() {
+  // 如果scenes.js中的通用函数可用，则直接调用
+  if (typeof window.populateSelect === 'function') {
+    window.populateSelect('dragon-player-select');
+  } else {
+    // 否则使用上面的备用实现
     const playerSelect = document.getElementById('dragon-player-select');
     if (!playerSelect) return;
     
     // 清空现有选项
     playerSelect.innerHTML = '<option value="">请选择</option>';
     
-    // 添加预设玩家名
-    const presetNames = ['风花雪月', '天外飞仙', '神雕侠侣', '倚天屠龙', '碧血剑'];
+    // 使用scenes.js中的预设角色列表
+    const tianGangCharacters = [
+      // 角色列表同上
+    ];
     
-    presetNames.forEach(name => {
+    tianGangCharacters.forEach(name => {
       const option = document.createElement('option');
       option.value = name;
       option.textContent = name;
       playerSelect.appendChild(option);
     });
-  },
+  }
+},
   
   // 提交分数到排行榜
   submitScore: function(playerName, score) {
@@ -810,17 +818,8 @@ const dragonGame = {
     handElement.innerHTML = '';
     
     if (player.isPlayer) {
-      // 如果是玩家自己，显示详细的牌面并采用扇形排列
+      // 如果是玩家自己，显示详细的牌面，采用直线排列
       const totalCards = player.hand.length;
-      
-      // 根据卡牌数量调整重叠度
-      let overlap = 40;
-      if (totalCards > 10) overlap = 45;
-      if (totalCards > 15) overlap = 48;
-      
-      // 计算扇形的总宽度
-      const cardWidth = 60; // 卡牌宽度
-      const totalWidth = cardWidth + (cardWidth - overlap) * (totalCards - 1);
       
       player.hand.forEach((card, index) => {
         const cardElement = document.createElement('div');
@@ -841,27 +840,8 @@ const dragonGame = {
         // 添加到手牌区域
         handElement.appendChild(cardElement);
         
-        // 修改叠放布局
-        if (totalCards > 1) {
-          const centerOffset = totalWidth / 2;
-          const posX = (index * (cardWidth - overlap));
-          const horizontalShift = posX - centerOffset + cardWidth/2;
-          
-          // 创建微妙的弧形效果
-          const arcHeight = 5; // 弧度高度
-          const arcPos = (index / (totalCards - 1)) * Math.PI; // 0到π的范围
-          const verticalShift = Math.sin(arcPos) * arcHeight;
-          
-          // 计算旋转角度：中间牌0度，两侧递增
-          const angle = (index / (totalCards - 1) - 0.5) * 30; // -15到15度范围
-          
-          cardElement.style.transform = `
-            translateX(${horizontalShift}px) 
-            translateY(${-verticalShift}px)
-            rotate(${angle}deg)
-          `;
-          cardElement.style.zIndex = index + 1;
-        }
+        // 设置层叠顺序，确保从左到右正确显示
+        cardElement.style.zIndex = index + 1;
       });
     } else {
       // AI玩家展示代码保持不变
@@ -1014,27 +994,3 @@ document.addEventListener('DOMContentLoaded', () => {
   dragonGame.init();
 });
 
-// 确保populateSelect函数可用于斗龙牌游戏
-function populateSelect(selectId) {
-  const select = document.getElementById(selectId);
-  if (!select) return;
-  
-  // 清空现有选项
-  select.innerHTML = '<option value="">请选择</option>';
-  
-  // 添加预设玩家名
-  const names = ['风花雪月', '天外飞仙', '神雕侠侣', '倚天屠龙', '碧血剑', 
-                '梦幻西游', '剑侠情缘', '诛仙世界', '仙剑奇侠', '侠客行'];
-  
-  names.forEach(name => {
-    const option = document.createElement('option');
-    option.value = name;
-    option.textContent = name;
-    select.appendChild(option);
-  });
-}
-
-// 如果该函数不存在，则添加到全局作用域
-if (typeof window.populateSelect !== 'function') {
-  window.populateSelect = populateSelect;
-}
