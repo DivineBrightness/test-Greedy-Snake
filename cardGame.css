@@ -355,23 +355,19 @@
 }
 /* 修改排行榜按钮和容器的相对定位 */
 .dragon-leaderboard {
-  position: relative;
-  margin-top: 0px;
-  /* 确保容器有足够的宽度和可见性 */
-  z-index: 200;
-  display: inline-block;
+  position: absolute; /* 使用绝对定位 */
+  top: -40px; /* 距离顶部的距离 */
+  right: -70px; /* 距离右侧的距离 */
+  z-index: 1000000; /* 确保在其他元素上方 */
 }
 
+/* 覆盖通用.leaderboard-btn的margin-top */
 .dragon-leaderboard .leaderboard-btn {
-  background-color: #e74c3c;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  padding: 8px 15px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  margin-top: 0 !important; /* 使用!important覆盖通用样式 */
+  margin-bottom: 0;
+  padding: 6px 12px; /* 稍微减小内边距使按钮更紧凑 */
 }
+
 
 .dragon-leaderboard .leaderboard-btn:hover {
   background-color: #c0392b;
@@ -1015,5 +1011,57 @@
   /* 手牌交叠优化 */
   #player-hand-0 .card {
     --overlap: 45px; /* 更大的重叠度 */
+  }
+}
+/* 调整游戏分数和最高分的容器样式 */
+.dragon-game-header .game-info {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px; /* 控制两个元素之间的间距 */
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 6px 15px;
+  border-radius: 8px;
+  margin: 10px auto;
+  width: fit-content;
+}
+
+/* 分数样式 */
+.game-score {
+  color: #ffdd00; /* 金色 */
+  font-weight: bold;
+  font-size: 16px;
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+}
+
+/* 最高分样式 */
+.game-high-score {
+  color: #ff9900; /* 橙色 */
+  font-weight: bold;
+  font-size: 16px;
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+}
+
+/* 数字样式加强 */
+.game-score span,
+.game-high-score span {
+  display: inline-block;
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 0 5px;
+  border-radius: 4px;
+  margin-left: 5px;
+  min-width: 40px;
+  text-align: center;
+}
+
+/* 移动设备适配 */
+@media (max-width: 480px) {
+  .dragon-game-header .game-info {
+    gap: 10px;
+    padding: 4px 10px;
+  }
+  
+  .game-score, .game-high-score {
+    font-size: 14px;
   }
 }
