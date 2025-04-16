@@ -543,50 +543,72 @@ const dragonGame = {
     }
   },
   
-  // 检查游戏是否结束
-  checkGameOver: function() {
-    // 检查是否有玩家没有牌了
-    for (let i = 0; i < this.players.length; i++) {
-      if (this.players[i].hand.length === 0 && !this.players[i].isEliminated) {
-        // 标记玩家为已出局
-        this.players[i].isEliminated = true;
-        this.playersInGame--;
-        
-        // 更新玩家UI
-        const playerBox = document.getElementById(`player-box-${this.players[i].id}`);
-        if (playerBox) {
-          playerBox.classList.add('eliminated');
-        }
-        
-        // 显示出局消息
-        this.showMessage(`${this.players[i].name} 已出局!`, 2000);
+// 检查游戏是否结束
+checkGameOver: function() {
+  // 记录是否有新的玩家出局
+  let newEliminationOccurred = false;
+  let eliminatedPlayerId = -1;
+  
+  // 检查是否有玩家没有牌了
+  for (let i = 0; i < this.players.length; i++) {
+    if (this.players[i].hand.length === 0 && !this.players[i].isEliminated) {
+      // 检查是否是第一个出局的玩家
+      const isFirstToEliminate = this.players.every(p => p.id === this.players[i].id || !p.isEliminated);
+      
+      // 标记玩家为已出局
+      this.players[i].isEliminated = true;
+      this.playersInGame--;
+      eliminatedPlayerId = this.players[i].id;
+      newEliminationOccurred = true;
+      
+      // 更新玩家UI
+      const playerBox = document.getElementById(`player-box-${this.players[i].id}`);
+      if (playerBox) {
+        playerBox.classList.add('eliminated');
       }
+      
+      // 显示出局消息
+      this.showMessage(`${this.players[i].name} 率先出完牌!`, 2000);
+      
+      // 如果是玩家(id为0)且是第一个出局的，给予额外奖励
+      if (this.players[i].id === 0 && isFirstToEliminate) {
+        // 玩家是最快出完牌的，奖励10分
+        this.addScore(10);
+        this.showMessage(`恭喜! 你最快出完牌，奖励10分!`, 2500);
+      }
+    }
+  }
+  
+  // 如果当前玩家出局了，需要调整activePlayerIndex
+  if (newEliminationOccurred && this.activePlayerIndex === eliminatedPlayerId) {
+    // 轮到下一个未出局的玩家
+    this.nextPlayer();
+  }
+  
+  // 如果只剩一名玩家或所有玩家都出局，游戏结束
+  if (this.playersInGame <= 1) {
+    this.gamePhase = "finished";
+    
+    // 找出胜利者
+    const winner = this.determineWinner();
+    
+    // 显示游戏结束消息
+    this.showMessage(`游戏结束! ${winner.name} 获胜!`, 3000);
+    
+    // 如果玩家获胜，增加奖励分数
+    if (winner.isPlayer) {
+      // 增加胜利奖励
+      this.addScore(50);
     }
     
-    // 如果只剩一名玩家，游戏结束
-    if (this.playersInGame <= 1) {
-      this.gamePhase = "finished";
-      
-      // 找出胜利者
-      const winner = this.determineWinner();
-      
-      // 显示游戏结束消息
-      this.showMessage(`游戏结束! ${winner.name} 获胜!`, 3000);
-      
-      // 如果玩家获胜，增加奖励分数
-      if (winner.isPlayer) {
-        // 增加胜利奖励
-        this.addScore(50);
-      }
-      
-      // 显示游戏结束模态框
-      this.showGameOverModal();
-      
-      // 启用/禁用按钮
-      document.getElementById('dragon-start-btn').disabled = false;
-      document.getElementById('dragon-reset-btn').disabled = false;
-    }
-  },
+    // 显示游戏结束模态框
+    this.showGameOverModal();
+    
+    // 启用/禁用按钮
+    document.getElementById('dragon-start-btn').disabled = false;
+    document.getElementById('dragon-reset-btn').disabled = false;
+  }
+},
   
   // 确定胜利者
   determineWinner: function() {
