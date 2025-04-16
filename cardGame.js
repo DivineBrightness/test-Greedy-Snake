@@ -236,12 +236,7 @@ const dragonGame = {
         const customNameElement = document.getElementById('dragon-custom-name');
         let playerName = customNameElement.value.trim() || selectElement.value;
         
-        if (!playerName) {
-          alert('请选择或输入一个名字');
-          return;
-        }
-        
-        // 提交分数
+        // 调用简化的提交函数
         this.submitScore(playerName, this.score);
       });
     }
@@ -663,62 +658,42 @@ populatePlayerSelect: function() {
   }
 },
   
-  // 提交分数到排行榜
-  submitScore: function(playerName, score) {
-    const submitBtn = document.getElementById('dragon-submit-btn');
-    if (submitBtn) submitBtn.disabled = true;
+// 简化的提交分数函数 - 参考恐龙游戏的实现
+submitScore: async function(playerName, score) {
+  const submitBtn = document.getElementById('dragon-submit-btn');
+  if (!submitBtn) return;
+  
+  // 输入验证
+  if (!playerName) {
+    alert("请选择或输入一个名字");
+    return;
+  }
+  
+  // 禁用按钮，防止重复提交
+  submitBtn.disabled = true;
+  submitBtn.textContent = '提交中...';
+  
+  try {
+    // 直接使用window.submitScore函数
+    await window.submitScore('dragon', playerName, score);
     
-    // 显示提交状态
-    const statusElement = document.createElement('div');
-    statusElement.className = 'submit-status';
-    statusElement.textContent = "提交中...";
-    
-    // 找到模态框内容区域
-    const modalContent = document.querySelector('#dragon-modal > div');
-    if (modalContent) {
-      // 添加状态元素到模态框
-      modalContent.appendChild(statusElement);
+    // 重新加载排行榜 (不包含任何状态消息创建)
+    if (typeof window.loadLeaderboard === 'function') {
+      window.loadLeaderboard('dragon', 'dragon-leaderboard-content');
     }
     
-    // 使用leaderboard.js中的submitScore函数
-    // 注意：需要确保游戏名称为'dragon'
-    if (typeof window.submitScore === 'function') {
-      window.submitScore('dragon', playerName, score)
-        .then(() => {
-          // 提交成功
-          statusElement.textContent = "提交成功！";
-          statusElement.style.color = "green";
-          
-          // 重新加载排行榜
-          this.loadLeaderboard();
-          
-          // 3秒后关闭模态框
-          setTimeout(() => {
-            document.getElementById('dragon-modal').style.display = 'none';
-            
-            // 移除状态信息
-            if (statusElement.parentNode) {
-              statusElement.parentNode.removeChild(statusElement);
-            }
-            
-            if (submitBtn) submitBtn.disabled = false;
-          }, 3000);
-        })
-        .catch(error => {
-          // 提交失败
-          statusElement.textContent = `提交失败：${error.message}`;
-          statusElement.style.color = "red";
-          
-          if (submitBtn) submitBtn.disabled = false;
-        });
-    } else {
-      // 如果submitScore函数不存在
-      statusElement.textContent = "提交失败：排行榜功能不可用";
-      statusElement.style.color = "red";
-      
-      if (submitBtn) submitBtn.disabled = false;
-    }
-  },
+    // 简单提示并关闭模态框
+    alert("提交成功！");
+    document.getElementById('dragon-modal').style.display = 'none';
+  } catch (error) {
+    console.error('提交分数失败:', error);
+    alert('提交失败，请重试');
+  } finally {
+    // 无论成功失败都恢复按钮状态
+    submitBtn.disabled = false;
+    submitBtn.textContent = '提交成绩';
+  }
+},
   
   // 加载排行榜
   loadLeaderboard: function() {
