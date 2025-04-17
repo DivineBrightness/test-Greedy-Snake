@@ -1066,3 +1066,50 @@
     font-size: 14px;
   }
 }
+/* 为图图(玩家1)添加背景图片 */
+.player-box#player-box-1 {
+  background-image: url('./image/poke/图图.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+}
+
+/* 为壮壮(玩家2)添加背景图片 */
+.player-box#player-box-2 {
+  background-image: url('./image/poke/壮壮.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+}
+
+/* 添加半透明覆盖层，确保文字内容可见 */
+.player-box#player-box-1::before,
+.player-box#player-box-2::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* 半透明黑色覆盖 */
+  border-radius: 10px; /* 保持与框相同的圆角 */
+  z-index: 1;
+}
+
+/* 确保内容显示在背景和覆盖层上方 */
+.player-box#player-box-1 > *,
+.player-box#player-box-2 > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* 移动设备适配调整 */
+@media (max-width: 768px) {
+  /* 保留背景图但调整容器样式 */
+  .player-box#player-box-1, 
+  .player-box#player-box-2 {
+    background-color: transparent; /* 移除原来的背景色 */
+  }
+}
