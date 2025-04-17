@@ -3,6 +3,8 @@ const dragonGame = {
   isOpen: false,
   deckId: null,
   gamePhase: "idle", // idle, playing, finished
+    // 添加无敌模式标志
+    godMode: false,
   players: [
     { id: 0, name: "你", isPlayer: true, hand: [], collected: 0, score: 0, isEliminated: false },
     { id: 1, name: "图图", isPlayer: false, hand: [], collected: 0, score: 0, isEliminated: false },
@@ -29,6 +31,9 @@ const dragonGame = {
     
     // 加载排行榜
     this.loadLeaderboard();
+        
+    // 设置无敌模式双击监听
+    this.setupGodModeListener();
   },
   
   // 创建游戏界面
@@ -241,7 +246,94 @@ const dragonGame = {
       });
     }
   },
+  // 添加无敌模式监听器
+  setupGodModeListener: function() {
+    const heartContainer = document.getElementById('flying-heart-container');
+    if (heartContainer) {
+      // 跟踪点击次数和时间
+      let clickCount = 0;
+      let lastClickTime = 0;
+      
+      heartContainer.addEventListener('click', () => {
+        const currentTime = new Date().getTime();
+        
+        // 如果是300ms内的两次点击，视为双击
+        if (currentTime - lastClickTime < 300) {
+          clickCount++;
+          
+          // 双击激活/关闭无敌模式
+          if (clickCount >= 2 && this.gamePhase === "playing") {
+            this.toggleGodMode();
+            clickCount = 0;
+          }
+        } else {
+          clickCount = 1;
+        }
+        
+        lastClickTime = currentTime;
+      });
+    }
+  },
+// 修改toggleGodMode函数使其更明显
+toggleGodMode: function() {
+  this.godMode = !this.godMode;
   
+  // 显示明显的无敌模式状态
+  if (this.godMode) {
+    // 创建一个固定在屏幕上方的指示器
+    const indicator = document.createElement('div');
+    indicator.id = 'god-mode-indicator';
+    indicator.style.position = 'fixed';
+    indicator.style.top = '10px';
+    indicator.style.left = '50%';
+    indicator.style.transform = 'translateX(-50%)';
+    indicator.style.background = 'rgba(143, 218, 239, 0.8)';
+    indicator.style.color = 'white';
+    indicator.style.padding = '5px 10px';
+    indicator.style.borderRadius = '5px';
+    indicator.style.fontWeight = 'bold';
+    indicator.style.zIndex = '10000';
+    indicator.style.boxShadow = '0 0 10px gold';
+    // indicator.textContent = '🎮 无敌模式已开启';
+    document.body.appendChild(indicator);
+    
+    this.showMessage("🎮 无敌模式已开启! 图图和壮壮变笨了~", 3000);
+    
+    // 添加视觉效果到AI玩家
+    document.querySelectorAll('#player-box-1, #player-box-2').forEach(box => {
+      box.style.boxShadow = "0 0 15px red";
+      // 添加"变笨了"标记
+      const dumbLabel = document.createElement('div');
+      dumbLabel.className = 'dumb-label';
+      dumbLabel.textContent = '变笨了';
+      dumbLabel.style.position = 'absolute';
+      dumbLabel.style.top = '5px';
+      dumbLabel.style.right = '5px';
+      dumbLabel.style.background = 'rgba(137, 228, 146, 0.7)';
+      dumbLabel.style.color = 'white';
+      dumbLabel.style.padding = '2px 5px';
+      dumbLabel.style.borderRadius = '3px';
+      dumbLabel.style.fontSize = '12px';
+      dumbLabel.style.zIndex = '100';
+      box.appendChild(dumbLabel);
+    });
+  } else {
+    // 移除指示器
+    const indicator = document.getElementById('god-mode-indicator');
+    if (indicator) document.body.removeChild(indicator);
+    
+    this.showMessage("无敌模式已关闭! 图图和壮壮恢复聪明~", 3000);
+    
+    // 移除视觉效果
+    document.querySelectorAll('#player-box-1, #player-box-2').forEach(box => {
+      box.style.boxShadow = "";
+      const dumbLabel = box.querySelector('.dumb-label');
+      if (dumbLabel) {
+        box.removeChild(dumbLabel);
+      }
+    });
+  }
+},
   // 显示游戏界面
   show: function() {
     const gameContainer = document.getElementById('dragon-game-container');
@@ -304,7 +396,10 @@ const dragonGame = {
       player.collected = 0;
       player.isEliminated = false;
     });
-    
+        // 额外关闭无敌模式
+        if (this.godMode) {
+          this.toggleGodMode();
+        }
     // 清空牌河
     this.river = [];
     
@@ -388,116 +483,123 @@ const dragonGame = {
     this.updatePlayerInfo();
   },
   
-// 修改玩家出牌函数
-playerPlayCard: function(cardIndex) {
-  if (this.gamePhase !== "playing" || this.activePlayerIndex !== 0) return;
-  
-  const player = this.players[0];
-  if (cardIndex >= player.hand.length) return;
-  
-  // 从玩家手牌中取出一张牌
-  const card = player.hand.splice(cardIndex, 1)[0];
-  
-  // 添加到牌河
-  this.river.push({
-    card: card,
-    playerId: player.id
-  });
-  
-  // 更新牌河显示
-  this.updateRiver();
-  
-  // 更新玩家手牌显示
-  this.updatePlayerHand(player.id);
-  
-  // 检查是否有匹配
-  const matchIndex = this.checkMatch(card);
-  
-  if (matchIndex !== -1) {
-    // 计算新的得分规则
-    // 1. 首先获取收集的牌数量
-    const cardsCount = this.river.length - matchIndex;
+  // 修改玩家出牌函数
+  playerPlayCard: function(cardIndex) {
+    if (this.gamePhase !== "playing" || this.activePlayerIndex !== 0) return;
     
-    // 2. 然后计算中间牌的点数总和（不包括匹配的两张牌）
-    let middleCardsSum = 0;
-    if (cardsCount > 2) { // 只有当有中间牌时才计算
-      for (let i = matchIndex + 1; i < this.river.length - 1; i++) {
-        middleCardsSum += this.river[i].card.numericValue;
+    const player = this.players[0];
+    if (cardIndex >= player.hand.length) return;
+    
+    // 从玩家手牌中取出一张牌
+    const card = player.hand.splice(cardIndex, 1)[0];
+    
+    // 添加到牌河
+    this.river.push({
+      card: card,
+      playerId: player.id
+    });
+    
+    // 更新牌河显示
+    this.updateRiver();
+    
+    // 更新玩家手牌显示
+    this.updatePlayerHand(player.id);
+    
+    // 检查是否有匹配
+    const matchIndex = this.checkMatch(card);
+    
+    if (matchIndex !== -1) {
+      // 计算新的得分规则
+      // 1. 首先获取收集的牌数量
+      const cardsCount = this.river.length - matchIndex;
+      
+      // 2. 然后计算中间牌的点数总和（不包括匹配的两张牌）
+      let middleCardsSum = 0;
+      if (cardsCount > 2) { // 只有当有中间牌时才计算
+        for (let i = matchIndex + 1; i < this.river.length - 1; i++) {
+          middleCardsSum += this.river[i].card.numericValue;
+        }
       }
+      
+      // 3. 计算总得分：牌数 + 中间牌点数总和
+      const totalScore = cardsCount + middleCardsSum;
+      
+      // 收集牌
+      this.collectCards(player.id, matchIndex);
+      
+      // 增加分数
+      this.addScore(totalScore);
+      
+      // 显示得分明细
+      this.showMessage(`匹配成功! 收集${cardsCount}张牌，得分：${cardsCount}+${middleCardsSum}=${totalScore}`, 2500);
+    } else {
+      // 没有匹配，轮到下一个玩家
+      this.nextPlayer();
     }
     
-    // 3. 计算总得分：牌数 + 中间牌点数总和
-    const totalScore = cardsCount + middleCardsSum;
+    // 检查游戏是否结束
+    this.checkGameOver();
+  },
+  
+  // 修改AI出牌函数，在无敌模式下AI变笨
+  aiPlayCard: function(aiPlayer) {
+    if (this.gamePhase !== "playing") return;
     
-    // 收集牌
-    this.collectCards(player.id, matchIndex);
+    // 简单AI策略：随机出牌
+    const cardIndex = Math.floor(Math.random() * aiPlayer.hand.length);
+    const card = aiPlayer.hand.splice(cardIndex, 1)[0];
     
-    // 增加分数
-    this.addScore(totalScore);
+    // 添加到牌河
+    this.river.push({
+      card: card,
+      playerId: aiPlayer.id
+    });
     
-    // 显示得分明细
-    this.showMessage(`匹配成功! 收集${cardsCount}张牌，得分：${cardsCount}+${middleCardsSum}=${totalScore}`, 2500);
-  } else {
-    // 没有匹配，轮到下一个玩家
-    this.nextPlayer();
-  }
-  
-  // 检查游戏是否结束
-  this.checkGameOver();
-},
-  
-// 修改AI出牌函数
-aiPlayCard: function(aiPlayer) {
-  if (this.gamePhase !== "playing") return;
-  
-  // 简单AI策略：随机出牌
-  const cardIndex = Math.floor(Math.random() * aiPlayer.hand.length);
-  const card = aiPlayer.hand.splice(cardIndex, 1)[0];
-  
-  // 添加到牌河
-  this.river.push({
-    card: card,
-    playerId: aiPlayer.id
-  });
-  
-  // 更新牌河显示
-  this.updateRiver();
-  
-  // 更新AI手牌显示
-  this.updatePlayerHand(aiPlayer.id);
-  
-  // 检查是否有匹配
-  const matchIndex = this.checkMatch(card);
-  
-  if (matchIndex !== -1) {
-    // 与玩家相同的得分计算逻辑
-    const cardsCount = this.river.length - matchIndex;
-    let middleCardsSum = 0;
-    if (cardsCount > 2) {
-      for (let i = matchIndex + 1; i < this.river.length - 1; i++) {
-        middleCardsSum += this.river[i].card.numericValue;
-      }
+    // 更新牌河显示
+    this.updateRiver();
+    
+    // 更新AI手牌显示
+    this.updatePlayerHand(aiPlayer.id);
+    
+    // 检查是否有匹配 - 无敌模式下改变AI行为
+    let matchIndex = this.checkMatch(card);
+    
+    // 在无敌模式下，AI有80%的概率不匹配牌（即使可以匹配）
+    if (this.godMode && matchIndex !== -1 && Math.random() < 0.8) {
+      // 假装没有匹配到
+      matchIndex = -1;
+      this.showMessage(`${aiPlayer.name} 没看到匹配机会，错过了得分!`, 1500);
     }
-    // 计算AI得分
-    const totalScore = cardsCount + middleCardsSum;
     
-    // 更新AI得分
-    aiPlayer.score += totalScore;
+    if (matchIndex !== -1) {
+      // 与玩家相同的得分计算逻辑
+      const cardsCount = this.river.length - matchIndex;
+      let middleCardsSum = 0;
+      if (cardsCount > 2) {
+        for (let i = matchIndex + 1; i < this.river.length - 1; i++) {
+          middleCardsSum += this.river[i].card.numericValue;
+        }
+      }
+      // 计算AI得分
+      const totalScore = cardsCount + middleCardsSum;
+      
+      // 更新AI得分
+      aiPlayer.score += totalScore;
+      
+      // 收集牌
+      this.collectCards(aiPlayer.id, matchIndex);
+      
+      // 显示AI得分信息
+      this.showMessage(`${aiPlayer.name} 匹配成功! 收集${cardsCount}张牌，得分：${totalScore}分`, 2000);
+    } else {
+      // 没有匹配，轮到下一个玩家
+      this.nextPlayer();
+    }
     
-    // 收集牌
-    this.collectCards(aiPlayer.id, matchIndex);
+    // 检查游戏是否结束
+    this.checkGameOver();
+  },
     
-    // 显示AI得分信息
-    this.showMessage(`${aiPlayer.name} 匹配成功! 收集${cardsCount}张牌，得分：${totalScore}分`, 2000);
-  } else {
-    // 没有匹配，轮到下一个玩家
-    this.nextPlayer();
-  }
-  
-  // 检查游戏是否结束
-  this.checkGameOver();
-},
-  
   // 处理AI行动
   processAIAction: function() {
     if (this.gamePhase !== "playing") return;
