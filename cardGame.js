@@ -388,80 +388,113 @@ const dragonGame = {
     this.updatePlayerInfo();
   },
   
-  // 玩家出牌
-  playerPlayCard: function(cardIndex) {
-    if (this.gamePhase !== "playing" || this.activePlayerIndex !== 0) return;
-    
-    const player = this.players[0];
-    if (cardIndex >= player.hand.length) return;
-    
-    // 从玩家手牌中取出一张牌
-    const card = player.hand.splice(cardIndex, 1)[0];
-    
-    // 添加到牌河
-    this.river.push({
-      card: card,
-      playerId: player.id
-    });
-    
-    // 更新牌河显示
-    this.updateRiver();
-    
-    // 更新玩家手牌显示
-    this.updatePlayerHand(player.id);
-    
-    // 检查是否有匹配
-    const matchIndex = this.checkMatch(card);
-    
-    if (matchIndex !== -1) {
-      // 匹配成功，收集牌
-      this.collectCards(player.id, matchIndex);
-      
-      // 增加分数
-      this.addScore(this.river.length);
-    } else {
-      // 没有匹配，轮到下一个玩家
-      this.nextPlayer();
-    }
-    
-    // 检查游戏是否结束
-    this.checkGameOver();
-  },
+// 修改玩家出牌函数
+playerPlayCard: function(cardIndex) {
+  if (this.gamePhase !== "playing" || this.activePlayerIndex !== 0) return;
   
-  // AI出牌
-  aiPlayCard: function(aiPlayer) {
-    if (this.gamePhase !== "playing") return;
+  const player = this.players[0];
+  if (cardIndex >= player.hand.length) return;
+  
+  // 从玩家手牌中取出一张牌
+  const card = player.hand.splice(cardIndex, 1)[0];
+  
+  // 添加到牌河
+  this.river.push({
+    card: card,
+    playerId: player.id
+  });
+  
+  // 更新牌河显示
+  this.updateRiver();
+  
+  // 更新玩家手牌显示
+  this.updatePlayerHand(player.id);
+  
+  // 检查是否有匹配
+  const matchIndex = this.checkMatch(card);
+  
+  if (matchIndex !== -1) {
+    // 计算新的得分规则
+    // 1. 首先获取收集的牌数量
+    const cardsCount = this.river.length - matchIndex;
     
-    // 简单AI策略：随机出牌
-    const cardIndex = Math.floor(Math.random() * aiPlayer.hand.length);
-    const card = aiPlayer.hand.splice(cardIndex, 1)[0];
-    
-    // 添加到牌河
-    this.river.push({
-      card: card,
-      playerId: aiPlayer.id
-    });
-    
-    // 更新牌河显示
-    this.updateRiver();
-    
-    // 更新AI手牌显示
-    this.updatePlayerHand(aiPlayer.id);
-    
-    // 检查是否有匹配
-    const matchIndex = this.checkMatch(card);
-    
-    if (matchIndex !== -1) {
-      // 匹配成功，收集牌
-      this.collectCards(aiPlayer.id, matchIndex);
-    } else {
-      // 没有匹配，轮到下一个玩家
-      this.nextPlayer();
+    // 2. 然后计算中间牌的点数总和（不包括匹配的两张牌）
+    let middleCardsSum = 0;
+    if (cardsCount > 2) { // 只有当有中间牌时才计算
+      for (let i = matchIndex + 1; i < this.river.length - 1; i++) {
+        middleCardsSum += this.river[i].card.numericValue;
+      }
     }
     
-    // 检查游戏是否结束
-    this.checkGameOver();
-  },
+    // 3. 计算总得分：牌数 + 中间牌点数总和
+    const totalScore = cardsCount + middleCardsSum;
+    
+    // 收集牌
+    this.collectCards(player.id, matchIndex);
+    
+    // 增加分数
+    this.addScore(totalScore);
+    
+    // 显示得分明细
+    this.showMessage(`匹配成功! 收集${cardsCount}张牌，得分：${cardsCount}+${middleCardsSum}=${totalScore}`, 2500);
+  } else {
+    // 没有匹配，轮到下一个玩家
+    this.nextPlayer();
+  }
+  
+  // 检查游戏是否结束
+  this.checkGameOver();
+},
+  
+// 修改AI出牌函数
+aiPlayCard: function(aiPlayer) {
+  if (this.gamePhase !== "playing") return;
+  
+  // 简单AI策略：随机出牌
+  const cardIndex = Math.floor(Math.random() * aiPlayer.hand.length);
+  const card = aiPlayer.hand.splice(cardIndex, 1)[0];
+  
+  // 添加到牌河
+  this.river.push({
+    card: card,
+    playerId: aiPlayer.id
+  });
+  
+  // 更新牌河显示
+  this.updateRiver();
+  
+  // 更新AI手牌显示
+  this.updatePlayerHand(aiPlayer.id);
+  
+  // 检查是否有匹配
+  const matchIndex = this.checkMatch(card);
+  
+  if (matchIndex !== -1) {
+    // 与玩家相同的得分计算逻辑
+    // 为AI计算得分 (但不添加到玩家分数中)
+    const cardsCount = this.river.length - matchIndex;
+    let middleCardsSum = 0;
+    if (cardsCount > 2) {
+      for (let i = matchIndex + 1; i < this.river.length - 1; i++) {
+        middleCardsSum += this.river[i].card.numericValue;
+      }
+    }
+    // 只计算AI收集了多少分，但不增加玩家分数
+    const totalScore = cardsCount + middleCardsSum;
+    
+    // 收集牌
+    this.collectCards(aiPlayer.id, matchIndex);
+    
+    // 显示AI得分信息
+    this.showMessage(`${aiPlayer.name} 匹配成功! 收集${cardsCount}张牌，得分：${totalScore}`, 2000);
+  } else {
+    // 没有匹配，轮到下一个玩家
+    this.nextPlayer();
+  }
+  
+  // 检查游戏是否结束
+  this.checkGameOver();
+},
   
   // 处理AI行动
   processAIAction: function() {
@@ -508,42 +541,45 @@ const dragonGame = {
     return -1;
   },
   
-  // 收集牌
-  collectCards: function(playerIndex, matchIndex) {
-    const player = this.players.find(p => p.id === playerIndex);
-    if (!player) return;
-    
-    // 收集从匹配位置到最后一张牌
-    const collectedCards = this.river.splice(matchIndex);
-    
-    // 增加玩家收集的牌数
-    player.collected += collectedCards.length;
-    
-    // 更新玩家信息
-    this.updatePlayerInfo();
-    
-    // 更新牌河显示
-    this.updateRiver();
-    
-    // 播放收集动画
-    this.showAnimation('collect', collectedCards);
-    
-    // 显示匹配消息
-    this.showMessage(`${player.name} 匹配成功，收集了 ${collectedCards.length} 张牌!`, 2000);
-    
-    // 轮到该玩家继续行动
-    this.activePlayerIndex = playerIndex;
-    this.highlightActivePlayer();
-    
-    // 如果是玩家，启用操作；如果是AI，处理AI行动
-    if (this.activePlayerIndex === 0) {
-      this.enablePlayerActions();
-    } else {
-      this.processAIAction();
-    }
-  },
+// 收集牌
+collectCards: function(playerIndex, matchIndex) {
+  const player = this.players.find(p => p.id === playerIndex);
+  if (!player) return;
   
-// 检查游戏是否结束
+  // 计算收集范围：从匹配牌到最后一张牌
+  const collectedCount = this.river.length - matchIndex;
+  
+  // 只收集匹配牌到最后一张牌
+  const collectedCards = this.river.splice(matchIndex, collectedCount);
+  
+  // 增加玩家收集的牌数
+  player.collected += collectedCards.length;
+  
+  // 更新玩家信息
+  this.updatePlayerInfo();
+  
+  // 更新牌河显示
+  this.updateRiver();
+  
+  // 播放收集动画
+  this.showAnimation('collect', collectedCards);
+  
+  // 显示匹配消息
+  this.showMessage(`${player.name} 匹配成功，收集了 ${collectedCards.length} 张牌!`, 2000);
+  
+  // 轮到该玩家继续行动
+  this.activePlayerIndex = playerIndex;
+  this.highlightActivePlayer();
+  
+  // 如果是玩家，启用操作；如果是AI，处理AI行动
+  if (this.activePlayerIndex === 0) {
+    this.enablePlayerActions();
+  } else {
+    this.processAIAction();
+  }
+},
+  
+// 修改检查游戏是否结束的函数
 checkGameOver: function() {
   // 记录是否有新的玩家出局
   let newEliminationOccurred = false;
@@ -585,8 +621,18 @@ checkGameOver: function() {
     this.nextPlayer();
   }
   
-  // 如果只剩一名玩家或所有玩家都出局，游戏结束
-  if (this.playersInGame <= 1) {
+  // 判断游戏是否结束的条件修改为：
+  // 1. 所有AI玩家都出局了，或者
+  // 2. 玩家出局且至少一个AI玩家出局，或者
+  // 3. 所有玩家都出局了
+  
+  const humanPlayer = this.players[0];
+  const aiPlayers = this.players.filter(p => !p.isPlayer);
+  const allAIEliminated = aiPlayers.every(p => p.isEliminated);
+  const humanEliminated = humanPlayer.isEliminated;
+  const anyAIEliminated = aiPlayers.some(p => p.isEliminated);
+  
+  if (allAIEliminated || (humanEliminated && anyAIEliminated) || this.playersInGame === 0) {
     this.gamePhase = "finished";
     
     // 找出胜利者
@@ -601,7 +647,7 @@ checkGameOver: function() {
       this.addScore(50);
     }
     
-    // 显示游戏结束模态框
+    // 显示游戏结束模态框，让玩家提交成绩
     this.showGameOverModal();
     
     // 启用/禁用按钮

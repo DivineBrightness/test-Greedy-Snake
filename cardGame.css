@@ -741,6 +741,7 @@
     transform: none; /* 移除垂直居中 */
   }
   
+  
   .player-position-2 {
     top: 80px; /* 从50%改为固定80px，靠近顶部 */
     right: 30px;
