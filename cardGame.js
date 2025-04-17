@@ -1017,44 +1017,36 @@ submitScore: async function(playerName, score) {
 // 修复动画函数，确保只对被收集的牌应用动画效果
 showAnimation: function(type, collectedCards) {
   if (type === 'collect') {
-    // 先记录被收集牌的数值，用于标识
-    const collectedValues = collectedCards.map(item => 
-      item.card.suit + item.card.value
+    // 获取被收集牌的唯一标识
+    const collectedIdentifiers = collectedCards.map(item => 
+      `${item.card.suit}-${item.card.value}`
     );
     
     // 收集牌的动画效果
     const riverElement = document.querySelector('.dragon-card-river');
     if (!riverElement) return;
     
-    // 在当前牌河DOM中找到对应被收集的牌
-    const cardElements = riverElement.querySelectorAll('.card');
+    // 记录当前牌河中的牌
+    const cardElements = Array.from(riverElement.querySelectorAll('.card'));
     if (!cardElements.length) return;
     
-    // 临时存储收集后应保留的牌
-    const remainingCards = [...this.river];
+    // 立即先更新一次牌河，确保剩余的牌显示正确
+    this.updateRiver();
     
-    // 创建一个延迟函数，在动画结束后重新渲染牌河
-    const reRenderRiver = () => {
-      // 重新渲染牌河，确保正确显示剩余的牌
+    // 设置一个标志，表示动画已经完成
+    let animationCompleted = false;
+    
+    // 设置一个定时器，确保无论动画如何，最终都会更新牌河
+    setTimeout(() => {
+      if (!animationCompleted) {
+        this.updateRiver();
+        animationCompleted = true;
+      }
+    }, 800);
+    
+    // 双重确保牌河显示正确
+    requestAnimationFrame(() => {
       this.updateRiver();
-    };
-    
-    // 为被收集的牌元素添加动画类
-    let animatedCards = 0;
-    cardElements.forEach((card, index) => {
-      // 添加匹配和收集动画类
-      card.classList.add('matched');
-      
-      // 延迟添加收集动画类
-      setTimeout(() => {
-        card.classList.add('collected');
-        animatedCards++;
-        
-        // 当所有被收集的牌都完成动画后，重新渲染牌河
-        if (animatedCards === collectedCards.length) {
-          setTimeout(reRenderRiver, 300);
-        }
-      }, 300);
     });
   }
 }
