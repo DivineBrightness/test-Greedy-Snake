@@ -563,8 +563,8 @@ toggleGodMode: function() {
     // 检查是否有匹配 - 无敌模式下改变AI行为
     let matchIndex = this.checkMatch(card);
     
-    // 在无敌模式下，AI有80%的概率不匹配牌（即使可以匹配）
-    if (this.godMode && matchIndex !== -1 && Math.random() < 0.8) {
+    // 在无敌模式下，AI有50%的概率不匹配牌（即使可以匹配）
+    if (this.godMode && matchIndex !== -1 && Math.random() < 0.5) {
       // 假装没有匹配到
       matchIndex = -1;
       this.showMessage(`${aiPlayer.name} 没看到匹配机会，错过了得分!`, 1500);
