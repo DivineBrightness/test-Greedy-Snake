@@ -557,6 +557,11 @@ collectCards: function(playerIndex, matchIndex) {
   // 增加玩家收集的牌数
   player.collected += collectedCards.length;
   
+  // 检查是否触发特殊效果：连续收集10张以上的牌
+  if (collectedCount >= 10) {
+    this.triggerSpecialReward(player);
+  }
+  
   // 更新玩家信息
   this.updatePlayerInfo();
   
@@ -580,7 +585,132 @@ collectCards: function(playerIndex, matchIndex) {
     this.processAIAction();
   }
 },
+// 修改triggerSpecialReward函数，添加飞牌动画
+triggerSpecialReward: function(player) {
+  // 创建两张红心K
+  const heartK1 = {
+    suit: 'hearts',
+    value: 'K',
+    numericValue: 13
+  };
   
+  const heartK2 = {
+    suit: 'hearts',
+    value: 'K',
+    numericValue: 13
+  };
+  
+  // 显示特殊奖励消息
+  let message = player.isPlayer ? 
+    "超强连击！连续收集10张以上的牌，奖励两张红心K！" :
+    `${player.name} 连续收集10张以上的牌，获得了两张红心K！`;
+  
+  this.showMessage(message, 3000);
+  
+  // 播放特效动画 - 两张K飞向玩家
+  this.showFlyingCardEffect(player.id, [heartK1, heartK2]);
+  
+  // 添加到玩家手牌 (延迟添加，等动画播放完)
+  setTimeout(() => {
+    player.hand.push(heartK1, heartK2);
+    // 更新玩家手牌显示
+    this.updatePlayerHand(player.id);
+  }, 3000);
+},
+
+// 新增函数：显示飞行牌特效
+showFlyingCardEffect: function(playerId, cards) {
+  const playerBox = document.getElementById(`player-box-${playerId}`);
+  const handElement = document.getElementById(`player-hand-${playerId}`);
+  if (!playerBox || !handElement) return;
+  
+  // 添加CSS动画样式
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes flyingCard {
+      0% {
+        transform: translate(-50%, -50%) scale(1.5) rotate(0deg);
+        opacity: 0;
+        top: 50%;
+        left: 50%;
+      }
+      20% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.5) rotate(5deg);
+        top: 50%;
+        left: 50%;
+      }
+      100% {
+        transform: translate(0, 0) scale(1) rotate(0deg);
+        opacity: 1;
+        top: ${handElement.offsetTop + 20}px;
+        left: ${handElement.offsetLeft + handElement.offsetWidth/2}px;
+      }
+    }
+    
+    .flying-card {
+      position: fixed;
+      z-index: 9999;
+      box-shadow: 0 0 20px gold, 0 0 40px gold;
+      animation: flyingCard 2s ease-in-out forwards;
+    }
+    
+    .flying-card:nth-child(2) {
+      animation-delay: 0.3s;
+    }
+  `;
+  document.head.appendChild(style);
+  
+  // 创建动画容器
+  const animContainer = document.createElement('div');
+  animContainer.className = 'flying-card-container';
+  animContainer.style.position = 'absolute';
+  animContainer.style.top = '0';
+  animContainer.style.left = '0';
+  animContainer.style.width = '100%';
+  animContainer.style.height = '100%';
+  animContainer.style.pointerEvents = 'none';
+  animContainer.style.zIndex = '10000';
+  document.body.appendChild(animContainer);
+  
+  // 为每张牌创建飞行动画元素
+  cards.forEach((card, index) => {
+    const cardElement = document.createElement('div');
+    cardElement.className = `card ${card.suit} flying-card`;
+    
+    // 添加牌面内容
+    cardElement.innerHTML = `
+      <div class="card-value">${card.value}</div>
+      <div class="card-suit"></div>
+      <div class="card-value-bottom">${card.value}</div>
+    `;
+    
+    // 设置初始位置和延迟
+    cardElement.style.animationDelay = `${index * 0.3}s`;
+    
+    // 添加到动画容器
+    animContainer.appendChild(cardElement);
+    
+    // 播放音效（如果有）
+    if (typeof playSound === 'function') {
+      setTimeout(() => playSound('card_flip'), index * 300);
+    }
+  });
+  
+  // 移除动画元素
+  setTimeout(() => {
+    if (document.body.contains(animContainer)) {
+      document.body.removeChild(animContainer);
+    }
+  }, 4000);
+  
+  // 为玩家区域添加金色闪烁效果
+  playerBox.style.boxShadow = '0 0 20px gold';
+  setTimeout(() => {
+    playerBox.style.boxShadow = '';
+  }, 4000);
+},  
+
 // 修改检查游戏是否结束的函数
 checkGameOver: function() {
   // 记录是否有新的玩家出局
