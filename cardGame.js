@@ -647,6 +647,8 @@ checkGameOver: function() {
     if (winner.isPlayer) {
       // 增加胜利奖励
       this.addScore(50);
+      // 添加一个明确的消息提示玩家获得了额外奖励
+      this.showMessage(`恭喜！你获胜了，获得额外奖励50分！`, 3500);
     }
     
     // 显示游戏结束模态框，让玩家提交成绩
@@ -663,14 +665,35 @@ checkGameOver: function() {
     // 找出未出局的玩家
     const remainingPlayers = this.players.filter(p => !p.isEliminated);
     
+    // 如果只剩下一个玩家，先比较得分
     if (remainingPlayers.length === 1) {
+      const humanPlayer = this.players[0];
+      // 如果是人类玩家
+      if (remainingPlayers[0].isPlayer) {
+        return remainingPlayers[0];
+      }
+      // 如果是AI玩家，但人类得分更高
+      else if (this.score > remainingPlayers[0].score) {
+        return humanPlayer;
+      }
+      // 否则AI玩家胜利
       return remainingPlayers[0];
     }
     
-    // 如果都出局了，比较收集的牌数
-    return this.players.reduce((prev, current) => 
-      (prev.collected > current.collected) ? prev : current
-    );
+    // 如果都出局了，比较得分
+    // 对于人类玩家，使用游戏总分；对于AI玩家，使用其score属性
+    let highestScore = -1;
+    let winner = null;
+    
+    for (const player of this.players) {
+      const playerScore = player.isPlayer ? this.score : player.score;
+      if (playerScore > highestScore) {
+        highestScore = playerScore;
+        winner = player;
+      }
+    }
+    
+    return winner;
   },
   
   // 增加分数
