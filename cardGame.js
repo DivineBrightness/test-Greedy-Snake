@@ -3,10 +3,12 @@ const dragonGame = {
   isOpen: false,
   deckId: null,
   gamePhase: "idle", // idle, playing, finished
+    // 添加无敌模式标志
+    godMode: false,
   players: [
-    { id: 0, name: "你", isPlayer: true, hand: [], collected: 0, isEliminated: false },
-    { id: 1, name: "图图", isPlayer: false, hand: [], collected: 0, isEliminated: false },
-    { id: 2, name: "壮壮", isPlayer: false, hand: [], collected: 0, isEliminated: false }
+    { id: 0, name: "你", isPlayer: true, hand: [], collected: 0, score: 0, isEliminated: false },
+    { id: 1, name: "图图", isPlayer: false, hand: [], collected: 0, score: 0, isEliminated: false },
+    { id: 2, name: "壮壮", isPlayer: false, hand: [], collected: 0, score: 0, isEliminated: false }
   ],
   activePlayerIndex: 0,
   river: [], // 中间牌河
@@ -29,6 +31,9 @@ const dragonGame = {
     
     // 加载排行榜
     this.loadLeaderboard();
+        
+    // 设置无敌模式双击监听
+    this.setupGodModeListener();
   },
   
   // 创建游戏界面
@@ -80,7 +85,7 @@ const dragonGame = {
                   <div class="player-info">
                     <div class="player-name">图图</div>
                     <div class="player-cards-count">手牌: <span>0</span></div>
-                    <div class="player-collected">已收集: <span>0</span></div>
+                    <div class="player-collected">得分: <span>0</span></div>
                   </div>
                   <div class="player-hand">
                     <div class="hand-container" id="player-hand-1"></div>
@@ -93,7 +98,7 @@ const dragonGame = {
                   <div class="player-info">
                     <div class="player-name">壮壮</div>
                     <div class="player-cards-count">手牌: <span>0</span></div>
-                    <div class="player-collected">已收集: <span>0</span></div>
+                    <div class="player-collected">得分: <span>0</span></div>
                   </div>
                   <div class="player-hand">
                     <div class="hand-container" id="player-hand-2"></div>
@@ -241,7 +246,93 @@ const dragonGame = {
       });
     }
   },
+  // 添加无敌模式监听器
+  setupGodModeListener: function() {
+    const heartContainer = document.getElementById('flying-heart-container');
+    if (heartContainer) {
+      // 跟踪点击次数和时间
+      let clickCount = 0;
+      let lastClickTime = 0;
+      
+      heartContainer.addEventListener('click', () => {
+        const currentTime = new Date().getTime();
+        
+        // 如果是300ms内的两次点击，视为双击
+        if (currentTime - lastClickTime < 300) {
+          clickCount++;
+          
+          // 双击激活/关闭无敌模式
+          if (clickCount >= 2 && this.gamePhase === "playing") {
+            this.toggleGodMode();
+            clickCount = 0;
+          }
+        } else {
+          clickCount = 1;
+        }
+        
+        lastClickTime = currentTime;
+      });
+    }
+  },
+// 修改toggleGodMode函数使其更明显
+toggleGodMode: function() {
+  this.godMode = !this.godMode;
   
+  // 显示明显的无敌模式状态
+  if (this.godMode) {
+    // 创建一个固定在屏幕上方的指示器
+    const indicator = document.createElement('div');
+    indicator.id = 'god-mode-indicator';
+    indicator.style.position = 'fixed';
+    indicator.style.top = '10px';
+    indicator.style.left = '50%';
+    indicator.style.transform = 'translateX(-50%)';
+    indicator.style.background = 'rgba(143, 218, 239, 0.8)';
+    indicator.style.color = 'white';
+    indicator.style.padding = '5px 10px';
+    indicator.style.borderRadius = '5px';
+    indicator.style.fontWeight = 'bold';
+    indicator.style.zIndex = '10000';
+    indicator.style.boxShadow = '0 0 10px gold';
+    // indicator.textContent = '🎮 无敌模式已开启';
+    document.body.appendChild(indicator);
+    
+    this.showMessage("🎮 无敌模式已开启! 图图和壮壮变笨了~", 3000);
+    
+    // 添加视觉效果到AI玩家
+    document.querySelectorAll('#player-box-1, #player-box-2').forEach(box => {
+      // 添加"变笨了"标记
+      const dumbLabel = document.createElement('div');
+      dumbLabel.className = 'dumb-label';
+      dumbLabel.textContent = '变笨了';
+      dumbLabel.style.position = 'absolute';
+      dumbLabel.style.top = '5px';
+      dumbLabel.style.right = '5px';
+      dumbLabel.style.background = 'rgba(137, 228, 146, 0.7)';
+      dumbLabel.style.color = 'white';
+      dumbLabel.style.padding = '2px 5px';
+      dumbLabel.style.borderRadius = '3px';
+      dumbLabel.style.fontSize = '12px';
+      dumbLabel.style.zIndex = '100';
+      box.appendChild(dumbLabel);
+    });
+  } else {
+    // 移除指示器
+    const indicator = document.getElementById('god-mode-indicator');
+    if (indicator) document.body.removeChild(indicator);
+    
+    this.showMessage("无敌模式已关闭! 图图和壮壮恢复聪明~", 3000);
+    
+    // 移除视觉效果
+    document.querySelectorAll('#player-box-1, #player-box-2').forEach(box => {
+      box.style.boxShadow = "";
+      const dumbLabel = box.querySelector('.dumb-label');
+      if (dumbLabel) {
+        box.removeChild(dumbLabel);
+      }
+    });
+  }
+},
   // 显示游戏界面
   show: function() {
     const gameContainer = document.getElementById('dragon-game-container');
@@ -304,7 +395,10 @@ const dragonGame = {
       player.collected = 0;
       player.isEliminated = false;
     });
-    
+        // 额外关闭无敌模式
+        if (this.godMode) {
+          this.toggleGodMode();
+        }
     // 清空牌河
     this.river = [];
     
@@ -388,7 +482,7 @@ const dragonGame = {
     this.updatePlayerInfo();
   },
   
-  // 玩家出牌
+  // 修改玩家出牌函数
   playerPlayCard: function(cardIndex) {
     if (this.gamePhase !== "playing" || this.activePlayerIndex !== 0) return;
     
@@ -414,11 +508,29 @@ const dragonGame = {
     const matchIndex = this.checkMatch(card);
     
     if (matchIndex !== -1) {
-      // 匹配成功，收集牌
+      // 计算新的得分规则
+      // 1. 首先获取收集的牌数量
+      const cardsCount = this.river.length - matchIndex;
+      
+      // 2. 然后计算中间牌的点数总和（不包括匹配的两张牌）
+      let middleCardsSum = 0;
+      if (cardsCount > 2) { // 只有当有中间牌时才计算
+        for (let i = matchIndex + 1; i < this.river.length - 1; i++) {
+          middleCardsSum += this.river[i].card.numericValue;
+        }
+      }
+      
+      // 3. 计算总得分：牌数 + 中间牌点数总和
+      const totalScore = cardsCount + middleCardsSum;
+      
+      // 收集牌
       this.collectCards(player.id, matchIndex);
       
       // 增加分数
-      this.addScore(this.river.length);
+      this.addScore(totalScore);
+      
+      // 显示得分明细
+      this.showMessage(`匹配成功! 收集${cardsCount}张牌，得分：${cardsCount}+${middleCardsSum}=${totalScore}`, 2500);
     } else {
       // 没有匹配，轮到下一个玩家
       this.nextPlayer();
@@ -428,7 +540,7 @@ const dragonGame = {
     this.checkGameOver();
   },
   
-  // AI出牌
+  // 修改AI出牌函数，在无敌模式下AI变笨
   aiPlayCard: function(aiPlayer) {
     if (this.gamePhase !== "playing") return;
     
@@ -448,12 +560,36 @@ const dragonGame = {
     // 更新AI手牌显示
     this.updatePlayerHand(aiPlayer.id);
     
-    // 检查是否有匹配
-    const matchIndex = this.checkMatch(card);
+    // 检查是否有匹配 - 无敌模式下改变AI行为
+    let matchIndex = this.checkMatch(card);
+    
+    // 在无敌模式下，AI有80%的概率不匹配牌（即使可以匹配）
+    if (this.godMode && matchIndex !== -1 && Math.random() < 0.8) {
+      // 假装没有匹配到
+      matchIndex = -1;
+      this.showMessage(`${aiPlayer.name} 没看到匹配机会，错过了得分!`, 1500);
+    }
     
     if (matchIndex !== -1) {
-      // 匹配成功，收集牌
+      // 与玩家相同的得分计算逻辑
+      const cardsCount = this.river.length - matchIndex;
+      let middleCardsSum = 0;
+      if (cardsCount > 2) {
+        for (let i = matchIndex + 1; i < this.river.length - 1; i++) {
+          middleCardsSum += this.river[i].card.numericValue;
+        }
+      }
+      // 计算AI得分
+      const totalScore = cardsCount + middleCardsSum;
+      
+      // 更新AI得分
+      aiPlayer.score += totalScore;
+      
+      // 收集牌
       this.collectCards(aiPlayer.id, matchIndex);
+      
+      // 显示AI得分信息
+      this.showMessage(`${aiPlayer.name} 匹配成功! 收集${cardsCount}张牌，得分：${totalScore}分`, 2000);
     } else {
       // 没有匹配，轮到下一个玩家
       this.nextPlayer();
@@ -462,7 +598,7 @@ const dragonGame = {
     // 检查游戏是否结束
     this.checkGameOver();
   },
-  
+    
   // 处理AI行动
   processAIAction: function() {
     if (this.gamePhase !== "playing") return;
@@ -508,42 +644,175 @@ const dragonGame = {
     return -1;
   },
   
-  // 收集牌
-  collectCards: function(playerIndex, matchIndex) {
-    const player = this.players.find(p => p.id === playerIndex);
-    if (!player) return;
-    
-    // 收集从匹配位置到最后一张牌
-    const collectedCards = this.river.splice(matchIndex);
-    
-    // 增加玩家收集的牌数
-    player.collected += collectedCards.length;
-    
-    // 更新玩家信息
-    this.updatePlayerInfo();
-    
-    // 更新牌河显示
-    this.updateRiver();
-    
-    // 播放收集动画
-    this.showAnimation('collect', collectedCards);
-    
-    // 显示匹配消息
-    this.showMessage(`${player.name} 匹配成功，收集了 ${collectedCards.length} 张牌!`, 2000);
-    
-    // 轮到该玩家继续行动
-    this.activePlayerIndex = playerIndex;
-    this.highlightActivePlayer();
-    
-    // 如果是玩家，启用操作；如果是AI，处理AI行动
-    if (this.activePlayerIndex === 0) {
-      this.enablePlayerActions();
-    } else {
-      this.processAIAction();
-    }
-  },
+// 收集牌
+collectCards: function(playerIndex, matchIndex) {
+  const player = this.players.find(p => p.id === playerIndex);
+  if (!player) return;
   
-// 检查游戏是否结束
+  // 计算收集范围：从匹配牌到最后一张牌
+  const collectedCount = this.river.length - matchIndex;
+  
+  // 只收集匹配牌到最后一张牌
+  const collectedCards = this.river.splice(matchIndex, collectedCount);
+  
+  // 增加玩家收集的牌数
+  player.collected += collectedCards.length;
+  
+  // 检查是否触发特殊效果：连续收集10张以上的牌
+  if (collectedCount >= 10) {
+    this.triggerSpecialReward(player);
+  }
+  
+  // 更新玩家信息
+  this.updatePlayerInfo();
+  
+  // 更新牌河显示
+  this.updateRiver();
+  
+  // 播放收集动画
+  this.showAnimation('collect', collectedCards);
+  
+  // 显示匹配消息
+  this.showMessage(`${player.name} 匹配成功，收集了 ${collectedCards.length} 张牌!`, 2000);
+  
+  // 轮到该玩家继续行动
+  this.activePlayerIndex = playerIndex;
+  this.highlightActivePlayer();
+  
+  // 如果是玩家，启用操作；如果是AI，处理AI行动
+  if (this.activePlayerIndex === 0) {
+    this.enablePlayerActions();
+  } else {
+    this.processAIAction();
+  }
+},
+// 修改triggerSpecialReward函数，添加飞牌动画
+triggerSpecialReward: function(player) {
+  // 创建两张红心K
+  const heartK1 = {
+    suit: 'hearts',
+    value: 'K',
+    numericValue: 13
+  };
+  
+  const heartK2 = {
+    suit: 'hearts',
+    value: 'K',
+    numericValue: 13
+  };
+  
+  // 显示特殊奖励消息
+  let message = player.isPlayer ? 
+    "超强连击！连续收集10张以上的牌，奖励两张红心K！" :
+    `${player.name} 连续收集10张以上的牌，获得了两张红心K！`;
+  
+  this.showMessage(message, 3000);
+  
+  // 播放特效动画 - 两张K飞向玩家
+  this.showFlyingCardEffect(player.id, [heartK1, heartK2]);
+  
+  // 添加到玩家手牌 (延迟添加，等动画播放完)
+  setTimeout(() => {
+    player.hand.push(heartK1, heartK2);
+    // 更新玩家手牌显示
+    this.updatePlayerHand(player.id);
+  }, 3000);
+},
+
+// 新增函数：显示飞行牌特效
+showFlyingCardEffect: function(playerId, cards) {
+  const playerBox = document.getElementById(`player-box-${playerId}`);
+  const handElement = document.getElementById(`player-hand-${playerId}`);
+  if (!playerBox || !handElement) return;
+  
+  // 添加CSS动画样式
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes flyingCard {
+      0% {
+        transform: translate(-50%, -50%) scale(1.5) rotate(0deg);
+        opacity: 0;
+        top: 50%;
+        left: 50%;
+      }
+      20% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.5) rotate(5deg);
+        top: 50%;
+        left: 50%;
+      }
+      100% {
+        transform: translate(0, 0) scale(1) rotate(0deg);
+        opacity: 1;
+        top: ${handElement.offsetTop + 20}px;
+        left: ${handElement.offsetLeft + handElement.offsetWidth/2}px;
+      }
+    }
+    
+    .flying-card {
+      position: fixed;
+      z-index: 9999;
+      box-shadow: 0 0 20px gold, 0 0 40px gold;
+      animation: flyingCard 2s ease-in-out forwards;
+    }
+    
+    .flying-card:nth-child(2) {
+      animation-delay: 0.3s;
+    }
+  `;
+  document.head.appendChild(style);
+  
+  // 创建动画容器
+  const animContainer = document.createElement('div');
+  animContainer.className = 'flying-card-container';
+  animContainer.style.position = 'absolute';
+  animContainer.style.top = '0';
+  animContainer.style.left = '0';
+  animContainer.style.width = '100%';
+  animContainer.style.height = '100%';
+  animContainer.style.pointerEvents = 'none';
+  animContainer.style.zIndex = '10000';
+  document.body.appendChild(animContainer);
+  
+  // 为每张牌创建飞行动画元素
+  cards.forEach((card, index) => {
+    const cardElement = document.createElement('div');
+    cardElement.className = `card ${card.suit} flying-card`;
+    
+    // 添加牌面内容
+    cardElement.innerHTML = `
+      <div class="card-value">${card.value}</div>
+      <div class="card-suit"></div>
+      <div class="card-value-bottom">${card.value}</div>
+    `;
+    
+    // 设置初始位置和延迟
+    cardElement.style.animationDelay = `${index * 0.3}s`;
+    
+    // 添加到动画容器
+    animContainer.appendChild(cardElement);
+    
+    // 播放音效（如果有）
+    if (typeof playSound === 'function') {
+      setTimeout(() => playSound('card_flip'), index * 300);
+    }
+  });
+  
+  // 移除动画元素
+  setTimeout(() => {
+    if (document.body.contains(animContainer)) {
+      document.body.removeChild(animContainer);
+    }
+  }, 4000);
+  
+  // 为玩家区域添加金色闪烁效果
+  playerBox.style.boxShadow = '0 0 20px gold';
+  setTimeout(() => {
+    playerBox.style.boxShadow = '';
+  }, 4000);
+},  
+
+// 修改检查游戏是否结束的函数
 checkGameOver: function() {
   // 记录是否有新的玩家出局
   let newEliminationOccurred = false;
@@ -585,8 +854,18 @@ checkGameOver: function() {
     this.nextPlayer();
   }
   
-  // 如果只剩一名玩家或所有玩家都出局，游戏结束
-  if (this.playersInGame <= 1) {
+  // 判断游戏是否结束的条件修改为：
+  // 1. 所有AI玩家都出局了，或者
+  // 2. 玩家出局且至少一个AI玩家出局，或者
+  // 3. 所有玩家都出局了
+  
+  const humanPlayer = this.players[0];
+  const aiPlayers = this.players.filter(p => !p.isPlayer);
+  const allAIEliminated = aiPlayers.every(p => p.isEliminated);
+  const humanEliminated = humanPlayer.isEliminated;
+  const anyAIEliminated = aiPlayers.some(p => p.isEliminated);
+  
+  if (allAIEliminated || (humanEliminated && anyAIEliminated) || this.playersInGame === 0) {
     this.gamePhase = "finished";
     
     // 找出胜利者
@@ -599,9 +878,11 @@ checkGameOver: function() {
     if (winner.isPlayer) {
       // 增加胜利奖励
       this.addScore(50);
+      // 添加一个明确的消息提示玩家获得了额外奖励
+      this.showMessage(`恭喜！你获胜了，获得额外奖励50分！`, 3500);
     }
     
-    // 显示游戏结束模态框
+    // 显示游戏结束模态框，让玩家提交成绩
     this.showGameOverModal();
     
     // 启用/禁用按钮
@@ -615,14 +896,35 @@ checkGameOver: function() {
     // 找出未出局的玩家
     const remainingPlayers = this.players.filter(p => !p.isEliminated);
     
+    // 如果只剩下一个玩家，先比较得分
     if (remainingPlayers.length === 1) {
+      const humanPlayer = this.players[0];
+      // 如果是人类玩家
+      if (remainingPlayers[0].isPlayer) {
+        return remainingPlayers[0];
+      }
+      // 如果是AI玩家，但人类得分更高
+      else if (this.score > remainingPlayers[0].score) {
+        return humanPlayer;
+      }
+      // 否则AI玩家胜利
       return remainingPlayers[0];
     }
     
-    // 如果都出局了，比较收集的牌数
-    return this.players.reduce((prev, current) => 
-      (prev.collected > current.collected) ? prev : current
-    );
+    // 如果都出局了，比较得分
+    // 对于人类玩家，使用游戏总分；对于AI玩家，使用其score属性
+    let highestScore = -1;
+    let winner = null;
+    
+    for (const player of this.players) {
+      const playerScore = player.isPlayer ? this.score : player.score;
+      if (playerScore > highestScore) {
+        highestScore = playerScore;
+        winner = player;
+      }
+    }
+    
+    return winner;
   },
   
   // 增加分数
@@ -880,31 +1182,37 @@ submitScore: async function(playerName, score) {
   },
 
   // 添加 updatePlayerInfo 函数，它在代码中被调用但未定义
-updatePlayerInfo: function() {
-  this.players.forEach(player => {
-    const playerBox = document.getElementById(`player-box-${player.id}`);
-    if (!playerBox) return;
-    
-    // 更新手牌数
-    const cardsCountElement = playerBox.querySelector('.player-cards-count span');
-    if (cardsCountElement) {
-      cardsCountElement.textContent = player.hand.length;
-    }
-    
-    // 更新收集数
-    const collectedElement = playerBox.querySelector('.player-collected span');
-    if (collectedElement) {
-      collectedElement.textContent = player.collected;
-    }
-    
-    // 更新已出局状态
-    if (player.isEliminated) {
-      playerBox.classList.add('eliminated');
-    } else {
-      playerBox.classList.remove('eliminated');
-    }
-  });
-},
+  updatePlayerInfo: function() {
+    this.players.forEach(player => {
+      const playerBox = document.getElementById(`player-box-${player.id}`);
+      if (!playerBox) return;
+      
+      // 更新手牌数
+      const cardsCountElement = playerBox.querySelector('.player-cards-count span');
+      if (cardsCountElement) {
+        cardsCountElement.textContent = player.hand.length;
+      }
+      
+      // 更新收集数/得分 - 为AI玩家显示得分，为人类玩家显示收集数
+      const collectedElement = playerBox.querySelector('.player-collected span');
+      if (collectedElement) {
+        if (player.isPlayer) {
+          // 人类玩家显示收集数
+          collectedElement.textContent = player.collected;
+        } else {
+          // AI玩家显示得分
+          collectedElement.textContent = player.score;
+        }
+      }
+      
+      // 更新已出局状态
+      if (player.isEliminated) {
+        playerBox.classList.add('eliminated');
+      } else {
+        playerBox.classList.remove('eliminated');
+      }
+    });
+  },
   
   highlightActivePlayer: function() {
     // 移除所有高亮
@@ -960,27 +1268,42 @@ updatePlayerInfo: function() {
     }, duration);
   },
   
-  showAnimation: function(type, elements) {
-    if (type === 'collect') {
-      // 收集牌的动画效果
-      const riverElement = document.querySelector('.dragon-card-river');
-      if (!riverElement) return;
-      
-      // 选择要添加动画的牌元素
-      const cardElements = riverElement.querySelectorAll('.card');
-      if (!cardElements.length) return;
-      
-      // 为牌元素添加匹配和收集动画类
-      cardElements.forEach((card, index) => {
-        card.classList.add('matched');
-        
-        // 延迟添加收集动画类
-        setTimeout(() => {
-          card.classList.add('collected');
-        }, 300);
-      });
-    }
+// 修复动画函数，确保只对被收集的牌应用动画效果
+showAnimation: function(type, collectedCards) {
+  if (type === 'collect') {
+    // 获取被收集牌的唯一标识
+    const collectedIdentifiers = collectedCards.map(item => 
+      `${item.card.suit}-${item.card.value}`
+    );
+    
+    // 收集牌的动画效果
+    const riverElement = document.querySelector('.dragon-card-river');
+    if (!riverElement) return;
+    
+    // 记录当前牌河中的牌
+    const cardElements = Array.from(riverElement.querySelectorAll('.card'));
+    if (!cardElements.length) return;
+    
+    // 立即先更新一次牌河，确保剩余的牌显示正确
+    this.updateRiver();
+    
+    // 设置一个标志，表示动画已经完成
+    let animationCompleted = false;
+    
+    // 设置一个定时器，确保无论动画如何，最终都会更新牌河
+    setTimeout(() => {
+      if (!animationCompleted) {
+        this.updateRiver();
+        animationCompleted = true;
+      }
+    }, 800);
+    
+    // 双重确保牌河显示正确
+    requestAnimationFrame(() => {
+      this.updateRiver();
+    });
   }
+}
 };
 
 // 确保游戏对象可以从全局访问

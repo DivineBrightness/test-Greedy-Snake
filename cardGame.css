@@ -5,7 +5,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 32, 63, 0.85); /* 改为0.85的透明度，使背景更亮一些 */
+  background-color: rgba(234, 239, 145, 0.85); /* 改为0.85的透明度，使背景更亮一些 */
   z-index: 1000;
   display: none;
   overflow: hidden;
@@ -65,7 +65,7 @@
   margin: 0 auto;
   margin-top: 80px;
   position: relative;
-  background-color: rgba(0, 50, 80, 0.3);
+  background-color: rgba(219, 230, 236, 0.3);
   border-radius: 15px;
   display: flex;
   justify-content: center;
@@ -144,7 +144,7 @@
 }
 
 .player-box {
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(114, 111, 111, 0.5);
   border-radius: 10px;
   padding: 10px;
   width: 100%;
@@ -741,6 +741,7 @@
     transform: none; /* 移除垂直居中 */
   }
   
+  
   .player-position-2 {
     top: 80px; /* 从50%改为固定80px，靠近顶部 */
     right: 30px;
@@ -752,7 +753,7 @@
   .player-box#player-box-2 {
     min-height: 50px; /* 在移动设备上使用较小但仍足够的高度 */
     padding: 5px;
-    background-color: rgba(231, 180, 180, 0.7); /* 更深的背景 */
+    background-color: rgba(225, 217, 217, 0.7); /* 更深的背景 */
   }
   
   #player-box-1 .player-name, 
@@ -1031,7 +1032,7 @@
   color: #ffdd00; /* 金色 */
   font-weight: bold;
   font-size: 16px;
-  text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+  /* text-shadow: 0 0 5px rgba(0, 0, 0, 0.8); */
 }
 
 /* 最高分样式 */
@@ -1039,11 +1040,11 @@
   color: #ff9900; /* 橙色 */
   font-weight: bold;
   font-size: 16px;
-  text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+  /* text-shadow: 0 0 5px rgba(0, 0, 0, 0.8); */
 }
 
 /* 数字样式加强 */
-.game-score span,
+/* .game-score span,
 .game-high-score span {
   display: inline-block;
   background-color: rgba(0, 0, 0, 0.3);
@@ -1052,7 +1053,7 @@
   margin-left: 5px;
   min-width: 40px;
   text-align: center;
-}
+} */
 
 /* 移动设备适配 */
 @media (max-width: 480px) {
@@ -1063,5 +1064,52 @@
   
   .game-score, .game-high-score {
     font-size: 14px;
+  }
+}
+/* 为图图(玩家1)添加背景图片 */
+.player-box#player-box-1 {
+  background-image: url('./image/poke/图图.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+}
+
+/* 为壮壮(玩家2)添加背景图片 */
+.player-box#player-box-2 {
+  background-image: url('./image/poke/壮壮.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+}
+
+/* 添加半透明覆盖层，确保文字内容可见 */
+.player-box#player-box-1::before,
+.player-box#player-box-2::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.1); /* 半透明黑色覆盖 */
+  border-radius: 10px; /* 保持与框相同的圆角 */
+  z-index: 1;
+}
+
+/* 确保内容显示在背景和覆盖层上方 */
+.player-box#player-box-1 > *,
+.player-box#player-box-2 > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* 移动设备适配调整 */
+@media (max-width: 768px) {
+  /* 保留背景图但调整容器样式 */
+  .player-box#player-box-1, 
+  .player-box#player-box-2 {
+    background-color: transparent; /* 移除原来的背景色 */
   }
 }
