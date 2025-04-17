@@ -4,9 +4,9 @@ const dragonGame = {
   deckId: null,
   gamePhase: "idle", // idle, playing, finished
   players: [
-    { id: 0, name: "你", isPlayer: true, hand: [], collected: 0, isEliminated: false },
-    { id: 1, name: "图图", isPlayer: false, hand: [], collected: 0, isEliminated: false },
-    { id: 2, name: "壮壮", isPlayer: false, hand: [], collected: 0, isEliminated: false }
+    { id: 0, name: "你", isPlayer: true, hand: [], collected: 0, score: 0, isEliminated: false },
+    { id: 1, name: "图图", isPlayer: false, hand: [], collected: 0, score: 0, isEliminated: false },
+    { id: 2, name: "壮壮", isPlayer: false, hand: [], collected: 0, score: 0, isEliminated: false }
   ],
   activePlayerIndex: 0,
   river: [], // 中间牌河
@@ -80,7 +80,7 @@ const dragonGame = {
                   <div class="player-info">
                     <div class="player-name">图图</div>
                     <div class="player-cards-count">手牌: <span>0</span></div>
-                    <div class="player-collected">已收集: <span>0</span></div>
+                    <div class="player-collected">得分: <span>0</span></div>
                   </div>
                   <div class="player-hand">
                     <div class="hand-container" id="player-hand-1"></div>
@@ -93,7 +93,7 @@ const dragonGame = {
                   <div class="player-info">
                     <div class="player-name">壮壮</div>
                     <div class="player-cards-count">手牌: <span>0</span></div>
-                    <div class="player-collected">已收集: <span>0</span></div>
+                    <div class="player-collected">得分: <span>0</span></div>
                   </div>
                   <div class="player-hand">
                     <div class="hand-container" id="player-hand-2"></div>
@@ -471,7 +471,6 @@ aiPlayCard: function(aiPlayer) {
   
   if (matchIndex !== -1) {
     // 与玩家相同的得分计算逻辑
-    // 为AI计算得分 (但不添加到玩家分数中)
     const cardsCount = this.river.length - matchIndex;
     let middleCardsSum = 0;
     if (cardsCount > 2) {
@@ -479,14 +478,17 @@ aiPlayCard: function(aiPlayer) {
         middleCardsSum += this.river[i].card.numericValue;
       }
     }
-    // 只计算AI收集了多少分，但不增加玩家分数
+    // 计算AI得分
     const totalScore = cardsCount + middleCardsSum;
+    
+    // 更新AI得分
+    aiPlayer.score += totalScore;
     
     // 收集牌
     this.collectCards(aiPlayer.id, matchIndex);
     
     // 显示AI得分信息
-    this.showMessage(`${aiPlayer.name} 匹配成功! 收集${cardsCount}张牌，得分：${totalScore}`, 2000);
+    this.showMessage(`${aiPlayer.name} 匹配成功! 收集${cardsCount}张牌，得分：${totalScore}分`, 2000);
   } else {
     // 没有匹配，轮到下一个玩家
     this.nextPlayer();
@@ -926,31 +928,37 @@ submitScore: async function(playerName, score) {
   },
 
   // 添加 updatePlayerInfo 函数，它在代码中被调用但未定义
-updatePlayerInfo: function() {
-  this.players.forEach(player => {
-    const playerBox = document.getElementById(`player-box-${player.id}`);
-    if (!playerBox) return;
-    
-    // 更新手牌数
-    const cardsCountElement = playerBox.querySelector('.player-cards-count span');
-    if (cardsCountElement) {
-      cardsCountElement.textContent = player.hand.length;
-    }
-    
-    // 更新收集数
-    const collectedElement = playerBox.querySelector('.player-collected span');
-    if (collectedElement) {
-      collectedElement.textContent = player.collected;
-    }
-    
-    // 更新已出局状态
-    if (player.isEliminated) {
-      playerBox.classList.add('eliminated');
-    } else {
-      playerBox.classList.remove('eliminated');
-    }
-  });
-},
+  updatePlayerInfo: function() {
+    this.players.forEach(player => {
+      const playerBox = document.getElementById(`player-box-${player.id}`);
+      if (!playerBox) return;
+      
+      // 更新手牌数
+      const cardsCountElement = playerBox.querySelector('.player-cards-count span');
+      if (cardsCountElement) {
+        cardsCountElement.textContent = player.hand.length;
+      }
+      
+      // 更新收集数/得分 - 为AI玩家显示得分，为人类玩家显示收集数
+      const collectedElement = playerBox.querySelector('.player-collected span');
+      if (collectedElement) {
+        if (player.isPlayer) {
+          // 人类玩家显示收集数
+          collectedElement.textContent = player.collected;
+        } else {
+          // AI玩家显示得分
+          collectedElement.textContent = player.score;
+        }
+      }
+      
+      // 更新已出局状态
+      if (player.isEliminated) {
+        playerBox.classList.add('eliminated');
+      } else {
+        playerBox.classList.remove('eliminated');
+      }
+    });
+  },
   
   highlightActivePlayer: function() {
     // 移除所有高亮
