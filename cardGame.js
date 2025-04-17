@@ -301,7 +301,6 @@ toggleGodMode: function() {
     
     // 添加视觉效果到AI玩家
     document.querySelectorAll('#player-box-1, #player-box-2').forEach(box => {
-      box.style.boxShadow = "0 0 15px red";
       // 添加"变笨了"标记
       const dumbLabel = document.createElement('div');
       dumbLabel.className = 'dumb-label';
