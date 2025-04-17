@@ -303,3 +303,10 @@
   </div>
 </body>
 </html>
+<script>
+  // 在HTML底部，确保将本地dragonGame对象设为全局对象
+  window.addEventListener('DOMContentLoaded', () => {
+    // 确保dragonGame成为全局变量
+    window.dragonGame = dragonGame;
+  });
+</script>

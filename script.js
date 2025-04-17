@@ -1,4 +1,6 @@
 // script.js
+// 在script.js文件的顶部添加全局变量
+let lastHeartClickTime = 0;
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM 已加载');
     
@@ -203,56 +205,60 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // 修改飞心点击处理
-        // 修改script.js中的dragEnd函数
-        function dragEnd(e) {
-            // 停止拖动
-            isDragging = false;
+// 修改dragEnd函数，让点击飞心同时支持无敌模式和飞心动画
+function dragEnd(e) {
+    // 停止拖动
+    isDragging = false;
+    
+    // 移除事件监听器
+    document.removeEventListener('mousemove', dragMove);
+    document.removeEventListener('mouseup', dragEnd);
+    document.removeEventListener('touchmove', dragMove);
+    document.removeEventListener('touchend', dragEnd);
+    
+    // 判断是点击还是拖动
+    const endTime = Date.now();
+    const elapsedTime = endTime - startTime;
+    
+    // 如果移动距离小于5px，且时间小于200ms，则视为点击
+    if (movedDistance < 5 && elapsedTime < 200) {
+        console.log('检测到点击飞心');
+        
+        // 无论在任何情况下，点击都播放飞心动画
+        setTimeout(() => {
+            if (flyingHeartAnimation) {
+                flyingHeartAnimation.goToAndPlay(0, true);
+                console.log('触发飞心动画');
+            }
             
-            // 移除事件监听器
-            document.removeEventListener('mousemove', dragMove);
-            document.removeEventListener('mouseup', dragEnd);
-            document.removeEventListener('touchmove', dragMove);
-            document.removeEventListener('touchend', dragEnd);
-            
-            // 判断是点击还是拖动
-            const endTime = Date.now();
-            const elapsedTime = endTime - startTime;
-            
-            // 如果移动距离小于5px，且时间小于200ms，则视为点击
-            if (movedDistance < 5 && elapsedTime < 200) {
-            console.log('检测到点击飞心');
-            
-            // 添加对卡牌游戏无敌模式的支持
-            if (window.cardGame && window.cardGame.isOpen) {
-                // 检查是否是双击
+            if (window.floatingFruits) {
+                window.floatingFruits.toggleFreeze();
+            }
+        }, 10);
+        
+            // 额外检查是否在卡牌游戏中，处理无敌模式切换
+            if (window.dragonGame && window.dragonGame.isOpen) {
                 const now = Date.now();
-                if (now - lastHeartClickTime < 300) {
-                console.log('检测到双击飞心，尝试切换无敌模式');
-                if (window.cardGame.gamePhase === "playing") {
-                    window.cardGame.toggleGodMode();
-                }
-                lastHeartClickTime = 0; // 重置
+                console.log('点击间隔:', now - lastHeartClickTime, 'ms');
+                if (now - lastHeartClickTime < 500) { // 增加到500毫秒，更容易触发
+                    console.log('检测到双击飞心，尝试切换无敌模式');
+                    if (window.dragonGame.gamePhase === "playing") {
+                        // 直接在控制台显示当前状态
+                        console.log('当前无敌模式状态:', window.dragonGame.godMode);
+                        window.dragonGame.toggleGodMode();
+                        console.log('切换后无敌模式状态:', window.dragonGame.godMode);
+                    } else {
+                        console.log('游戏不在playing状态，当前状态:', window.dragonGame.gamePhase);
+                    }
+                    lastHeartClickTime = 0; // 重置
                 } else {
-                lastHeartClickTime = now;
+                    lastHeartClickTime = now;
                 }
-            } else {
-                // 原有的飞心点击逻辑
-                setTimeout(() => {
-                if (flyingHeartAnimation) {
-                    flyingHeartAnimation.goToAndPlay(0, true);
-                    console.log('触发飞心动画');
-                }
-                
-                if (window.floatingFruits) {
-                    window.floatingFruits.toggleFreeze();
-                }
-                }, 10);
             }
-            }
-            
-            console.log('结束拖动飞心');
-        }
-
+    }
+    
+    console.log('结束拖动飞心');
+}
 
     }
 
