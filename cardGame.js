@@ -1627,23 +1627,23 @@ checkDinoSquadCombo: function() {
   return { triggered: false };
 },
 
-// 霸王龙小分队效果触发函数
+// 修改霸王龙小分队效果函数，添加清晰的总分提示
 triggerDinoSquadEffect: function(playerName) {
   // 显示霸王龙小分队图片
   this.showDinoSquadImage();
   
-  // 显示特效消息
-  this.showMessage(`霸王龙小分队！${playerName}收走所有牌！`, 3000);
-  
-  // 找到后出王牌的玩家
-  const player = this.players.find(p => p.name === playerName);
-  if (!player) return;
+  // 记录原始分数，用于计算增量
+  const initialScore = this.score;
   
   // 收集所有牌给该玩家
   const collectedCards = [...this.river];
+  const collectedCount = collectedCards.length;
   
   // 给玩家增加收集的牌数
-  player.collected += collectedCards.length;
+  const player = this.players.find(p => p.name === playerName);
+  if (player) {
+    player.collected += collectedCount;
+  }
   
   // 清空牌河
   this.river = [];
@@ -1652,44 +1652,57 @@ triggerDinoSquadEffect: function(playerName) {
   this.updatePlayerInfo();
   this.updateRiver();
   
-  // 霸王龙小分队特殊奖励：图图和刷子各加50分
-  // 找到图图和给他加50分
-  const tutu = this.players.find(p => p.name === "图图");
-  if (tutu) {
-    tutu.score += 50;
-    this.showMessage(`霸王龙小分队奖励！图图获得50分！`, 2500);
-  }
-  
-  // 如果玩家是刷子，给他加50分
-  const shuazi = this.players.find(p => p.name === "刷子");
-  if (shuazi) {
-    if (shuazi.isPlayer) {
-      // 玩家0是刷子，使用addScore方法增加分数
-      this.addScore(50);
-      this.showMessage(`霸王龙小分队奖励！你获得50分！`, 2500);
-    } else {
-      // AI玩家是刷子，直接增加分数
-      shuazi.score += 50;
-      this.showMessage(`霸王龙小分队奖励！刷子获得50分！`, 2500);
+  // 在动画结束后执行剩余操作
+  setTimeout(() => {
+    // 特殊奖励：图图和刷子各加50分
+    let totalBonus = 0;
+    
+    // 找到图图和给他加50分
+    const tutu = this.players.find(p => p.name === "图图");
+    if (tutu) {
+      tutu.score += 50;
+      this.showMessage(`霸王龙小分队奖励！图图获得50分！`, 2500);
     }
-  }
-  
-  // 给图图和刷子分别发两张K
-  this.giveKingsToPlayers();
-  
-  // 轮到该玩家继续行动
-  this.activePlayerIndex = player.id;
-  this.highlightActivePlayer();
-  
-  // 如果是玩家，启用操作；如果是AI，处理AI行动
-  if (this.activePlayerIndex === 0) {
-    this.enablePlayerActions();
-  } else {
-    setTimeout(() => {
-      this.processAIAction();
-    }, 2000);
-  }
+    
+    // 如果玩家是刷子，给他加50分
+    const shuazi = this.players.find(p => p.name === "刷子");
+    if (shuazi) {
+      if (shuazi.isPlayer) {
+        // 玩家0是刷子，使用addScore方法增加分数
+        this.addScore(50);
+        totalBonus = 50;
+      } else {
+        // AI玩家是刷子，直接增加分数
+        shuazi.score += 50;
+      }
+    }
+    
+    // 给图图和刷子分别发两张K
+    this.giveKingsToPlayers();
+    
+    // 最后显示总分数增加的明确提示
+    if (player && player.isPlayer) {
+      const pointsGained = collectedCount + totalBonus;
+      this.displayScoreChange(`霸王龙小分队效果！收集${collectedCount}张牌 + ${totalBonus}奖励分 = +${pointsGained}分！`, this.score);
+    }
+    
+    // 轮到该玩家继续行动
+    if (player) {
+      this.activePlayerIndex = player.id;
+      this.highlightActivePlayer();
+      
+      // 如果是玩家，启用操作；如果是AI，处理AI行动
+      if (this.activePlayerIndex === 0) {
+        this.enablePlayerActions();
+      } else {
+        setTimeout(() => {
+          this.processAIAction();
+        }, 1000);
+      }
+    }
+  }, 5500); // 在动画播放后执行
 },
+
 // 霸王龙小分队图片展示
 showDinoSquadImage: function() {
   // 创建全屏遮罩
@@ -1843,13 +1856,16 @@ checkGarbageCollectionCombo: function() {
   return { triggered: false };
 },
 
-// 修改牛爷爷垃圾回收效果触发函数
+// 修改垃圾回收效果函数，添加清晰的总分提示
 triggerGarbageCollectionEffect: function() {
   // 显示垃圾回收特效图片
   this.showGarbageCollectionImage();
   
   // 显示特效消息
   this.showMessage(`垃圾分类，人人有责！牛爷爷收走所有垃圾！`, 3000);
+  
+  // 记录特效前的分数
+  const initialScore = this.score;
   
   // 收集所有牌给牛爷爷
   const collectedCards = [...this.river];
@@ -1873,15 +1889,21 @@ triggerGarbageCollectionEffect: function() {
   this.updatePlayerInfo();
   this.updateRiver();
   
-  // 环保奖励：收集牌数 + 中间牌点数 + 10分基础奖励
-  const totalScore = collectedCount + cardsSum + 10;
-  this.addScore(totalScore);
-  this.showMessage(`环保奖励！收集${collectedCount}张牌(${cardsSum}点) + 10分环保奖励 = ${totalScore}分`, 2500);
-  
-  // 轮到牛爷爷继续行动
-  this.activePlayerIndex = 0;
-  this.highlightActivePlayer();
-  this.enablePlayerActions();
+  // 在动画结束后执行剩余操作
+  setTimeout(() => {
+    // 环保奖励：收集牌数 + 中间牌点数 + 10分基础奖励
+    const baseBonus = 10;
+    const totalScore = collectedCount + cardsSum + baseBonus;
+    this.addScore(totalScore);
+    
+    // 显示详细的得分明细
+    this.displayScoreChange(`环保奖励！收集${collectedCount}张牌(${cardsSum}点) + ${baseBonus}环保奖励 = +${totalScore}分！`, this.score);
+    
+    // 轮到牛爷爷继续行动
+    this.activePlayerIndex = 0;
+    this.highlightActivePlayer();
+    this.enablePlayerActions();
+  }, 3500); // 在动画播放后执行
 },
 // 牛爷爷垃圾回收图片展示
 showGarbageCollectionImage: function() {
@@ -1987,6 +2009,77 @@ showGarbageCollectionImage: function() {
     }
   }, 3000);
 },
+// 新增函数：显示分数变化的醒目提示
+displayScoreChange: function(message, newScore) {
+  // 创建一个特殊的分数变化提示框
+  const scoreAlert = document.createElement('div');
+  scoreAlert.className = 'score-change-alert';
+  scoreAlert.style.position = 'fixed';
+  scoreAlert.style.top = '50%';
+  scoreAlert.style.left = '50%';
+  scoreAlert.style.transform = 'translate(-50%, -50%)';
+  scoreAlert.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+  scoreAlert.style.color = '#FFD700';
+  scoreAlert.style.padding = '20px';
+  scoreAlert.style.borderRadius = '10px';
+  scoreAlert.style.fontSize = '24px';
+  scoreAlert.style.fontWeight = 'bold';
+  scoreAlert.style.textAlign = 'center';
+  scoreAlert.style.boxShadow = '0 0 20px gold';
+  scoreAlert.style.zIndex = '10000';
+  scoreAlert.style.animation = 'fadeInOut 4s';
+  
+  // 添加消息和当前总分
+  scoreAlert.innerHTML = `
+    ${message}<br>
+    <div style="margin-top: 15px; font-size: 28px;">
+      当前总分: <span style="color: #FFA500; font-size: 32px;">${newScore}</span>
+    </div>
+  `;
+  
+  // 添加关闭按钮
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '✓ 确定';
+  closeBtn.style.marginTop = '15px';
+  closeBtn.style.padding = '5px 15px';
+  closeBtn.style.backgroundColor = '#4CAF50';
+  closeBtn.style.border = 'none';
+  closeBtn.style.borderRadius = '5px';
+  closeBtn.style.color = 'white';
+  closeBtn.style.fontSize = '18px';
+  closeBtn.style.cursor = 'pointer';
+  
+  closeBtn.onclick = function() {
+    if (document.body.contains(scoreAlert)) {
+      document.body.removeChild(scoreAlert);
+    }
+  };
+  
+  scoreAlert.appendChild(closeBtn);
+  
+  // 添加淡入淡出动画的样式
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+      10% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+      20% { transform: translate(-50%, -50%) scale(1); }
+      80% { opacity: 1; }
+      100% { opacity: 1; }
+    }
+  `;
+  document.head.appendChild(style);
+  
+  // 添加到页面
+  document.body.appendChild(scoreAlert);
+  
+  // 自动关闭（用户可以手动点击关闭按钮提前关闭）
+  setTimeout(() => {
+    if (document.body.contains(scoreAlert)) {
+      document.body.removeChild(scoreAlert);
+    }
+  }, 20000);
+}
 };
 
 // 确保游戏对象可以从全局访问
