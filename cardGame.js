@@ -561,33 +561,45 @@ playerPlayCard: function(cardIndex) {
     return; // 不再进行普通匹配检测
   }
   
-  // 常规匹配检测代码
-  const matchIndex = this.checkMatch(card);
+    // 常规匹配检测代码
+    const matchIndex = this.checkMatch(card);
   
-  if (matchIndex !== -1) {
-    // 原有的匹配逻辑
-    const cardsCount = this.river.length - matchIndex;
-    let middleCardsSum = 0;
-    if (cardsCount > 2) {
-      for (let i = matchIndex + 1; i < this.river.length - 1; i++) {
-        middleCardsSum += this.river[i].card.numericValue;
+    if (matchIndex !== -1) {
+      // 修改分数计算，匹配牌不算分
+      const collectedCards = this.river.slice(matchIndex);
+      const cardsCount = collectedCards.length;
+      
+      // 计算除匹配牌外的其他牌的点数总和
+      let totalCardPoints = 0;
+      for (let i = 0; i < collectedCards.length; i++) {
+        // 跳过匹配牌(第一张)和最后打出的牌
+        if (i !== 0 && i !== collectedCards.length - 1) {
+          totalCardPoints += collectedCards[i].card.numericValue;
+        }
       }
+      
+      // 总分 = 收集的牌数 + 中间牌的点数总和
+      const totalScore = cardsCount + totalCardPoints;
+      
+      this.collectCards(player.id, matchIndex);
+      this.addScore(totalScore);
+      
+      // 显示更详细的分数信息
+      if (totalCardPoints < 0) {
+        this.showMessage(`匹配成功! 收集${cardsCount}张牌，但有垃圾牌 ${totalCardPoints}分，总得分：${totalScore}分`, 2500);
+      } else {
+        this.showMessage(`匹配成功! 收集${cardsCount}张牌，中间牌得分：${totalCardPoints}，总得分：${totalScore}分`, 2500);
+      }
+    } else {
+      // 没有匹配，轮到下一个玩家
+      this.nextPlayer();
     }
-    const totalScore = cardsCount + middleCardsSum;
     
-    this.collectCards(player.id, matchIndex);
-    this.addScore(totalScore);
-    this.showMessage(`匹配成功! 收集${cardsCount}张牌，得分：${cardsCount}+${middleCardsSum}=${totalScore}`, 2500);
-  } else {
-    // 没有匹配，轮到下一个玩家
-    this.nextPlayer();
-  }
+    // 检查游戏是否结束
+    this.checkGameOver();
+  },
   
-  // 检查游戏是否结束
-  this.checkGameOver();
-},
-  
-// 同样修改AI出牌函数，添加霸王龙小分队检测
+// 修改AI出牌函数中的分数计算逻辑
 aiPlayCard: function(aiPlayer) {
   if (this.gamePhase !== "playing") return;
   
@@ -627,19 +639,31 @@ aiPlayCard: function(aiPlayer) {
   
   // 后续原有的匹配和计分逻辑
   if (matchIndex !== -1) {
-    // 原有的匹配处理
-    const cardsCount = this.river.length - matchIndex;
-    let middleCardsSum = 0;
-    if (cardsCount > 2) {
-      for (let i = matchIndex + 1; i < this.river.length - 1; i++) {
-        middleCardsSum += this.river[i].card.numericValue;
+    // 修改分数计算，匹配牌不算分
+    const collectedCards = this.river.slice(matchIndex);
+    const cardsCount = collectedCards.length;
+    
+    // 计算除匹配牌外的其他牌的点数总和
+    let totalCardPoints = 0;
+    for (let i = 0; i < collectedCards.length; i++) {
+      // 跳过匹配牌(第一张)和最后打出的牌
+      if (i !== 0 && i !== collectedCards.length - 1) {
+        totalCardPoints += collectedCards[i].card.numericValue;
       }
     }
-    const totalScore = cardsCount + middleCardsSum;
+    
+    // 总分 = 收集的牌数 + 中间牌的点数总和
+    const totalScore = cardsCount + totalCardPoints;
     
     aiPlayer.score += totalScore;
     this.collectCards(aiPlayer.id, matchIndex);
-    this.showMessage(`${aiPlayer.name} 匹配成功! 收集${cardsCount}张牌，得分：${totalScore}分`, 2000);
+    
+    // 显示更详细的分数信息
+    if (totalCardPoints < 0) {
+      this.showMessage(`${aiPlayer.name} 匹配成功! 收集${cardsCount}张牌，但有垃圾牌 ${totalCardPoints}分，总得分：${totalScore}分`, 2500);
+    } else {
+      this.showMessage(`${aiPlayer.name} 匹配成功! 收集${cardsCount}张牌，中间牌得分：${totalCardPoints}，总得分：${totalScore}分`, 2500);
+    }
   } else {
     this.nextPlayer();
   }
@@ -2001,8 +2025,8 @@ showGarbageCollectionImage: function() {
     }
   }, 3000);
 },
-// 新增函数：显示分数变化的醒目提示
-displayScoreChange: function(message, newScore) {
+// 改进显示分数变化的函数，添加详细的计分公式
+displayScoreChange: function(message, newScore, formulaDetails = null) {
   // 创建一个特殊的分数变化提示框
   const scoreAlert = document.createElement('div');
   scoreAlert.className = 'score-change-alert';
@@ -2020,14 +2044,29 @@ displayScoreChange: function(message, newScore) {
   scoreAlert.style.boxShadow = '0 0 20px gold';
   scoreAlert.style.zIndex = '10000';
   scoreAlert.style.animation = 'fadeInOut 4s';
+  scoreAlert.style.width = '80%';
+  scoreAlert.style.maxWidth = '500px';
   
   // 添加消息和当前总分
-  scoreAlert.innerHTML = `
-    ${message}<br>
+  let htmlContent = `${message}<br>`;
+  
+  // 添加详细的计分公式
+  if (formulaDetails) {
+    htmlContent += `
+      <div style="margin-top: 15px; background-color: rgba(255,255,255,0.1); padding: 10px; border-radius: 5px; text-align: left;">
+        <div style="font-size: 20px; margin-bottom: 8px;">计分公式:</div>
+        ${formulaDetails}
+      </div>
+    `;
+  }
+  
+  htmlContent += `
     <div style="margin-top: 15px; font-size: 28px;">
       当前总分: <span style="color: #FFA500; font-size: 32px;">${newScore}</span>
     </div>
   `;
+  
+  scoreAlert.innerHTML = htmlContent;
   
   // 添加关闭按钮
   const closeBtn = document.createElement('button');
@@ -2049,28 +2088,15 @@ displayScoreChange: function(message, newScore) {
   
   scoreAlert.appendChild(closeBtn);
   
-  // 添加淡入淡出动画的样式
-  const style = document.createElement('style');
-  style.textContent = `
-    @keyframes fadeInOut {
-      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
-      10% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
-      20% { transform: translate(-50%, -50%) scale(1); }
-      80% { opacity: 1; }
-      100% { opacity: 1; }
-    }
-  `;
-  document.head.appendChild(style);
-  
   // 添加到页面
   document.body.appendChild(scoreAlert);
   
-  // 自动关闭（用户可以手动点击关闭按钮提前关闭）
+  // 自动关闭
   setTimeout(() => {
     if (document.body.contains(scoreAlert)) {
       document.body.removeChild(scoreAlert);
     }
-  }, 30000);
+  }, 10000);
 }
 };
 
