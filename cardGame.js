@@ -333,7 +333,7 @@ toggleGodMode: function() {
     });
   }
 },
-  // 显示游戏界面
+  // 修改show函数，添加背景设置
   show: function() {
     const gameContainer = document.getElementById('dragon-game-container');
     if (gameContainer) {
@@ -342,6 +342,9 @@ toggleGodMode: function() {
       
       // 加载排行榜
       this.loadLeaderboard();
+      
+      // 设置随机角色背景
+      this.setRandomCharacterBackgrounds();
     }
   },
   
@@ -1302,6 +1305,58 @@ showAnimation: function(type, collectedCards) {
     requestAnimationFrame(() => {
       this.updateRiver();
     });
+  }
+},
+// 在dragonGame对象中添加设置随机角色背景的函数
+setRandomCharacterBackgrounds: function() {
+  // 定义可用的角色背景图片列表
+  const characterImages = [
+    './image/poke/character/牛爷爷.webp',
+    // './image/poke/character/刷子.jpg'
+    // 可以根据实际情况添加更多角色图片
+  ];
+  
+  // 为主玩家随机选择一张图片
+  const randomPlayerImage = characterImages[Math.floor(Math.random() * characterImages.length)];
+  
+  // 获取主玩家框元素
+  const playerBox = document.getElementById('player-box-0');
+  if (playerBox) {
+    // 设置背景图片
+    playerBox.style.backgroundImage = `url('${randomPlayerImage}')`;
+    playerBox.style.backgroundSize = 'cover';
+    playerBox.style.backgroundPosition = 'center';
+    playerBox.style.position = 'relative';
+    
+    // 检查并添加半透明覆盖层
+    let overlay = playerBox.querySelector('.player-box-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.className = 'player-box-overlay';
+      overlay.style.position = 'absolute';
+      overlay.style.top = '0';
+      overlay.style.left = '0';
+      overlay.style.width = '100%';
+      overlay.style.height = '100%';
+      overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.1)'; // 半透明黑色覆盖
+      overlay.style.borderRadius = '10px';
+      overlay.style.zIndex = '1';
+      playerBox.prepend(overlay);
+    }
+    
+    // 确保内容显示在覆盖层之上
+    const playerInfo = playerBox.querySelector('.player-info');
+    const playerHand = playerBox.querySelector('.player-hand');
+    
+    if (playerInfo) {
+      playerInfo.style.position = 'relative';
+      playerInfo.style.zIndex = '2';
+    }
+    
+    if (playerHand) {
+      playerHand.style.position = 'relative';
+      playerHand.style.zIndex = '2';
+    }
   }
 }
 };
