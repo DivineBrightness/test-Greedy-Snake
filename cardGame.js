@@ -501,122 +501,122 @@ toggleGodMode: function() {
     this.updatePlayerInfo();
   },
   
-  // 修改玩家出牌函数
-  playerPlayCard: function(cardIndex) {
-    if (this.gamePhase !== "playing" || this.activePlayerIndex !== 0) return;
-    
-    const player = this.players[0];
-    if (cardIndex >= player.hand.length) return;
-    
-    // 从玩家手牌中取出一张牌
-    const card = player.hand.splice(cardIndex, 1)[0];
-    
-    // 添加到牌河
-    this.river.push({
-      card: card,
-      playerId: player.id
-    });
-    
-    // 更新牌河显示
-    this.updateRiver();
-    
-    // 更新玩家手牌显示
-    this.updatePlayerHand(player.id);
-    
-    // 检查是否有匹配
-    const matchIndex = this.checkMatch(card);
-    
-    if (matchIndex !== -1) {
-      // 计算新的得分规则
-      // 1. 首先获取收集的牌数量
-      const cardsCount = this.river.length - matchIndex;
-      
-      // 2. 然后计算中间牌的点数总和（不包括匹配的两张牌）
-      let middleCardsSum = 0;
-      if (cardsCount > 2) { // 只有当有中间牌时才计算
-        for (let i = matchIndex + 1; i < this.river.length - 1; i++) {
-          middleCardsSum += this.river[i].card.numericValue;
-        }
-      }
-      
-      // 3. 计算总得分：牌数 + 中间牌点数总和
-      const totalScore = cardsCount + middleCardsSum;
-      
-      // 收集牌
-      this.collectCards(player.id, matchIndex);
-      
-      // 增加分数
-      this.addScore(totalScore);
-      
-      // 显示得分明细
-      this.showMessage(`匹配成功! 收集${cardsCount}张牌，得分：${cardsCount}+${middleCardsSum}=${totalScore}`, 2500);
-    } else {
-      // 没有匹配，轮到下一个玩家
-      this.nextPlayer();
-    }
-    
-    // 检查游戏是否结束
-    this.checkGameOver();
-  },
+// 在playerPlayCard函数中添加霸王龙小分队检测
+playerPlayCard: function(cardIndex) {
+  if (this.gamePhase !== "playing" || this.activePlayerIndex !== 0) return;
   
-  // 修改AI出牌函数，在无敌模式下AI变笨
-  aiPlayCard: function(aiPlayer) {
-    if (this.gamePhase !== "playing") return;
-    
-    // 简单AI策略：随机出牌
-    const cardIndex = Math.floor(Math.random() * aiPlayer.hand.length);
-    const card = aiPlayer.hand.splice(cardIndex, 1)[0];
-    
-    // 添加到牌河
-    this.river.push({
-      card: card,
-      playerId: aiPlayer.id
-    });
-    
-    // 更新牌河显示
-    this.updateRiver();
-    
-    // 更新AI手牌显示
-    this.updatePlayerHand(aiPlayer.id);
-    
-    // 检查是否有匹配 - 无敌模式下改变AI行为
-    let matchIndex = this.checkMatch(card);
-    
-    // 在无敌模式下，AI有50%的概率不匹配牌（即使可以匹配）
-    if (this.godMode && matchIndex !== -1 && Math.random() < 0.3) {
-      // 假装没有匹配到
-      matchIndex = -1;
-      this.showMessage(`${aiPlayer.name} 没看到匹配机会，错过了得分!`, 1500);
-    }
-    
-    if (matchIndex !== -1) {
-      // 与玩家相同的得分计算逻辑
-      const cardsCount = this.river.length - matchIndex;
-      let middleCardsSum = 0;
-      if (cardsCount > 2) {
-        for (let i = matchIndex + 1; i < this.river.length - 1; i++) {
-          middleCardsSum += this.river[i].card.numericValue;
-        }
+  const player = this.players[0];
+  if (cardIndex >= player.hand.length) return;
+  
+  // 从玩家手牌中取出一张牌
+  const card = player.hand.splice(cardIndex, 1)[0];
+  
+  // 添加到牌河
+  this.river.push({
+    card: card,
+    playerId: player.id,
+    playerName: player.name // 记录玩家名字，用于后续判断
+  });
+  
+  // 更新牌河显示
+  this.updateRiver();
+  
+  // 更新玩家手牌显示
+  this.updatePlayerHand(player.id);
+  
+  // 检查是否触发霸王龙小分队效果
+  const dinoSquadCheck = this.checkDinoSquadCombo();
+  if (dinoSquadCheck.triggered) {
+    // 触发霸王龙小分队效果
+    this.triggerDinoSquadEffect(dinoSquadCheck.lastPlayerName);
+    return; // 不再进行普通匹配检测
+  }
+  
+  // 常规匹配检测代码
+  const matchIndex = this.checkMatch(card);
+  
+  if (matchIndex !== -1) {
+    // 原有的匹配逻辑
+    const cardsCount = this.river.length - matchIndex;
+    let middleCardsSum = 0;
+    if (cardsCount > 2) {
+      for (let i = matchIndex + 1; i < this.river.length - 1; i++) {
+        middleCardsSum += this.river[i].card.numericValue;
       }
-      // 计算AI得分
-      const totalScore = cardsCount + middleCardsSum;
-      
-      // 更新AI得分
-      aiPlayer.score += totalScore;
-      
-      // 收集牌
-      this.collectCards(aiPlayer.id, matchIndex);
-      
-      // 显示AI得分信息
-      this.showMessage(`${aiPlayer.name} 匹配成功! 收集${cardsCount}张牌，得分：${totalScore}分`, 2000);
-    } else {
-      // 没有匹配，轮到下一个玩家
-      this.nextPlayer();
     }
+    const totalScore = cardsCount + middleCardsSum;
     
-    // 检查游戏是否结束
-    this.checkGameOver();
-  },
+    this.collectCards(player.id, matchIndex);
+    this.addScore(totalScore);
+    this.showMessage(`匹配成功! 收集${cardsCount}张牌，得分：${cardsCount}+${middleCardsSum}=${totalScore}`, 2500);
+  } else {
+    // 没有匹配，轮到下一个玩家
+    this.nextPlayer();
+  }
+  
+  // 检查游戏是否结束
+  this.checkGameOver();
+},
+  
+// 同样修改AI出牌函数，添加霸王龙小分队检测
+aiPlayCard: function(aiPlayer) {
+  if (this.gamePhase !== "playing") return;
+  
+  // 简单AI策略：随机出牌
+  const cardIndex = Math.floor(Math.random() * aiPlayer.hand.length);
+  const card = aiPlayer.hand.splice(cardIndex, 1)[0];
+  
+  // 添加到牌河并记录玩家名字
+  this.river.push({
+    card: card,
+    playerId: aiPlayer.id,
+    playerName: aiPlayer.name // 记录玩家名字
+  });
+  
+  // 更新牌河显示
+  this.updateRiver();
+  
+  // 更新AI手牌显示
+  this.updatePlayerHand(aiPlayer.id);
+  
+  // 检查是否触发霸王龙小分队效果
+  const dinoSquadCheck = this.checkDinoSquadCombo();
+  if (dinoSquadCheck.triggered) {
+    // 触发霸王龙小分队效果
+    this.triggerDinoSquadEffect(dinoSquadCheck.lastPlayerName);
+    return; // 不再进行普通匹配检测
+  }
+  
+  // 原有的AI出牌逻辑
+  let matchIndex = this.checkMatch(card);
+  
+  // 在无敌模式下的逻辑
+  if (this.godMode && matchIndex !== -1 && Math.random() < 0.3) {
+    matchIndex = -1;
+    this.showMessage(`${aiPlayer.name} 没看到匹配机会，错过了得分!`, 1500);
+  }
+  
+  // 后续原有的匹配和计分逻辑
+  if (matchIndex !== -1) {
+    // 原有的匹配处理
+    const cardsCount = this.river.length - matchIndex;
+    let middleCardsSum = 0;
+    if (cardsCount > 2) {
+      for (let i = matchIndex + 1; i < this.river.length - 1; i++) {
+        middleCardsSum += this.river[i].card.numericValue;
+      }
+    }
+    const totalScore = cardsCount + middleCardsSum;
+    
+    aiPlayer.score += totalScore;
+    this.collectCards(aiPlayer.id, matchIndex);
+    this.showMessage(`${aiPlayer.name} 匹配成功! 收集${cardsCount}张牌，得分：${totalScore}分`, 2000);
+  } else {
+    this.nextPlayer();
+  }
+  
+  this.checkGameOver();
+},
     
   // 处理AI行动
   processAIAction: function() {
@@ -1495,7 +1495,188 @@ setRandomCharacterBackgrounds: function() {
   } catch (error) {
     console.error('设置角色背景出错:', error);
   }
-}
+},
+// 添加霸王龙小分队检查函数 - 基于名字检查
+checkDinoSquadCombo: function() {
+  // 查找场上是否有刷子和图图出的王牌
+  let shuaziJoker = null; // 刷子出的王牌
+  let tutuJoker = null;   // 图图出的王牌
+  
+  // 检查牌河中的所有牌
+  for (let i = 0; i < this.river.length; i++) {
+    const item = this.river[i];
+    
+    // 检查是否是王牌（大王或小王）
+    if (item.card.suit === 'joker') {
+      // 根据玩家名字判断
+      if (item.playerName === "刷子") {
+        shuaziJoker = { index: i, item: item };
+      } else if (item.playerName === "图图") {
+        tutuJoker = { index: i, item: item };
+      }
+    }
+  }
+  
+  // 如果同时找到刷子和图图出的王牌
+  if (shuaziJoker && tutuJoker) {
+    console.log("检测到霸王龙小分队条件满足!");
+    
+    // 确定谁后出的王牌
+    const lastPlayerName = (shuaziJoker.index > tutuJoker.index) ? "刷子" : "图图";
+    
+    return {
+      triggered: true,
+      lastPlayerName: lastPlayerName,
+      shuaziJoker: shuaziJoker,
+      tutuJoker: tutuJoker
+    };
+  }
+  
+  return { triggered: false };
+},
+
+// 霸王龙小分队效果触发函数
+triggerDinoSquadEffect: function(playerName) {
+  // 显示霸王龙小分队图片
+  this.showDinoSquadImage();
+  
+  // 显示特效消息
+  this.showMessage(`霸王龙小分队！${playerName}收走所有牌！`, 3000);
+  
+  // 找到后出王牌的玩家
+  const player = this.players.find(p => p.name === playerName);
+  if (!player) return;
+  
+  // 收集所有牌给该玩家
+  const collectedCards = [...this.river];
+  
+  // 给玩家增加收集的牌数
+  player.collected += collectedCards.length;
+  
+  // 清空牌河
+  this.river = [];
+  
+  // 更新玩家信息和牌河显示
+  this.updatePlayerInfo();
+  this.updateRiver();
+  
+  // 给图图和刷子分别发两张K
+  this.giveKingsToPlayers();
+  
+  // 轮到该玩家继续行动
+  this.activePlayerIndex = player.id;
+  this.highlightActivePlayer();
+  
+  // 如果是玩家，启用操作；如果是AI，处理AI行动
+  if (this.activePlayerIndex === 0) {
+    this.enablePlayerActions();
+  } else {
+    setTimeout(() => {
+      this.processAIAction();
+    }, 2000);
+  }
+},
+
+// 霸王龙小分队图片展示
+showDinoSquadImage: function() {
+  // 创建全屏遮罩
+  const overlay = document.createElement('div');
+  overlay.className = 'dino-squad-overlay';
+  overlay.style.position = 'fixed';
+  overlay.style.top = '0';
+  overlay.style.left = '0';
+  overlay.style.width = '100%';
+  overlay.style.height = '100%';
+  overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+  overlay.style.display = 'flex';
+  overlay.style.justifyContent = 'center';
+  overlay.style.alignItems = 'center';
+  overlay.style.zIndex = '9999';
+  
+  // 创建图片元素
+  const image = document.createElement('img');
+  image.src = './image/poke/霸王龙小分队.jpg';
+  image.alt = '霸王龙小分队';
+  image.style.maxWidth = '80%';
+  image.style.maxHeight = '80%';
+  image.style.border = '5px solid gold';
+  image.style.borderRadius = '10px';
+  image.style.boxShadow = '0 0 30px gold';
+  image.style.animation = 'dinoSquadPulse 1.5s infinite';
+  
+  // 图片加载失败时的处理
+  image.onerror = () => {
+    console.error('霸王龙小分队图片加载失败');
+    image.src = ''; // 清除错误的src
+    
+    // 显示文字替代
+    const errorText = document.createElement('div');
+    errorText.textContent = '霸王龙小分队集结！';
+    errorText.style.color = 'white';
+    errorText.style.fontSize = '36px';
+    errorText.style.fontWeight = 'bold';
+    errorText.style.textShadow = '0 0 10px gold';
+    overlay.appendChild(errorText);
+  };
+  
+  // 添加动画样式
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes dinoSquadPulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+  `;
+  document.head.appendChild(style);
+  
+  // 添加图片到遮罩
+  overlay.appendChild(image);
+  document.body.appendChild(overlay);
+  
+  // 点击关闭特效
+  overlay.addEventListener('click', () => {
+    if (document.body.contains(overlay)) {
+      document.body.removeChild(overlay);
+    }
+  });
+  
+  // 自动3秒后关闭
+  setTimeout(() => {
+    if (document.body.contains(overlay)) {
+      document.body.removeChild(overlay);
+    }
+  }, 3000);
+},
+
+// 给图图和刷子分别发K牌
+giveKingsToPlayers: function() {
+  // 创建K牌
+  const kingHearts = { suit: 'hearts', value: 'K', numericValue: 13 };
+  const kingDiamonds = { suit: 'diamonds', value: 'K', numericValue: 13 };
+  const kingClubs = { suit: 'clubs', value: 'K', numericValue: 13 };
+  const kingSpades = { suit: 'spades', value: 'K', numericValue: 13 };
+  
+  // 给图图两张K
+  const tutu = this.players.find(p => p.name === "图图");
+  if (tutu && !tutu.isEliminated) {
+    tutu.hand.push(kingHearts, kingDiamonds);
+    this.updatePlayerHand(tutu.id);
+    this.showFlyingCardEffect(tutu.id, [kingHearts, kingDiamonds]);
+    this.showMessage(`图图获得了两张K！`, 2000);
+  }
+  
+  // 给刷子两张K
+  const shuazi = this.players.find(p => p.name === "刷子");
+  if (shuazi && !shuazi.isEliminated) {
+    setTimeout(() => {
+      shuazi.hand.push(kingClubs, kingSpades);
+      this.updatePlayerHand(shuazi.id);
+      this.showFlyingCardEffect(shuazi.id, [kingClubs, kingSpades]);
+      this.showMessage(`刷子获得了两张K！`, 2000);
+    }, 1500); // 延迟执行，避免消息重叠
+  }
+},
 };
 
 // 确保游戏对象可以从全局访问
