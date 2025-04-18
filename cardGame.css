@@ -59,11 +59,11 @@
 
 /* 修改牌河中的牌为直线排列 */
 .dragon-card-river {
-  width: 70%;
+  width: 100%;
   height: 110px;
   padding: 10px;
   margin: 0 auto;
-  margin-top: 80px;
+  margin-top: 120px;
   position: relative;
   background-color: rgba(219, 230, 236, 0.3);
   border-radius: 15px;
@@ -956,7 +956,7 @@
 /* 移动设备上的牌河优化 */
 @media (max-width: 768px) {
   .dragon-card-river {
-    width: 85%;
+    width: 100%;
     height: 130px;
   }
   
@@ -988,8 +988,8 @@
 /* 超小屏幕设备的极限优化 */
 @media (max-width: 480px) {
   .dragon-card-river {
-    width: 90%;
-    height: 110px;
+    width: 100%;
+    height: 140px;
   }
   
   /* 调整叠放距离 */
