@@ -430,55 +430,74 @@ toggleGodMode: function() {
     document.getElementById('dragon-reset-btn').disabled = true;
   },
   
-  // 修改创建新牌组和洗牌函数，添加大王小王
-  createNewDeck: function() {
-    // 创建标准52张牌
-    const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
-    const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-    
-    let deck = [];
-    for (let suit of suits) {
-      for (let value of values) {
-        deck.push({
-          suit: suit,
-          value: value,
-          numericValue: this.getCardNumericValue(value)
-        });
-      }
-    }
-    
-    // 添加大王和小王
-    deck.push({
-      suit: 'joker',
-      value: 'BJ', // 大王(Big Joker)
-      numericValue: 30
-    });
-    
-    deck.push({
-      suit: 'joker',
-      value: 'SJ', // 小王(Small Joker)
-      numericValue: 20
-    });
-    
-    // 洗牌
-    for (let i = deck.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [deck[i], deck[j]] = [deck[j], deck[i]];
-    }
-    
-    return deck;
-  },
+// 修改创建新牌组函数，添加塑料瓶牌和麻袋牌
+createNewDeck: function() {
+  // 创建标准52张牌
+  const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+  const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
   
-  // 修改获取牌的数值函数，添加大王和小王的分值
-  getCardNumericValue: function(value) {
-    if (value === 'A') return 1;
-    if (value === 'J') return 11;
-    if (value === 'Q') return 12;
-    if (value === 'K') return 13;
-    if (value === 'BJ') return 30; // 大王30分
-    if (value === 'SJ') return 20; // 小王20分
-    return parseInt(value);
-  },
+  let deck = [];
+  for (let suit of suits) {
+    for (let value of values) {
+      deck.push({
+        suit: suit,
+        value: value,
+        numericValue: this.getCardNumericValue(value)
+      });
+    }
+  }
+  
+  // 添加大王和小王
+  deck.push({
+    suit: 'joker',
+    value: 'BJ', // 大王
+    numericValue: 30
+  });
+  
+  deck.push({
+    suit: 'joker',
+    value: 'SJ', // 小王
+    numericValue: 20
+  });
+  
+  // 添加四张塑料瓶牌
+  for (let i = 1; i <= 4; i++) {
+    deck.push({
+      suit: 'garbage',
+      value: `PB${i}`, // 塑料瓶
+      displayName: '塑料瓶', // 显示的中文名称
+      numericValue: 0
+    });
+  }
+  
+  // 添加一张麻袋牌
+  deck.push({
+    suit: 'garbage',
+    value: 'BAG', // 麻袋/垃圾袋
+    displayName: '麻袋',
+    numericValue: 0
+  });
+  
+  // 洗牌
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  
+  return deck;
+},
+  
+// 修改获取牌的数值函数，调整垃圾牌的分值
+getCardNumericValue: function(value) {
+  if (value === 'A') return 1;
+  if (value === 'J') return 11;
+  if (value === 'Q') return 12;
+  if (value === 'K') return 13;
+  if (value === 'BJ') return 30; // 大王30分
+  if (value === 'SJ') return 20; // 小王20分
+  if (value.startsWith('PB') || value === 'BAG') return -10; // 垃圾牌-10分
+  return parseInt(value);
+},
   
   
   // 发牌
@@ -501,7 +520,7 @@ toggleGodMode: function() {
     this.updatePlayerInfo();
   },
   
-// 在playerPlayCard函数中添加霸王龙小分队检测
+// 在playerPlayCard函数中添加垃圾回收检测
 playerPlayCard: function(cardIndex) {
   if (this.gamePhase !== "playing" || this.activePlayerIndex !== 0) return;
   
@@ -523,6 +542,16 @@ playerPlayCard: function(cardIndex) {
   
   // 更新玩家手牌显示
   this.updatePlayerHand(player.id);
+  
+  // 如果玩家是牛爷爷且打出的是垃圾袋牌，检查是否触发垃圾回收效果
+  if (player.name === "牛爷爷" && card.suit === 'garbage' && card.value === 'BAG') {
+    const garbageCheck = this.checkGarbageCollectionCombo();
+    if (garbageCheck.triggered) {
+      // 触发垃圾回收效果
+      this.triggerGarbageCollectionEffect();
+      return; // 不再进行其他匹配检测
+    }
+  }
   
   // 检查是否触发霸王龙小分队效果
   const dinoSquadCheck = this.checkDinoSquadCombo();
@@ -1109,6 +1138,20 @@ submitScore: async function(playerName, score) {
           <div class="card-value">${item.card.value === 'BJ' ? '大王' : '小王'}</div>
           //
         `;
+      } else if (item.card.suit === 'garbage') {
+        cardElement.innerHTML = `
+          <div class="card-value">${item.card.value.startsWith('PB') ? '塑料瓶' : '麻袋'}</div>
+          <div class="card-value-bottom">-10</div>
+        `;
+        
+        // 为垃圾牌添加特殊样式
+        if (item.card.value === 'BAG') {
+          cardElement.style.backgroundColor = '#a5d6a7'; // 麻袋背景色
+          cardElement.style.color = '#2e7d32';
+        } else {
+          cardElement.style.backgroundColor = '#90caf9'; // 塑料瓶背景色
+          cardElement.style.color = '#1565c0';
+        }
       } else {
         cardElement.innerHTML = `
           <div class="card-value">${item.card.value}</div>
@@ -1183,6 +1226,20 @@ submitScore: async function(playerName, score) {
             <div class="card-value">${card.value === 'BJ' ? '大王' : '小王'}</div>
             // 
           `;
+        }else if (card.suit === 'garbage') {
+          cardElement.innerHTML = `
+            <div class="card-value">${card.value.startsWith('PB') ? '塑料瓶' : '麻袋'}</div>
+            <div class="card-value-bottom">-10</div>
+          `;
+          
+          // 为垃圾牌添加特殊样式
+          if (card.value === 'BAG') {
+            cardElement.style.backgroundColor = '#a5d6a7'; // 麻袋背景色
+            cardElement.style.color = '#2e7d32';
+          } else {
+            cardElement.style.backgroundColor = '#90caf9'; // 塑料瓶背景色
+            cardElement.style.color = '#1565c0';
+          }
         } else {
           cardElement.innerHTML = `
             <div class="card-value">${card.value}</div>
@@ -1719,6 +1776,181 @@ giveKingsToPlayers: function() {
       this.showMessage(`刷子获得了两张K！`, 2000);
     }, 1500); // 延迟执行，避免消息重叠
   }
+},
+// 添加垃圾回收检查函数 - 牛爷爷专属
+checkGarbageCollectionCombo: function() {
+  // 检查最后一张出的牌是不是牛爷爷出的垃圾袋牌
+  const lastCard = this.river[this.river.length - 1];
+  if (!lastCard || 
+      lastCard.playerName !== "牛爷爷" || 
+      lastCard.card.suit !== 'garbage' || 
+      lastCard.card.value !== 'BAG') {
+    return { triggered: false };
+  }
+  
+  // 检查牌河中是否有塑料瓶牌
+  const bottleIndices = [];
+  for (let i = 0; i < this.river.length - 1; i++) { // 不包括最后一张(垃圾袋牌)
+    const item = this.river[i];
+    if (item.card.suit === 'garbage' && item.card.value.startsWith('PB')) {
+      bottleIndices.push(i);
+    }
+  }
+  
+  // 如果找到了塑料瓶牌，触发效果
+  if (bottleIndices.length > 0) {
+    return {
+      triggered: true,
+      bottleIndices: bottleIndices
+    };
+  }
+  
+  return { triggered: false };
+},
+
+// 修改牛爷爷垃圾回收效果触发函数
+triggerGarbageCollectionEffect: function() {
+  // 显示垃圾回收特效图片
+  this.showGarbageCollectionImage();
+  
+  // 显示特效消息
+  this.showMessage(`垃圾分类，人人有责！牛爷爷收走所有垃圾！`, 3000);
+  
+  // 收集所有牌给牛爷爷
+  const collectedCards = [...this.river];
+  
+  // 计算收集的分数
+  const collectedCount = collectedCards.length;
+  let cardsSum = 0;
+  
+  // 计算所有牌的点数总和
+  for (let i = 0; i < collectedCards.length; i++) {
+    cardsSum += collectedCards[i].card.numericValue;
+  }
+  
+  // 给牛爷爷增加收集的牌数
+  this.players[0].collected += collectedCount;
+  
+  // 清空牌河
+  this.river = [];
+  
+  // 更新玩家信息和牌河显示
+  this.updatePlayerInfo();
+  this.updateRiver();
+  
+  // 环保奖励：收集牌数 + 中间牌点数 + 10分基础奖励
+  const totalScore = collectedCount + cardsSum + 10;
+  this.addScore(totalScore);
+  this.showMessage(`环保奖励！收集${collectedCount}张牌(${cardsSum}点) + 10分环保奖励 = ${totalScore}分`, 2500);
+  
+  // 轮到牛爷爷继续行动
+  this.activePlayerIndex = 0;
+  this.highlightActivePlayer();
+  this.enablePlayerActions();
+},
+// 牛爷爷垃圾回收图片展示
+showGarbageCollectionImage: function() {
+  // 创建全屏遮罩
+  const overlay = document.createElement('div');
+  overlay.className = 'garbage-collection-overlay';
+  overlay.style.position = 'fixed';
+  overlay.style.top = '0';
+  overlay.style.left = '0';
+  overlay.style.width = '100%';
+  overlay.style.height = '100%';
+  overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+  overlay.style.display = 'flex';
+  overlay.style.flexDirection = 'column';
+  overlay.style.justifyContent = 'center';
+  overlay.style.alignItems = 'center';
+  overlay.style.zIndex = '9999';
+  
+  // 创建图片元素
+  const image = document.createElement('img');
+  image.src = './image/poke/图图，随牛爷爷出征！.webp';
+  image.alt = '图图，随牛爷爷出征！';
+  image.style.maxWidth = '80%';
+  image.style.maxHeight = '70%';
+  image.style.border = '5px solid #4caf50'; // 绿色边框表示环保
+  image.style.borderRadius = '10px';
+  image.style.boxShadow = '0 0 30px #4caf50';
+  image.style.animation = 'garbagePulse 1.5s infinite';
+  
+  // 添加口号文字
+  const actionText = document.createElement('div');
+  actionText.textContent = '图图，随牛爷爷出征！';
+  actionText.style.color = '#4caf50'; // 绿色文字表示环保
+  actionText.style.fontSize = '36px';
+  actionText.style.fontWeight = 'bold';
+  actionText.style.marginTop = '20px';
+  actionText.style.textShadow = '2px 2px 4px #000, -2px -2px 4px #000';
+  actionText.style.fontFamily = "'黑体', Arial, sans-serif";
+  actionText.style.letterSpacing = '3px';
+  actionText.style.animation = 'garbageTextFlash 1s infinite';
+  actionText.style.textAlign = 'center';
+  actionText.style.width = '100%';
+  
+  // 添加副标题
+  const subText = document.createElement('div');
+  subText.textContent = '垃圾分类，保护环境！';
+  subText.style.color = '#fff';
+  subText.style.fontSize = '24px';
+  subText.style.marginTop = '10px';
+  subText.style.fontFamily = "'宋体', Arial, sans-serif";
+  subText.style.textAlign = 'center';
+  subText.style.width = '100%';
+  
+  // 图片加载失败时的处理
+  image.onerror = () => {
+    console.error('牛爷爷环保图片加载失败');
+    image.src = ''; // 清除错误的src
+    
+    // 显示文字替代
+    const errorText = document.createElement('div');
+    errorText.textContent = '图图，随牛爷爷出征！';
+    errorText.style.color = 'white';
+    errorText.style.fontSize = '36px';
+    errorText.style.fontWeight = 'bold';
+    errorText.style.textShadow = '0 0 10px #4caf50';
+    overlay.appendChild(errorText);
+  };
+  
+  // 添加动画样式
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes garbagePulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    
+    @keyframes garbageTextFlash {
+      0% { opacity: 1; }
+      50% { opacity: 0.7; transform: scale(1.05); }
+      100% { opacity: 1; }
+    }
+  `;
+  document.head.appendChild(style);
+  
+  // 添加图片和文字到遮罩
+  overlay.appendChild(image);
+  overlay.appendChild(actionText);
+  overlay.appendChild(subText);
+  document.body.appendChild(overlay);
+  
+  // 点击关闭特效
+  overlay.addEventListener('click', () => {
+    if (document.body.contains(overlay)) {
+      document.body.removeChild(overlay);
+    }
+  });
+  
+  // 自动4秒后关闭
+  setTimeout(() => {
+    if (document.body.contains(overlay)) {
+      document.body.removeChild(overlay);
+    }
+  }, 3000);
 },
 };
 
