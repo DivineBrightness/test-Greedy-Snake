@@ -1689,7 +1689,7 @@ showDinoSquadImage: function() {
     if (document.body.contains(overlay)) {
       document.body.removeChild(overlay);
     }
-  }, 3000);
+  }, 5000);
 },
 
 // 给图图和刷子分别发K牌
