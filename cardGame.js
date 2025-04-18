@@ -1107,7 +1107,7 @@ submitScore: async function(playerName, score) {
       if (item.card.suit === 'joker') {
         cardElement.innerHTML = `
           <div class="card-value">${item.card.value === 'BJ' ? '大王' : '小王'}</div>
-          <div class="card-value-bottom">${item.card.value === 'BJ' ? '30分' : '20分'}</div>
+          //
         `;
       } else {
         cardElement.innerHTML = `
