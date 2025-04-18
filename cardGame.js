@@ -1897,7 +1897,7 @@ triggerGarbageCollectionEffect: function() {
     this.addScore(totalScore);
     
     // 显示详细的得分明细
-    this.displayScoreChange(`环保奖励！收集${collectedCount}张牌(${cardsSum}点) + ${baseBonus}环保奖励 = +${totalScore}分！`, this.score);
+    this.displayScoreChange(`环保奖励！收集${collectedCount}张牌(${cardsSum}点) + ${baseBonus}环保奖励 = ${totalScore}分！`, this.score);
     
     // 轮到牛爷爷继续行动
     this.activePlayerIndex = 0;
@@ -2078,7 +2078,7 @@ displayScoreChange: function(message, newScore) {
     if (document.body.contains(scoreAlert)) {
       document.body.removeChild(scoreAlert);
     }
-  }, 20000);
+  }, 30000);
 }
 };
 
