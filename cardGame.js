@@ -430,7 +430,7 @@ toggleGodMode: function() {
     document.getElementById('dragon-reset-btn').disabled = true;
   },
   
-// 修改创建新牌组函数，添加塑料瓶牌和麻袋牌
+// 修复createNewDeck函数中的塑料瓶和麻袋牌初始值
 createNewDeck: function() {
   // 创建标准52张牌
   const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
@@ -460,22 +460,22 @@ createNewDeck: function() {
     numericValue: 20
   });
   
-  // 添加四张塑料瓶牌
+  // 添加四张塑料瓶牌 - 修改numericValue为-10
   for (let i = 1; i <= 4; i++) {
     deck.push({
       suit: 'garbage',
       value: `PB${i}`, // 塑料瓶
       displayName: '塑料瓶', // 显示的中文名称
-      numericValue: 0
+      numericValue: -10 // 修改为-10分
     });
   }
   
-  // 添加一张麻袋牌
+  // 添加一张麻袋牌 - 修改numericValue为-10
   deck.push({
     suit: 'garbage',
     value: 'BAG', // 麻袋/垃圾袋
     displayName: '麻袋',
-    numericValue: 0
+    numericValue: -10 // 修改为-10分
   });
   
   // 洗牌
