@@ -678,36 +678,28 @@ aiPlayCard: function(aiPlayer) {
     }
   },
   
-// 修改检查匹配的函数，添加垃圾牌特殊处理
+// 修改检查匹配的函数，调整垃圾牌特殊处理规则
 checkMatch: function(playedCard) {
   if (this.river.length <= 1) return -1;
   
-  // 如果当前打出的是垃圾牌（塑料瓶或麻袋）
-  if (playedCard.suit === 'garbage') {
-    // 只有牛爷爷可以匹配垃圾牌
+  // 如果当前打出的是塑料瓶牌，无论谁出都不匹配
+  if (playedCard.suit === 'garbage' && playedCard.value.startsWith('PB')) {
+    return -1; // 塑料瓶牌不能匹配任何牌
+  }
+  
+  // 如果当前打出的是麻袋牌
+  if (playedCard.suit === 'garbage' && playedCard.value === 'BAG') {
+    // 只有牛爷爷可以用麻袋牌匹配塑料瓶
     if (this.players[this.activePlayerIndex].name === "牛爷爷") {
-      // 检查牌河中是否有数值相同的牌
+      // 检查牌河中是否有塑料瓶牌
       for (let i = 0; i < this.river.length - 1; i++) {
-        if (this.river[i].card.numericValue === playedCard.numericValue && 
-            this.river[i].card.suit === 'garbage') {
-          return i;
+        if (this.river[i].card.suit === 'garbage' && 
+            this.river[i].card.value.startsWith('PB')) {
+          return i; // 麻袋可以匹配塑料瓶
         }
       }
     }
-    // 其他玩家无法匹配垃圾牌
-    return -1;
-  }
-  
-  // 如果牌河中最后一张是垃圾牌
-  const lastRiverCardIndex = this.river.length - 2; // 倒数第二张，因为最后一张是刚出的牌
-  if (lastRiverCardIndex >= 0 && this.river[lastRiverCardIndex].card.suit === 'garbage') {
-    // 只有牛爷爷可以匹配垃圾牌
-    if (this.players[this.activePlayerIndex].name === "牛爷爷") {
-      if (this.river[lastRiverCardIndex].card.numericValue === playedCard.numericValue) {
-        return lastRiverCardIndex;
-      }
-    }
-    // 其他玩家无法匹配垃圾牌
+    // 其他玩家的麻袋牌或者没找到塑料瓶，不能匹配
     return -1;
   }
   
