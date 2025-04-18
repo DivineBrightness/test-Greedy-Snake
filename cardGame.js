@@ -430,7 +430,7 @@ toggleGodMode: function() {
     document.getElementById('dragon-reset-btn').disabled = true;
   },
   
-  // 创建新牌组和洗牌
+  // 修改创建新牌组和洗牌函数，添加大王小王
   createNewDeck: function() {
     // 创建标准52张牌
     const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
@@ -447,6 +447,19 @@ toggleGodMode: function() {
       }
     }
     
+    // 添加大王和小王
+    deck.push({
+      suit: 'joker',
+      value: 'BJ', // 大王(Big Joker)
+      numericValue: 30
+    });
+    
+    deck.push({
+      suit: 'joker',
+      value: 'SJ', // 小王(Small Joker)
+      numericValue: 20
+    });
+    
     // 洗牌
     for (let i = deck.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -456,14 +469,17 @@ toggleGodMode: function() {
     return deck;
   },
   
-  // 获取牌的数值
+  // 修改获取牌的数值函数，添加大王和小王的分值
   getCardNumericValue: function(value) {
     if (value === 'A') return 1;
     if (value === 'J') return 11;
     if (value === 'Q') return 12;
     if (value === 'K') return 13;
+    if (value === 'BJ') return 30; // 大王30分
+    if (value === 'SJ') return 20; // 小王20分
     return parseInt(value);
   },
+  
   
   // 发牌
   dealCards: function() {
@@ -1071,14 +1087,35 @@ submitScore: async function(playerName, score) {
     
     visibleCards.forEach((item, index) => {
       const cardElement = document.createElement('div');
-      cardElement.className = `card ${item.card.suit}`;
+      
+      // 为大王小王添加特殊样式
+      if (item.card.suit === 'joker') {
+        cardElement.className = `card joker ${item.card.value === 'BJ' ? 'big-joker' : 'small-joker'}`;
+        // 添加自定义样式
+        if (item.card.value === 'BJ') {
+          cardElement.style.backgroundColor = '#f8d8e0'; // 大王背景色
+          cardElement.style.color = '#e91e63';
+        } else {
+          cardElement.style.backgroundColor = '#d8e8f8'; // 小王背景色
+          cardElement.style.color = '#2196f3';
+        }
+      } else {
+        cardElement.className = `card ${item.card.suit}`;
+      }
       
       // 添加牌面内容
-      cardElement.innerHTML = `
-        <div class="card-value">${item.card.value}</div>
-        <div class="card-suit"></div>
-        <div class="card-value-bottom">${item.card.value}</div>
-      `;
+      if (item.card.suit === 'joker') {
+        cardElement.innerHTML = `
+          <div class="card-value">${item.card.value === 'BJ' ? '大王' : '小王'}</div>
+          <div class="card-value-bottom">${item.card.value === 'BJ' ? '30分' : '20分'}</div>
+        `;
+      } else {
+        cardElement.innerHTML = `
+          <div class="card-value">${item.card.value}</div>
+          <div class="card-suit"></div>
+          <div class="card-value-bottom">${item.card.value}</div>
+        `;
+      }
       
       // 为超出预设位置的牌设置自定义属性
       if (index >= 7) {
@@ -1110,6 +1147,7 @@ submitScore: async function(playerName, score) {
     }
   },
   
+  // 在updatePlayerHand方法中修改，确保大王和小王正确显示
   updatePlayerHand: function(playerId) {
     const player = this.players.find(p => p.id === playerId);
     if (!player) return;
@@ -1121,18 +1159,37 @@ submitScore: async function(playerName, score) {
     
     if (player.isPlayer) {
       // 如果是玩家自己，显示详细的牌面，采用直线排列
-      const totalCards = player.hand.length;
-      
       player.hand.forEach((card, index) => {
         const cardElement = document.createElement('div');
-        cardElement.className = `card ${card.suit}`;
+        
+        // 为大王小王添加特殊样式
+        if (card.suit === 'joker') {
+          cardElement.className = `card joker ${card.value === 'BJ' ? 'big-joker' : 'small-joker'}`;
+          // 添加自定义样式
+          if (card.value === 'BJ') {
+            cardElement.style.backgroundColor = '#f8d8e0'; // 大王背景色
+            cardElement.style.color = '#e91e63';
+          } else {
+            cardElement.style.backgroundColor = '#d8e8f8'; // 小王背景色
+            cardElement.style.color = '#2196f3';
+          }
+        } else {
+          cardElement.className = `card ${card.suit}`;
+        }
         
         // 添加牌面内容
-        cardElement.innerHTML = `
-          <div class="card-value">${card.value}</div>
-          <div class="card-suit"></div>
-          <div class="card-value-bottom">${card.value}</div>
-        `;
+        if (card.suit === 'joker') {
+          cardElement.innerHTML = `
+            <div class="card-value">${card.value === 'BJ' ? '大王' : '小王'}</div>
+            // 
+          `;
+        } else {
+          cardElement.innerHTML = `
+            <div class="card-value">${card.value}</div>
+            <div class="card-suit"></div>
+            <div class="card-value-bottom">${card.value}</div>
+          `;
+        }
         
         // 添加点击事件
         cardElement.addEventListener('click', () => {
