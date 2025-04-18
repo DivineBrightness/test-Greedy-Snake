@@ -1307,56 +1307,136 @@ showAnimation: function(type, collectedCards) {
     });
   }
 },
-// 在dragonGame对象中添加设置随机角色背景的函数
+
+// 修改setRandomCharacterBackgrounds函数，调整玩家0框内只显示名字
 setRandomCharacterBackgrounds: function() {
   // 定义可用的角色背景图片列表
   const characterImages = [
     './image/poke/character/牛爷爷.webp',
-    // './image/poke/character/刷子.jpg'
+    './image/poke/character/刷子.jpg'
     // 可以根据实际情况添加更多角色图片
   ];
   
-  // 为主玩家随机选择一张图片
-  const randomPlayerImage = characterImages[Math.floor(Math.random() * characterImages.length)];
+  // 如果没有可用的图片，直接返回
+  if (characterImages.length === 0) {
+    console.log('没有可用的角色图片');
+    return;
+  }
   
-  // 获取主玩家框元素
-  const playerBox = document.getElementById('player-box-0');
-  if (playerBox) {
-    // 设置背景图片
-    playerBox.style.backgroundImage = `url('${randomPlayerImage}')`;
-    playerBox.style.backgroundSize = 'cover';
-    playerBox.style.backgroundPosition = 'center';
-    playerBox.style.position = 'relative';
+  // 尝试预加载图片，如果失败使用备用方案
+  try {
+    // 为主玩家随机选择一张图片
+    const randomIndex = Math.floor(Math.random() * characterImages.length);
+    const randomPlayerImage = characterImages[randomIndex];
     
-    // 检查并添加半透明覆盖层
-    let overlay = playerBox.querySelector('.player-box-overlay');
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.className = 'player-box-overlay';
-      overlay.style.position = 'absolute';
-      overlay.style.top = '0';
-      overlay.style.left = '0';
-      overlay.style.width = '100%';
-      overlay.style.height = '100%';
-      overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.1)'; // 半透明黑色覆盖
-      overlay.style.borderRadius = '10px';
-      overlay.style.zIndex = '1';
-      playerBox.prepend(overlay);
+    // 从文件路径中提取角色名称（不含扩展名）
+    const characterName = randomPlayerImage.split('/').pop().split('.')[0];
+    
+    // 更新玩家名称
+    this.players[0].name = characterName;
+    
+    // 获取主玩家框元素
+    const playerBox = document.getElementById('player-box-0');
+    if (playerBox) {
+      // 更新显示的名称
+      const playerNameElement = playerBox.querySelector('.player-name');
+      if (playerNameElement) {
+        playerNameElement.textContent = characterName;
+      }
+      
+      // 设置背景图片
+      playerBox.style.backgroundImage = `url('${randomPlayerImage}')`;
+      playerBox.style.backgroundSize = 'cover';
+      playerBox.style.backgroundPosition = 'center';
+      playerBox.style.position = 'relative';
+      
+      // 检查并添加半透明覆盖层
+      let overlay = playerBox.querySelector('.player-box-overlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'player-box-overlay';
+        overlay.style.position = 'absolute';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.1)'; // 半透明黑色覆盖
+        overlay.style.borderRadius = '10px';
+        overlay.style.zIndex = '1';
+        playerBox.prepend(overlay);
+      }
+      
+      // 获取玩家信息元素
+      const playerInfo = playerBox.querySelector('.player-info');
+      if (playerInfo) {
+        // 隐藏手牌和已收集的信息文本，只保留数字
+        const cardsCount = playerInfo.querySelector('.player-cards-count');
+        const collected = playerInfo.querySelector('.player-collected');
+        
+        if (cardsCount) {
+          // 获取手牌数值并调整样式
+          const cardsCountValue = cardsCount.querySelector('span');
+          cardsCount.innerHTML = '';
+          if (cardsCountValue) {
+            cardsCount.appendChild(cardsCountValue);
+            cardsCount.style.position = 'absolute';
+            cardsCount.style.right = '10px';
+            cardsCount.style.top = '5px';
+            cardsCount.style.background = 'rgba(255,255,255,0.7)';
+            cardsCount.style.borderRadius = '50%';
+            cardsCount.style.width = '24px';
+            cardsCount.style.height = '24px';
+            cardsCount.style.display = 'flex';
+            cardsCount.style.justifyContent = 'center';
+            cardsCount.style.alignItems = 'center';
+            cardsCount.style.fontSize = '14px';
+            cardsCount.style.fontWeight = 'bold';
+          }
+        }
+        
+        if (collected) {
+          // 获取已收集数值并调整样式
+          const collectedValue = collected.querySelector('span');
+          collected.innerHTML = '';
+          if (collectedValue) {
+            collected.appendChild(collectedValue);
+            collected.style.position = 'absolute';
+            collected.style.right = '10px';
+            collected.style.top = '35px';
+            collected.style.background = 'rgba(255,220,100,0.7)';
+            collected.style.borderRadius = '50%';
+            collected.style.width = '24px';
+            collected.style.height = '24px';
+            collected.style.display = 'flex';
+            collected.style.justifyContent = 'center';
+            collected.style.alignItems = 'center';
+            collected.style.fontSize = '14px';
+            collected.style.fontWeight = 'bold';
+          }
+        }
+        
+        // 调整玩家名称样式
+        const playerName = playerInfo.querySelector('.player-name');
+        if (playerName) {
+          playerName.style.fontSize = '18px';
+          playerName.style.fontWeight = 'bold';
+          playerName.style.textShadow = '1px 1px 3px rgba(0,0,0,0.7)';
+          playerName.style.color = 'white';
+          playerName.style.position = 'relative';
+          playerName.style.zIndex = '2';
+        }
+      }
+      
+      // 确保手牌区域正确显示
+      const playerHand = playerBox.querySelector('.player-hand');
+      if (playerHand) {
+        playerHand.style.position = 'relative';
+        playerHand.style.zIndex = '2';
+        playerHand.style.marginTop = '10px';
+      }
     }
-    
-    // 确保内容显示在覆盖层之上
-    const playerInfo = playerBox.querySelector('.player-info');
-    const playerHand = playerBox.querySelector('.player-hand');
-    
-    if (playerInfo) {
-      playerInfo.style.position = 'relative';
-      playerInfo.style.zIndex = '2';
-    }
-    
-    if (playerHand) {
-      playerHand.style.position = 'relative';
-      playerHand.style.zIndex = '2';
-    }
+  } catch (error) {
+    console.error('设置角色背景出错:', error);
   }
 }
 };
