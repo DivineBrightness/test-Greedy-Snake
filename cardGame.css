@@ -59,11 +59,11 @@
 
 /* 修改牌河中的牌为直线排列 */
 .dragon-card-river {
-  width: 70%;
+  width: 100%;
   height: 110px;
   padding: 10px;
   margin: 0 auto;
-  margin-top: 80px;
+  margin-top: 30px;
   position: relative;
   background-color: rgba(219, 230, 236, 0.3);
   border-radius: 15px;
@@ -183,6 +183,7 @@
   overflow-y: auto;
   gap: 5px;
   margin-top: 10px;
+  margin-right: -370px; 
 }
 
 /* 卡牌样式 */
@@ -849,6 +850,7 @@
   width: 100%;
   display: flex;
   justify-content: center;
+  margin-top: -130px;
 }
 /* 移动设备上的玩家手牌调整 */
 @media (max-width: 768px) {
@@ -874,8 +876,8 @@
     padding: 5px;
     min-height: 0;
     width: 60%;
-    height: 60%;
-    margin-left: auto; /* Center horizontally */
+    height: 100%;
+    margin-left: -50px; /* Center horizontally */
     margin-right: auto; /* Center horizontally */
     /* If vertical centering is also needed within player-position-0, more complex flex/grid might be required depending on parent setup */
     }
@@ -911,6 +913,7 @@
 }
 @media (max-width: 768px) {
   .dragon-card-river {
+    margin-top: 90px; /* 对于平板设备稍微调整 */
     height: 100px;
   }
   
@@ -923,6 +926,7 @@
 
 @media (max-width: 480px) {
   .dragon-card-river {
+    margin-top: 100px; /* 在手机上稍微降低，避免与顶部玩家区域重叠 */
     height: 80px;
   }
   
@@ -954,7 +958,7 @@
 /* 移动设备上的牌河优化 */
 @media (max-width: 768px) {
   .dragon-card-river {
-    width: 85%;
+    width: 100%;
     height: 130px;
   }
   
@@ -986,8 +990,8 @@
 /* 超小屏幕设备的极限优化 */
 @media (max-width: 480px) {
   .dragon-card-river {
-    width: 90%;
-    height: 110px;
+    width: 100%;
+    height: 140px;
   }
   
   /* 调整叠放距离 */
