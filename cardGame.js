@@ -1560,6 +1560,28 @@ triggerDinoSquadEffect: function(playerName) {
   this.updatePlayerInfo();
   this.updateRiver();
   
+  // 霸王龙小分队特殊奖励：图图和刷子各加50分
+  // 找到图图和给他加50分
+  const tutu = this.players.find(p => p.name === "图图");
+  if (tutu) {
+    tutu.score += 50;
+    this.showMessage(`霸王龙小分队奖励！图图获得50分！`, 2500);
+  }
+  
+  // 如果玩家是刷子，给他加50分
+  const shuazi = this.players.find(p => p.name === "刷子");
+  if (shuazi) {
+    if (shuazi.isPlayer) {
+      // 玩家0是刷子，使用addScore方法增加分数
+      this.addScore(50);
+      this.showMessage(`霸王龙小分队奖励！你获得50分！`, 2500);
+    } else {
+      // AI玩家是刷子，直接增加分数
+      shuazi.score += 50;
+      this.showMessage(`霸王龙小分队奖励！刷子获得50分！`, 2500);
+    }
+  }
+  
   // 给图图和刷子分别发两张K
   this.giveKingsToPlayers();
   
@@ -1576,7 +1598,6 @@ triggerDinoSquadEffect: function(playerName) {
     }, 2000);
   }
 },
-
 // 霸王龙小分队图片展示
 showDinoSquadImage: function() {
   // 创建全屏遮罩
@@ -1589,6 +1610,7 @@ showDinoSquadImage: function() {
   overlay.style.height = '100%';
   overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
   overlay.style.display = 'flex';
+  overlay.style.flexDirection = 'column'; // 改为纵向排列
   overlay.style.justifyContent = 'center';
   overlay.style.alignItems = 'center';
   overlay.style.zIndex = '9999';
@@ -1598,11 +1620,25 @@ showDinoSquadImage: function() {
   image.src = './image/poke/霸王龙小分队.jpg';
   image.alt = '霸王龙小分队';
   image.style.maxWidth = '80%';
-  image.style.maxHeight = '80%';
+  image.style.maxHeight = '70%'; // 减小高度，给文字留空间
   image.style.border = '5px solid gold';
   image.style.borderRadius = '10px';
   image.style.boxShadow = '0 0 30px gold';
   image.style.animation = 'dinoSquadPulse 1.5s infinite';
+  
+  // 添加口号文字
+  const actionText = document.createElement('div');
+  actionText.textContent = '霸王龙小分队，行动！！';
+  actionText.style.color = '#FFD700'; // 金色文字
+  actionText.style.fontSize = '36px';
+  actionText.style.fontWeight = 'bold';
+  actionText.style.marginTop = '20px';
+  actionText.style.textShadow = '2px 2px 4px #ff0000, -2px -2px 4px #ff0000'; // 红色描边
+  actionText.style.fontFamily = "'黑体', Arial, sans-serif";
+  actionText.style.letterSpacing = '3px';
+  actionText.style.animation = 'textFlash 1s infinite';
+  actionText.style.textAlign = 'center'; // 确保文字居中
+  actionText.style.width = '100%'; // 让元素占满整行，确保居中效果
   
   // 图片加载失败时的处理
   image.onerror = () => {
@@ -1627,11 +1663,18 @@ showDinoSquadImage: function() {
       50% { transform: scale(1.05); }
       100% { transform: scale(1); }
     }
+    
+    @keyframes textFlash {
+      0% { opacity: 1; }
+      50% { opacity: 0.7; transform: scale(1.05); }
+      100% { opacity: 1; }
+    }
   `;
   document.head.appendChild(style);
   
-  // 添加图片到遮罩
+  // 添加图片和文字到遮罩
   overlay.appendChild(image);
+  overlay.appendChild(actionText);
   document.body.appendChild(overlay);
   
   // 点击关闭特效
