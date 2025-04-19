@@ -1117,3 +1117,61 @@
     background-color: transparent; /* 移除原来的背景色 */
   }
 }
+/* 添加到现有CSS文件末尾 */
+
+/* 新出的牌高亮效果 */
+.card.new-card {
+  box-shadow: 0 0 15px gold;
+  animation: pulseGlow 1.5s infinite;
+  z-index: 200;
+}
+
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 15px gold; }
+  50% { box-shadow: 0 0 25px gold, 0 0 40px gold; }
+  100% { box-shadow: 0 0 15px gold; }
+}
+
+/* 匹配的牌对高亮效果 */
+.card.matched-pair {
+  box-shadow: 0 0 20px #ff4500;
+  animation: matchPulse 0.6s infinite alternate;
+  z-index: 200;
+}
+
+@keyframes matchPulse {
+  0% { box-shadow: 0 0 10px #ff4500; transform: scale(1); }
+  100% { box-shadow: 0 0 25px #ff4500, 0 0 40px #ff4500; transform: scale(1.1); }
+}
+
+/* 匹配连接线动画 */
+.card-match-connection {
+  position: fixed;
+  height: 3px;
+  background-color: #ff4500;
+  box-shadow: 0 0 8px #ff4500;
+  z-index: 199;
+  opacity: 0;
+  animation: connectionFadeIn 0.4s forwards;
+}
+
+@keyframes connectionFadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* AI出牌动画 */
+.ai-play-card-animation .card {
+  transition: transform 0.5s ease;
+}
+
+.ai-play-card-animation .card.flipped {
+  transform: rotateY(180deg);
+}
+
+/* 收集牌飞向玩家动画 */
+.collect-animation-container .card {
+  position: absolute;
+  transition: all 0.8s ease;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}

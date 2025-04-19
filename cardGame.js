@@ -520,86 +520,358 @@ getCardNumericValue: function(value) {
     this.updatePlayerInfo();
   },
   
-// 在playerPlayCard函数中添加垃圾回收检测
+// 修改playerPlayCard函数，添加出牌动画和延迟
 playerPlayCard: function(cardIndex) {
   if (this.gamePhase !== "playing" || this.activePlayerIndex !== 0) return;
   
   const player = this.players[0];
   if (cardIndex >= player.hand.length) return;
   
+  // 禁用所有玩家操作，防止连续点击
+  this.disablePlayerActions();
+  
   // 从玩家手牌中取出一张牌
   const card = player.hand.splice(cardIndex, 1)[0];
   
-  // 添加到牌河
-  this.river.push({
-    card: card,
-    playerId: player.id,
-    playerName: player.name // 记录玩家名字，用于后续判断
-  });
+  // 创建并展示出牌动画
+  this.showPlayCardAnimation(player.id, card, () => {
+    // 添加到牌河
+    this.river.push({
+      card: card,
+      playerId: player.id,
+      playerName: player.name
+    });
   
-  // 更新牌河显示
-  this.updateRiver();
+    // 更新牌河显示
+    this.updateRiver();
+    
+    // 高亮最新出的牌
+    this.highlightLastCard();
+    
+    // 更新玩家手牌显示
+    this.updatePlayerHand(player.id);
   
-  // 更新玩家手牌显示
-  this.updatePlayerHand(player.id);
-  
-  // 如果玩家是牛爷爷且打出的是垃圾袋牌，检查是否触发垃圾回收效果
-  if (player.name === "牛爷爷" && card.suit === 'garbage' && card.value === 'BAG') {
-    const garbageCheck = this.checkGarbageCollectionCombo();
-    if (garbageCheck.triggered) {
-      // 触发垃圾回收效果
-      this.triggerGarbageCollectionEffect();
-      return; // 不再进行其他匹配检测
+    // 如果玩家是牛爷爷且打出的是垃圾袋牌，检查是否触发垃圾回收效果
+    if (player.name === "牛爷爷" && card.suit === 'garbage' && card.value === 'BAG') {
+      const garbageCheck = this.checkGarbageCollectionCombo();
+      if (garbageCheck.triggered) {
+        this.triggerGarbageCollectionEffect();
+        return;
+      }
     }
-  }
   
-  // 检查是否触发霸王龙小分队效果
-  const dinoSquadCheck = this.checkDinoSquadCombo();
-  if (dinoSquadCheck.triggered) {
-    // 触发霸王龙小分队效果
-    this.triggerDinoSquadEffect(dinoSquadCheck.lastPlayerName);
-    return; // 不再进行普通匹配检测
-  }
+    // 检查是否触发霸王龙小分队效果
+    const dinoSquadCheck = this.checkDinoSquadCombo();
+    if (dinoSquadCheck.triggered) {
+      this.triggerDinoSquadEffect(dinoSquadCheck.lastPlayerName);
+      return;
+    }
   
     // 常规匹配检测代码
     const matchIndex = this.checkMatch(card);
   
     if (matchIndex !== -1) {
-      // 修改分数计算，匹配牌不算分
-      const collectedCards = this.river.slice(matchIndex);
-      const cardsCount = collectedCards.length;
-      
-      // 计算除匹配牌外的其他牌的点数总和
-      let totalCardPoints = 0;
-      for (let i = 0; i < collectedCards.length; i++) {
-        // 跳过匹配牌(第一张)和最后打出的牌
-        if (i !== 0 && i !== collectedCards.length - 1) {
-          totalCardPoints += collectedCards[i].card.numericValue;
-        }
-      }
-      
-      // 总分 = 收集的牌数 + 中间牌的点数总和
-      const totalScore = cardsCount + totalCardPoints;
-      
-      this.collectCards(player.id, matchIndex);
-      this.addScore(totalScore);
-      
-      // 显示更详细的分数信息
-      if (totalCardPoints < 0) {
-        this.showMessage(`匹配成功! 收集${cardsCount}张牌，但有垃圾牌 ${totalCardPoints}分，总得分：${totalScore}分`, 2500);
-      } else {
-        this.showMessage(`匹配成功! 收集${cardsCount}张牌，中间牌得分：${totalCardPoints}，总得分：${totalScore}分`, 2500);
-      }
+      // 高亮显示匹配的牌对 - 延迟1秒执行
+      setTimeout(() => {
+        this.highlightMatchedCards(matchIndex, this.river.length - 1);
+        
+        // 再延迟1.2秒后收集牌
+        setTimeout(() => {
+          // 计分逻辑保持不变...
+          const collectedCards = this.river.slice(matchIndex);
+          const cardsCount = collectedCards.length;
+          
+          let totalCardPoints = 0;
+          for (let i = 0; i < collectedCards.length; i++) {
+            if (i !== 0 && i !== collectedCards.length - 1) {
+              totalCardPoints += collectedCards[i].card.numericValue;
+            }
+          }
+          
+          const totalScore = cardsCount + totalCardPoints;
+          
+          this.collectCards(player.id, matchIndex);
+          this.addScore(totalScore);
+          
+          if (totalCardPoints < 0) {
+            this.showMessage(`匹配成功! 收集${cardsCount}张牌，但有垃圾牌 ${totalCardPoints}分，总得分：${totalScore}分`, 2500);
+          } else {
+            this.showMessage(`匹配成功! 收集${cardsCount}张牌，中间牌得分：${totalCardPoints}，总得分：${totalScore}分`, 2500);
+          }
+        }, 1200);
+      }, 1000);
     } else {
-      // 没有匹配，轮到下一个玩家
-      this.nextPlayer();
+      // 没有匹配，延迟后轮到下一个玩家
+      setTimeout(() => {
+        this.nextPlayer();
+      }, 800);
     }
     
     // 检查游戏是否结束
     this.checkGameOver();
-  },
+  });
+},
+
+// 新增函数：出牌动画效果
+showPlayCardAnimation: function(playerId, card, callback) {
+  // 创建动画元素
+  const animContainer = document.createElement('div');
+  animContainer.className = 'play-card-animation';
+  animContainer.style.position = 'absolute';
+  animContainer.style.zIndex = '1000';
+  animContainer.style.pointerEvents = 'none';
   
-// 修改AI出牌函数中的分数计算逻辑
+  // 创建卡牌元素
+  const cardElement = document.createElement('div');
+  
+  // 设置卡牌样式
+  if (card.suit === 'joker') {
+    cardElement.className = `card joker ${card.value === 'BJ' ? 'big-joker' : 'small-joker'}`;
+    if (card.value === 'BJ') {
+      cardElement.style.backgroundColor = '#f8d8e0';
+      cardElement.style.color = '#e91e63';
+    } else {
+      cardElement.style.backgroundColor = '#d8e8f8';
+      cardElement.style.color = '#2196f3';
+    }
+  } else {
+    cardElement.className = `card ${card.suit}`;
+  }
+  
+  // 添加牌面内容
+  if (card.suit === 'joker') {
+    cardElement.innerHTML = `
+      <div class="card-value">${card.value === 'BJ' ? '大王' : '小王'}</div>
+    `;
+  } else if (card.suit === 'garbage') {
+    cardElement.innerHTML = `
+      <div class="card-value">${card.value.startsWith('PB') ? '塑料瓶' : '麻袋'}</div>
+      <div class="card-value-bottom">-10</div>
+    `;
+    
+    if (card.value === 'BAG') {
+      cardElement.style.backgroundColor = '#a5d6a7';
+      cardElement.style.color = '#2e7d32';
+    } else {
+      cardElement.style.backgroundColor = '#90caf9';
+      cardElement.style.color = '#1565c0';
+    }
+  } else {
+    cardElement.innerHTML = `
+      <div class="card-value">${card.value}</div>
+      <div class="card-suit"></div>
+      <div class="card-value-bottom">${card.value}</div>
+    `;
+  }
+  
+  // 将卡牌添加到动画容器
+  animContainer.appendChild(cardElement);
+  document.body.appendChild(animContainer);
+  
+  // 获取源位置（玩家手牌区域）和目标位置（牌河）
+  const playerHandElement = document.getElementById(`player-hand-${playerId}`);
+  const riverElement = document.querySelector('.dragon-card-river');
+  
+  if (!playerHandElement || !riverElement) {
+    // 如果找不到元素，直接执行回调
+    if (callback) callback();
+    return;
+  }
+  
+  const handRect = playerHandElement.getBoundingClientRect();
+  const riverRect = riverElement.getBoundingClientRect();
+  
+  // 设置卡牌初始位置
+  animContainer.style.left = `${handRect.left + handRect.width/2 - 30}px`;
+  animContainer.style.top = `${handRect.top + handRect.height/2 - 45}px`;
+  
+  // 添加CSS动画样式
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes flyToRiver {
+      0% {
+        transform: translate(0, 0) rotate(0deg) scale(1);
+        opacity: 0.7;
+      }
+      20% {
+        opacity: 1;
+        transform: translate(0, -20px) rotate(5deg) scale(1.2);
+      }
+      100% {
+        transform: translate(${riverRect.left + riverRect.width/2 - handRect.left - handRect.width/2 + 30}px, 
+                           ${riverRect.top + riverRect.height/2 - handRect.top - handRect.height/2 + 45}px) 
+                           rotate(0deg) scale(1);
+      }
+    }
+    
+    .play-card-animation {
+      animation: flyToRiver 0.8s ease-in-out forwards;
+    }
+    
+    .play-card-animation .card {
+      width: 60px;
+      height: 90px;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
+    }
+  `;
+  document.head.appendChild(style);
+  
+  // 播放音效（如果有）
+  if (typeof playSound === 'function') {
+    playSound('card_play');
+  }
+  
+  // 动画结束后执行回调
+  setTimeout(() => {
+    if (document.body.contains(animContainer)) {
+      document.body.removeChild(animContainer);
+    }
+    document.head.removeChild(style);
+    if (callback) callback();
+  }, 800);
+},
+
+// 新增函数：高亮显示最新出的牌
+highlightLastCard: function() {
+  if (this.river.length === 0) return;
+  
+  const riverElement = document.querySelector('.dragon-card-river');
+  if (!riverElement) return;
+  
+  const cards = riverElement.querySelectorAll('.card');
+  if (cards.length === 0) return;
+  
+  const lastCard = cards[cards.length - 1];
+  lastCard.classList.add('new-card');
+  
+  // 添加高亮样式
+  const style = document.createElement('style');
+  style.id = 'highlight-last-card-style';
+  style.textContent = `
+    .card.new-card {
+      box-shadow: 0 0 15px gold;
+      animation: pulseGlow 1.5s infinite;
+    }
+    
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 15px gold; }
+      50% { box-shadow: 0 0 25px gold, 0 0 40px gold; }
+      100% { box-shadow: 0 0 15px gold; }
+    }
+  `;
+  document.head.appendChild(style);
+  
+  // 3秒后移除高亮效果
+  setTimeout(() => {
+    lastCard.classList.remove('new-card');
+    const oldStyle = document.getElementById('highlight-last-card-style');
+    if (oldStyle) {
+      document.head.removeChild(oldStyle);
+    }
+  }, 3000);
+},
+
+// 新增函数：高亮显示匹配的牌对
+highlightMatchedCards: function(matchIndex, lastCardIndex) {
+  const riverElement = document.querySelector('.dragon-card-river');
+  if (!riverElement) return;
+  
+  const cards = riverElement.querySelectorAll('.card');
+  if (cards.length <= matchIndex || cards.length <= lastCardIndex) return;
+  
+  // 获取匹配的两张牌
+  const matchedCard = cards[matchIndex];
+  const lastCard = cards[lastCardIndex];
+  
+  // 添加匹配高亮类
+  matchedCard.classList.add('matched-pair');
+  lastCard.classList.add('matched-pair');
+  
+  // 添加连接线动画样式
+  const style = document.createElement('style');
+  style.id = 'match-highlight-style';
+  style.textContent = `
+    .card.matched-pair {
+      box-shadow: 0 0 20px #ff4500;
+      animation: matchPulse 0.6s infinite alternate;
+      z-index: 100;
+    }
+    
+    @keyframes matchPulse {
+      0% { box-shadow: 0 0 10px #ff4500; transform: scale(1); }
+      100% { box-shadow: 0 0 25px #ff4500, 0 0 40px #ff4500; transform: scale(1.1); }
+    }
+  `;
+  document.head.appendChild(style);
+  
+  // 创建连接线
+  const connection = document.createElement('div');
+  connection.className = 'card-match-connection';
+  document.body.appendChild(connection);
+  
+  // 获取两张牌的位置
+  const matchedRect = matchedCard.getBoundingClientRect();
+  const lastRect = lastCard.getBoundingClientRect();
+  
+  // 计算连接线位置和角度
+  const x1 = matchedRect.left + matchedRect.width / 2;
+  const y1 = matchedRect.top + matchedRect.height / 2;
+  const x2 = lastRect.left + lastRect.width / 2;
+  const y2 = lastRect.top + lastRect.height / 2;
+  
+  const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+  const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+  
+  // 设置连接线样式
+  connection.style.position = 'fixed';
+  connection.style.width = `${length}px`;
+  connection.style.height = '3px';
+  connection.style.backgroundColor = '#ff4500';
+  connection.style.boxShadow = '0 0 8px #ff4500';
+  connection.style.top = `${y1}px`;
+  connection.style.left = `${x1}px`;
+  connection.style.transformOrigin = '0 0';
+  connection.style.transform = `rotate(${angle}deg)`;
+  connection.style.zIndex = '99';
+  connection.style.opacity = '0';
+  connection.style.animation = 'connectionFadeIn 0.4s forwards';
+  
+  // 添加连接线动画
+  const connectionStyle = document.createElement('style');
+  connectionStyle.id = 'connection-style';
+  connectionStyle.textContent = `
+    @keyframes connectionFadeIn {
+      0% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+  `;
+  document.head.appendChild(connectionStyle);
+  
+  // 延迟清除高亮和连接线
+  setTimeout(() => {
+    // 移除高亮样式
+    matchedCard.classList.remove('matched-pair');
+    lastCard.classList.remove('matched-pair');
+    
+    // 移除连接线
+    if (document.body.contains(connection)) {
+      document.body.removeChild(connection);
+    }
+    
+    // 移除样式表
+    const oldStyle = document.getElementById('match-highlight-style');
+    if (oldStyle) {
+      document.head.removeChild(oldStyle);
+    }
+    
+    const oldConnectionStyle = document.getElementById('connection-style');
+    if (oldConnectionStyle) {
+      document.head.removeChild(oldConnectionStyle);
+    }
+  }, 1000);
+},
+  
+// 修改AI出牌函数，添加出牌动画和延迟
 aiPlayCard: function(aiPlayer) {
   if (this.gamePhase !== "playing") return;
   
@@ -607,90 +879,231 @@ aiPlayCard: function(aiPlayer) {
   const cardIndex = Math.floor(Math.random() * aiPlayer.hand.length);
   const card = aiPlayer.hand.splice(cardIndex, 1)[0];
   
-  // 添加到牌河并记录玩家名字
-  this.river.push({
-    card: card,
-    playerId: aiPlayer.id,
-    playerName: aiPlayer.name // 记录玩家名字
-  });
-  
-  // 更新牌河显示
-  this.updateRiver();
-  
-  // 更新AI手牌显示
-  this.updatePlayerHand(aiPlayer.id);
-  
-  // 检查是否触发王牌特殊效果 - 无论无敌模式是否开启都要检查
-  if (card.suit === 'joker') {
-    // 检查霸王龙小分队组合
-    const dinoSquadCheck = this.checkDinoSquadCombo();
-    if (dinoSquadCheck.triggered) {
-      this.triggerDinoSquadEffect(dinoSquadCheck.lastPlayerName);
-      return; // 直接返回，不进行普通匹配检测
-    }
-  } else {
-    // 非王牌才检查普通霸王龙组合
-    const dinoSquadCheck = this.checkDinoSquadCombo();
-    if (dinoSquadCheck.triggered) {
-      this.triggerDinoSquadEffect(dinoSquadCheck.lastPlayerName);
-      return; // 不再进行普通匹配检测
-    }
-  }
-  
-  // 无敌模式下的普通牌匹配逻辑
-  let matchIndex = this.checkMatch(card);
-  
-  // 在无敌模式下的逻辑 - 只针对普通牌匹配，不影响特殊组合
-  if (this.godMode && matchIndex !== -1 && Math.random() < 0.3) {
-    matchIndex = -1;
-    this.showMessage(`${aiPlayer.name} 没看到匹配机会，错过了得分!`, 1500);
-  }
-  
-  // 后续原有的匹配和计分逻辑
-  if (matchIndex !== -1) {
-    // 修改分数计算，匹配牌不算分
-    const collectedCards = this.river.slice(matchIndex);
-    const cardsCount = collectedCards.length;
+  // 创建并展示出牌动画
+  this.showAIPlayCardAnimation(aiPlayer.id, card, () => {
+    // 添加到牌河并记录玩家名字
+    this.river.push({
+      card: card,
+      playerId: aiPlayer.id,
+      playerName: aiPlayer.name
+    });
     
-    // 计算除匹配牌外的其他牌的点数总和
-    let totalCardPoints = 0;
-    for (let i = 0; i < collectedCards.length; i++) {
-      // 跳过匹配牌(第一张)和最后打出的牌
-      if (i !== 0 && i !== collectedCards.length - 1) {
-        totalCardPoints += collectedCards[i].card.numericValue;
+    // 更新牌河显示
+    this.updateRiver();
+    
+    // 高亮最新出的牌
+    this.highlightLastCard();
+    
+    // 更新AI手牌显示
+    this.updatePlayerHand(aiPlayer.id);
+    
+    // 检查是否触发王牌特殊效果 - 无论无敌模式是否开启都要检查
+    if (card.suit === 'joker') {
+      const dinoSquadCheck = this.checkDinoSquadCombo();
+      if (dinoSquadCheck.triggered) {
+        this.triggerDinoSquadEffect(dinoSquadCheck.lastPlayerName);
+        return;
+      }
+    } else {
+      // 非王牌才检查普通霸王龙组合
+      const dinoSquadCheck = this.checkDinoSquadCombo();
+      if (dinoSquadCheck.triggered) {
+        this.triggerDinoSquadEffect(dinoSquadCheck.lastPlayerName);
+        return;
       }
     }
     
-    // 总分 = 收集的牌数 + 中间牌的点数总和
-    const totalScore = cardsCount + totalCardPoints;
+    // 无敌模式下的普通牌匹配逻辑
+    let matchIndex = this.checkMatch(card);
     
-    aiPlayer.score += totalScore;
-    this.collectCards(aiPlayer.id, matchIndex);
-    
-    // 显示更详细的分数信息
-    if (totalCardPoints < 0) {
-      this.showMessage(`${aiPlayer.name} 匹配成功! 收集${cardsCount}张牌，但有垃圾牌 ${totalCardPoints}分，总得分：${totalScore}分`, 2500);
-    } else {
-      this.showMessage(`${aiPlayer.name} 匹配成功! 收集${cardsCount}张牌，中间牌得分：${totalCardPoints}，总得分：${totalScore}分`, 2500);
+    // 在无敌模式下的逻辑 - 只针对普通牌匹配，不影响特殊组合
+    if (this.godMode && matchIndex !== -1 && Math.random() < 0.3) {
+      matchIndex = -1;
+      this.showMessage(`${aiPlayer.name} 没看到匹配机会，错过了得分!`, 1500);
     }
-  } else {
-    this.nextPlayer();
+    
+    if (matchIndex !== -1) {
+      // 高亮显示匹配的牌对 - 延迟1秒执行
+      setTimeout(() => {
+        this.highlightMatchedCards(matchIndex, this.river.length - 1);
+        
+        // 再延迟1.2秒后收集牌
+        setTimeout(() => {
+          // 计分逻辑保持不变...
+          const collectedCards = this.river.slice(matchIndex);
+          const cardsCount = collectedCards.length;
+          
+          let totalCardPoints = 0;
+          for (let i = 0; i < collectedCards.length; i++) {
+            if (i !== 0 && i !== collectedCards.length - 1) {
+              totalCardPoints += collectedCards[i].card.numericValue;
+            }
+          }
+          
+          const totalScore = cardsCount + totalCardPoints;
+          
+          aiPlayer.score += totalScore;
+          this.collectCards(aiPlayer.id, matchIndex);
+          
+          if (totalCardPoints < 0) {
+            this.showMessage(`${aiPlayer.name} 匹配成功! 收集${cardsCount}张牌，但有垃圾牌 ${totalCardPoints}分，总得分：${totalScore}分`, 2500);
+          } else {
+            this.showMessage(`${aiPlayer.name} 匹配成功! 收集${cardsCount}张牌，中间牌得分：${totalCardPoints}，总得分：${totalScore}分`, 2500);
+          }
+        }, 1200);
+      }, 1000);
+    } else {
+      // 没有匹配，延迟后轮到下一个玩家
+      setTimeout(() => {
+        this.nextPlayer();
+      }, 800);
+    }
+    
+    this.checkGameOver();
+  });
+},
+
+// 新增函数：AI出牌动画
+showAIPlayCardAnimation: function(playerId, card, callback) {
+  // 获取AI手牌区域和牌河
+  const aiHandElement = document.getElementById(`player-hand-${playerId}`);
+  const riverElement = document.querySelector('.dragon-card-river');
+  
+  if (!aiHandElement || !riverElement) {
+    if (callback) callback();
+    return;
   }
   
-  this.checkGameOver();
+  // 创建动画容器
+  const animContainer = document.createElement('div');
+  animContainer.className = 'ai-play-card-animation';
+  animContainer.style.position = 'absolute';
+  animContainer.style.zIndex = '1000';
+  animContainer.style.pointerEvents = 'none';
+  
+  // 创建卡牌元素（先是牌背）
+  const cardElement = document.createElement('div');
+  cardElement.className = 'card back';
+  animContainer.appendChild(cardElement);
+  document.body.appendChild(animContainer);
+  
+  // 获取源位置和目标位置
+  const handRect = aiHandElement.getBoundingClientRect();
+  const riverRect = riverElement.getBoundingClientRect();
+  
+  // 设置卡牌初始位置
+  animContainer.style.left = `${handRect.left + handRect.width/2 - 30}px`;
+  animContainer.style.top = `${handRect.top + handRect.height/2 - 45}px`;
+  
+  // 添加飞行动画样式
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes aiCardFlyToRiver {
+      0% {
+        transform: translate(0, 0) rotate(0deg) scale(1);
+      }
+      20% {
+        transform: translate(0, -20px) rotate(10deg) scale(1.1);
+      }
+      40% {
+        transform: translate(${(riverRect.left + riverRect.width/2 - handRect.left - handRect.width/2)/2}px, 
+                            ${(riverRect.top + riverRect.height/2 - handRect.top - handRect.height/2)/2}px) 
+                            rotate(180deg) scale(1.1);
+      }
+      100% {
+        transform: translate(${riverRect.left + riverRect.width/2 - handRect.left - handRect.width/2}px, 
+                           ${riverRect.top + riverRect.height/2 - handRect.top - handRect.height/2}px) 
+                           rotate(360deg) scale(1);
+      }
+    }
+    
+    .ai-play-card-animation {
+      animation: aiCardFlyToRiver 1s ease-in-out forwards;
+    }
+    
+    .ai-play-card-animation .card {
+      width: 60px;
+      height: 90px;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
+      transition: all 0.5s ease;
+    }
+    
+    .ai-play-card-animation .card.flipped {
+      transform: rotateY(180deg);
+      background-color: white;
+    }
+  `;
+  document.head.appendChild(style);
+  
+  // 播放音效（如果有）
+  if (typeof playSound === 'function') {
+    playSound('card_play');
+  }
+  
+  // 中途翻转卡牌，显示正面
+  setTimeout(() => {
+    cardElement.className = `card ${card.suit}`;
+    
+    // 为大王小王添加特殊样式
+    if (card.suit === 'joker') {
+      cardElement.className = `card joker ${card.value === 'BJ' ? 'big-joker' : 'small-joker'}`;
+      if (card.value === 'BJ') {
+        cardElement.style.backgroundColor = '#f8d8e0';
+        cardElement.style.color = '#e91e63';
+      } else {
+        cardElement.style.backgroundColor = '#d8e8f8';
+        cardElement.style.color = '#2196f3';
+      }
+    }
+    
+    // 添加牌面内容
+    if (card.suit === 'joker') {
+      cardElement.innerHTML = `
+        <div class="card-value">${card.value === 'BJ' ? '大王' : '小王'}</div>
+      `;
+    } else if (card.suit === 'garbage') {
+      cardElement.innerHTML = `
+        <div class="card-value">${card.value.startsWith('PB') ? '塑料瓶' : '麻袋'}</div>
+        <div class="card-value-bottom">-10</div>
+      `;
+      
+      if (card.value === 'BAG') {
+        cardElement.style.backgroundColor = '#a5d6a7';
+        cardElement.style.color = '#2e7d32';
+      } else {
+        cardElement.style.backgroundColor = '#90caf9';
+        cardElement.style.color = '#1565c0';
+      }
+    } else {
+      cardElement.innerHTML = `
+        <div class="card-value">${card.value}</div>
+        <div class="card-suit"></div>
+        <div class="card-value-bottom">${card.value}</div>
+      `;
+    }
+  }, 400);
+  
+  // 动画结束后执行回调
+  setTimeout(() => {
+    if (document.body.contains(animContainer)) {
+      document.body.removeChild(animContainer);
+    }
+    document.head.removeChild(style);
+    if (callback) callback();
+  }, 1000);
 },
     
-  // 处理AI行动
-  processAIAction: function() {
-    if (this.gamePhase !== "playing") return;
-    
-    const aiPlayer = this.players[this.activePlayerIndex];
-    
-    // 添加延迟，使AI行动更自然
-    setTimeout(() => {
-      this.aiPlayCard(aiPlayer);
-    }, 1000);
-  },
+// 修改processAIAction函数，增加延迟
+processAIAction: function() {
+  if (this.gamePhase !== "playing") return;
+  
+  const aiPlayer = this.players[this.activePlayerIndex];
+  
+  // 添加更长的延迟，使AI行动更自然
+  setTimeout(() => {
+    this.aiPlayCard(aiPlayer);
+  }, 1500); // 从1000ms增加到1500ms
+},
   
   // 轮到下一个玩家
   nextPlayer: function() {
@@ -752,7 +1165,7 @@ checkMatch: function(playedCard) {
   return -1;
 },
   
-// 收集牌
+// 修改collectCards函数，增加收集动画的持续时间
 collectCards: function(playerIndex, matchIndex) {
   const player = this.players.find(p => p.id === playerIndex);
   if (!player) return;
@@ -766,34 +1179,193 @@ collectCards: function(playerIndex, matchIndex) {
   // 增加玩家收集的牌数
   player.collected += collectedCards.length;
   
-  // 检查是否触发特殊效果：连续收集10张以上的牌
-  if (collectedCount >= 10) {
-    this.triggerSpecialReward(player);
-  }
-  
   // 更新玩家信息
   this.updatePlayerInfo();
   
-  // 更新牌河显示
-  this.updateRiver();
+  // 更新牌河显示 - 先不急着更新，等动画完成后再更新
   
-  // 播放收集动画
-  this.showAnimation('collect', collectedCards);
+  // 播放收集动画 - 增加动画持续时间
+  this.showCollectAnimation(collectedCards, player.id, () => {
+    // 动画完成后再更新牌河显示
+    this.updateRiver();
+    
+    // 检查是否触发特殊效果：连续收集10张以上的牌
+    if (collectedCount >= 10) {
+      this.triggerSpecialReward(player);
+    }
+    
+    // 显示匹配消息
+    this.showMessage(`${player.name} 匹配成功，收集了 ${collectedCards.length} 张牌!`, 2000);
+    
+    // 轮到该玩家继续行动
+    this.activePlayerIndex = playerIndex;
+    this.highlightActivePlayer();
+    
+    // 如果是玩家，启用操作；如果是AI，处理AI行动
+    if (this.activePlayerIndex === 0) {
+      this.enablePlayerActions();
+    } else {
+      this.processAIAction();
+    }
+  });
+},
+
+// 新增优化的收集动画函数
+showCollectAnimation: function(collectedCards, playerId, callback) {
+  const riverElement = document.querySelector('.dragon-card-river');
+  const playerBox = document.getElementById(`player-box-${playerId}`);
   
-  // 显示匹配消息
-  this.showMessage(`${player.name} 匹配成功，收集了 ${collectedCards.length} 张牌!`, 2000);
+  if (!riverElement || !playerBox) {
+    if (callback) callback();
+    return;
+  }
   
-  // 轮到该玩家继续行动
-  this.activePlayerIndex = playerIndex;
-  this.highlightActivePlayer();
+  // 创建动画容器
+  const animContainer = document.createElement('div');
+  animContainer.className = 'collect-animation-container';
+  animContainer.style.position = 'absolute';
+  animContainer.style.top = '0';
+  animContainer.style.left = '0';
+  animContainer.style.width = '100%';
+  animContainer.style.height = '100%';
+  animContainer.style.pointerEvents = 'none';
+  animContainer.style.zIndex = '9000';
+  document.body.appendChild(animContainer);
   
-  // 如果是玩家，启用操作；如果是AI，处理AI行动
-  if (this.activePlayerIndex === 0) {
-    this.enablePlayerActions();
-  } else {
-    this.processAIAction();
+  // 找到牌河中的卡牌元素
+  const cardElements = riverElement.querySelectorAll('.card');
+  if (cardElements.length === 0) {
+    if (callback) callback();
+    return;
+  }
+  
+  // 获取玩家区域位置
+  const playerRect = playerBox.getBoundingClientRect();
+  const playerCenterX = playerRect.left + playerRect.width / 2;
+  const playerCenterY = playerRect.top + playerRect.height / 2;
+  
+  // 为每张牌创建动画克隆
+  const animationsRunning = [];
+  
+  // 重新创建卡牌元素，以便应用动画
+  collectedCards.forEach((item, index) => {
+    const cardElement = document.createElement('div');
+    
+    // 根据牌的类型设置样式
+    if (item.card.suit === 'joker') {
+      cardElement.className = `card joker ${item.card.value === 'BJ' ? 'big-joker' : 'small-joker'}`;
+      if (item.card.value === 'BJ') {
+        cardElement.style.backgroundColor = '#f8d8e0';
+        cardElement.style.color = '#e91e63';
+      } else {
+        cardElement.style.backgroundColor = '#d8e8f8';
+        cardElement.style.color = '#2196f3';
+      }
+    } else {
+      cardElement.className = `card ${item.card.suit}`;
+    }
+    
+    // 添加牌面内容
+    if (item.card.suit === 'joker') {
+      cardElement.innerHTML = `
+        <div class="card-value">${item.card.value === 'BJ' ? '大王' : '小王'}</div>
+      `;
+    } else if (item.card.suit === 'garbage') {
+      cardElement.innerHTML = `
+        <div class="card-value">${item.card.value.startsWith('PB') ? '塑料瓶' : '麻袋'}</div>
+        <div class="card-value-bottom">-10</div>
+      `;
+      
+      if (item.card.value === 'BAG') {
+        cardElement.style.backgroundColor = '#a5d6a7';
+        cardElement.style.color = '#2e7d32';
+      } else {
+        cardElement.style.backgroundColor = '#90caf9';
+        cardElement.style.color = '#1565c0';
+      }
+    } else {
+      cardElement.innerHTML = `
+        <div class="card-value">${item.card.value}</div>
+        <div class="card-suit"></div>
+        <div class="card-value-bottom">${item.card.value}</div>
+      `;
+    }
+    
+    // 获取该牌在牌河中的位置
+    // 为简化起见，我们使用牌河中当前的牌的位置，从最左边开始
+    const originalCardElement = cardElements[Math.min(index, cardElements.length - 1)];
+    const cardRect = originalCardElement.getBoundingClientRect();
+    
+    // 设置复制的卡牌元素的初始位置
+    cardElement.style.position = 'absolute';
+    cardElement.style.left = `${cardRect.left}px`;
+    cardElement.style.top = `${cardRect.top}px`;
+    cardElement.style.width = `${cardRect.width}px`;
+    cardElement.style.height = `${cardRect.height}px`;
+    cardElement.style.transition = 'all 0.8s ease';
+    cardElement.style.transitionDelay = `${index * 0.05}s`;
+    cardElement.style.transform = 'rotate(0deg)';
+    cardElement.style.opacity = '1';
+    cardElement.style.zIndex = `${1000 + index}`;
+    
+    // 添加到动画容器
+    animContainer.appendChild(cardElement);
+    
+    // 将此卡牌添加到正在运行的动画队列
+    animationsRunning.push(cardElement);
+    
+    // 设置超时以开始移动卡牌
+    setTimeout(() => {
+      // 计算随机旋转角度，为动画增加变化
+      const randomRotation = Math.random() * 20 - 10;
+      
+      // 添加飞向玩家的动画
+      cardElement.style.transform = `translate(${playerCenterX - cardRect.left - cardRect.width/2}px, ${playerCenterY - cardRect.top - cardRect.height/2}px) rotate(${randomRotation}deg) scale(0.1)`;
+      cardElement.style.opacity = '0';
+      
+      // 移除动画追踪
+      setTimeout(() => {
+        const index = animationsRunning.indexOf(cardElement);
+        if (index !== -1) {
+          animationsRunning.splice(index, 1);
+        }
+        
+        // 当所有动画完成时，调用回调
+        if (animationsRunning.length === 0) {
+          setTimeout(() => {
+            if (document.body.contains(animContainer)) {
+              document.body.removeChild(animContainer);
+            }
+            if (callback) callback();
+          }, 100);
+        }
+      }, 800 + index * 50);
+    }, 10);
+    
+    // 播放音效（如果可用）
+    if (typeof playSound === 'function') {
+      setTimeout(() => {
+        playSound('card_collect');
+      }, index * 50);
+    }
+  });
+  
+  // 播放收集成功音效（如果可用）
+  if (typeof playSound === 'function') {
+    setTimeout(() => {
+      playSound('collect_success');
+    }, 200);
+  }
+  
+  // 如果没有牌被收集，立即调用回调
+  if (collectedCards.length === 0) {
+    if (document.body.contains(animContainer)) {
+      document.body.removeChild(animContainer);
+    }
+    if (callback) callback();
   }
 },
+
 // 修改triggerSpecialReward函数，添加飞牌动画
 triggerSpecialReward: function(player) {
   // 创建两张红心K
