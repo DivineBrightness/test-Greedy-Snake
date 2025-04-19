@@ -1172,6 +1172,6 @@
 /* 收集牌飞向玩家动画 */
 .collect-animation-container .card {
   position: absolute;
-  transition: all 0.8s ease;
+  transition: all 0.3s ease;
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
 }

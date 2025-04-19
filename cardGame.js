@@ -604,7 +604,7 @@ playerPlayCard: function(cardIndex) {
       // 没有匹配，延迟后轮到下一个玩家
       setTimeout(() => {
         this.nextPlayer();
-      }, 800);
+      }, 500);
     }
     
     // 检查游戏是否结束
@@ -705,7 +705,7 @@ showPlayCardAnimation: function(playerId, card, callback) {
     }
     
     .play-card-animation {
-      animation: flyToRiver 0.8s ease-in-out forwards;
+      animation: flyToRiver 0.2s ease-in-out forwards;
     }
     
     .play-card-animation .card {
@@ -750,7 +750,7 @@ highlightLastCard: function() {
   style.textContent = `
     .card.new-card {
       box-shadow: 0 0 15px gold;
-      animation: pulseGlow 1.5s infinite;
+      animation: pulseGlow 0.5s infinite;
     }
     
     @keyframes pulseGlow {
@@ -768,7 +768,7 @@ highlightLastCard: function() {
     if (oldStyle) {
       document.head.removeChild(oldStyle);
     }
-  }, 3000);
+  }, 1000);
 },
 
 // 新增函数：高亮显示匹配的牌对
@@ -793,7 +793,7 @@ highlightMatchedCards: function(matchIndex, lastCardIndex) {
   style.textContent = `
     .card.matched-pair {
       box-shadow: 0 0 20px #ff4500;
-      animation: matchPulse 0.6s infinite alternate;
+      animation: matchPulse 0.5s infinite alternate;
       z-index: 100;
     }
     
@@ -950,7 +950,7 @@ aiPlayCard: function(aiPlayer) {
           } else {
             this.showMessage(`${aiPlayer.name} 匹配成功! 收集${cardsCount}张牌，中间牌得分：${totalCardPoints}，总得分：${totalScore}分`, 2500);
           }
-        }, 1200);
+        }, 500);
       }, 1000);
     } else {
       // 没有匹配，延迟后轮到下一个玩家
@@ -1102,7 +1102,7 @@ processAIAction: function() {
   // 添加更长的延迟，使AI行动更自然
   setTimeout(() => {
     this.aiPlayCard(aiPlayer);
-  }, 1500); // 从1000ms增加到1500ms
+  }, 500); // 从1000ms增加到1500ms
 },
   
   // 轮到下一个玩家
