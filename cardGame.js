@@ -620,15 +620,24 @@ aiPlayCard: function(aiPlayer) {
   // 更新AI手牌显示
   this.updatePlayerHand(aiPlayer.id);
   
-  // 检查是否触发霸王龙小分队效果 - 特殊效果检查不受无敌模式影响
-  const dinoSquadCheck = this.checkDinoSquadCombo();
-  if (dinoSquadCheck.triggered) {
-    // 触发霸王龙小分队效果
-    this.triggerDinoSquadEffect(dinoSquadCheck.lastPlayerName);
-    return; // 不再进行普通匹配检测
+  // 检查是否触发王牌特殊效果 - 无论无敌模式是否开启都要检查
+  if (card.suit === 'joker') {
+    // 检查霸王龙小分队组合
+    const dinoSquadCheck = this.checkDinoSquadCombo();
+    if (dinoSquadCheck.triggered) {
+      this.triggerDinoSquadEffect(dinoSquadCheck.lastPlayerName);
+      return; // 直接返回，不进行普通匹配检测
+    }
+  } else {
+    // 非王牌才检查普通霸王龙组合
+    const dinoSquadCheck = this.checkDinoSquadCombo();
+    if (dinoSquadCheck.triggered) {
+      this.triggerDinoSquadEffect(dinoSquadCheck.lastPlayerName);
+      return; // 不再进行普通匹配检测
+    }
   }
   
-  // 原有的AI出牌逻辑
+  // 无敌模式下的普通牌匹配逻辑
   let matchIndex = this.checkMatch(card);
   
   // 在无敌模式下的逻辑 - 只针对普通牌匹配，不影响特殊组合
