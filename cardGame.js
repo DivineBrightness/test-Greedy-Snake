@@ -869,16 +869,50 @@ highlightMatchedCards: function(matchIndex, lastCardIndex) {
   }, 1000);
 },
   
-// 修改AI出牌函数，添加出牌动画和延迟
+// 修改aiPlayCard函数，添加错误处理和安全检查
 aiPlayCard: function(aiPlayer) {
   if (this.gamePhase !== "playing") return;
+  
+  // 安全检查：确保AI有牌可出
+  if (!aiPlayer || !aiPlayer.hand || aiPlayer.hand.length === 0) {
+    console.error("AI玩家没有牌可出，标记为已出局");
+    // 标记玩家为已出局
+    if (aiPlayer) {
+      aiPlayer.isEliminated = true;
+      this.playersInGame--;
+      
+      // 更新玩家UI
+      const playerBox = document.getElementById(`player-box-${aiPlayer.id}`);
+      if (playerBox) {
+        playerBox.classList.add('eliminated');
+      }
+      
+      this.showMessage(`${aiPlayer.name} 已出局!`, 2000);
+      
+      // 立即检查游戏是否结束
+      this.checkGameOver();
+      
+      // 如果游戏未结束，轮到下一个玩家
+      if (this.gamePhase === "playing") {
+        this.nextPlayer();
+      }
+    }
+    return;
+  }
   
   // 简单AI策略：随机出牌
   const cardIndex = Math.floor(Math.random() * aiPlayer.hand.length);
   const card = aiPlayer.hand.splice(cardIndex, 1)[0];
   
-  // 创建并展示出牌动画
-  this.showAIPlayCardAnimation(aiPlayer.id, card, () => {
+  // 创建并展示出牌动画，带超时保护
+  let callbackExecuted = false;
+  
+  // 创建一个安全的回调函数
+  const safeCallback = () => {
+    // 防止回调被执行多次
+    if (callbackExecuted) return;
+    callbackExecuted = true;
+    
     // 添加到牌河并记录玩家名字
     this.river.push({
       card: card,
@@ -958,169 +992,250 @@ aiPlayCard: function(aiPlayer) {
     }
     
     this.checkGameOver();
-  });
+  };
+  
+  // 调用动画函数并传入安全回调
+  this.showAIPlayCardAnimation(aiPlayer.id, card, safeCallback);
+  
+  // 设置超时保护，确保游戏不会卡住
+  setTimeout(() => {
+    if (!callbackExecuted) {
+      console.warn(`AI出牌动画回调超时，强制执行下一步 (玩家: ${aiPlayer.name})`);
+      safeCallback();
+    }
+  }, 3000); // 3秒超时保护
 },
 
-// 新增函数：AI出牌动画
+// 修改showAIPlayCardAnimation函数，添加错误处理
 showAIPlayCardAnimation: function(playerId, card, callback) {
-  // 获取AI手牌区域和牌河
-  const aiHandElement = document.getElementById(`player-hand-${playerId}`);
-  const riverElement = document.querySelector('.dragon-card-river');
-  
-  if (!aiHandElement || !riverElement) {
-    if (callback) callback();
-    return;
-  }
-  
-  // 创建动画容器
-  const animContainer = document.createElement('div');
-  animContainer.className = 'ai-play-card-animation';
-  animContainer.style.position = 'absolute';
-  animContainer.style.zIndex = '1000';
-  animContainer.style.pointerEvents = 'none';
-  
-  // 创建卡牌元素（先是牌背）
-  const cardElement = document.createElement('div');
-  cardElement.className = 'card back';
-  animContainer.appendChild(cardElement);
-  document.body.appendChild(animContainer);
-  
-  // 获取源位置和目标位置
-  const handRect = aiHandElement.getBoundingClientRect();
-  const riverRect = riverElement.getBoundingClientRect();
-  
-  // 设置卡牌初始位置
-  animContainer.style.left = `${handRect.left + handRect.width/2 - 30}px`;
-  animContainer.style.top = `${handRect.top + handRect.height/2 - 45}px`;
-  
-  // 添加飞行动画样式
-  const style = document.createElement('style');
-  style.textContent = `
-    @keyframes aiCardFlyToRiver {
-      0% {
-        transform: translate(0, 0) rotate(0deg) scale(1);
-      }
-      20% {
-        transform: translate(0, -20px) rotate(10deg) scale(1.1);
-      }
-      40% {
-        transform: translate(${(riverRect.left + riverRect.width/2 - handRect.left - handRect.width/2)/2}px, 
-                            ${(riverRect.top + riverRect.height/2 - handRect.top - handRect.height/2)/2}px) 
-                            rotate(180deg) scale(1.1);
-      }
-      100% {
-        transform: translate(${riverRect.left + riverRect.width/2 - handRect.left - handRect.width/2}px, 
-                           ${riverRect.top + riverRect.height/2 - handRect.top - handRect.height/2}px) 
-                           rotate(360deg) scale(1);
-      }
+  try {
+    // 获取AI手牌区域和牌河
+    const aiHandElement = document.getElementById(`player-hand-${playerId}`);
+    const riverElement = document.querySelector('.dragon-card-river');
+    
+    // 如果元素不存在，立即执行回调并返回
+    if (!aiHandElement || !riverElement) {
+      console.warn("AI出牌动画：找不到必要的DOM元素");
+      if (callback) callback();
+      return;
     }
     
-    .ai-play-card-animation {
-      animation: aiCardFlyToRiver 1s ease-in-out forwards;
-    }
+    // 创建动画容器
+    const animContainer = document.createElement('div');
+    animContainer.className = 'ai-play-card-animation';
+    animContainer.style.position = 'absolute';
+    animContainer.style.zIndex = '1000';
+    animContainer.style.pointerEvents = 'none';
     
-    .ai-play-card-animation .card {
-      width: 60px;
-      height: 90px;
-      box-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
-      transition: all 0.5s ease;
-    }
+    // 创建卡牌元素（先是牌背）
+    const cardElement = document.createElement('div');
+    cardElement.className = 'card back';
+    animContainer.appendChild(cardElement);
+    document.body.appendChild(animContainer);
     
-    .ai-play-card-animation .card.flipped {
-      transform: rotateY(180deg);
-      background-color: white;
-    }
-  `;
-  document.head.appendChild(style);
-  
-  // 播放音效（如果有）
-  if (typeof playSound === 'function') {
-    playSound('card_play');
-  }
-  
-  // 中途翻转卡牌，显示正面
-  setTimeout(() => {
-    cardElement.className = `card ${card.suit}`;
+    // 获取源位置和目标位置
+    const handRect = aiHandElement.getBoundingClientRect();
+    const riverRect = riverElement.getBoundingClientRect();
     
-    // 为大王小王添加特殊样式
-    if (card.suit === 'joker') {
-      cardElement.className = `card joker ${card.value === 'BJ' ? 'big-joker' : 'small-joker'}`;
-      if (card.value === 'BJ') {
-        cardElement.style.backgroundColor = '#f8d8e0';
-        cardElement.style.color = '#e91e63';
-      } else {
-        cardElement.style.backgroundColor = '#d8e8f8';
-        cardElement.style.color = '#2196f3';
+    // 设置卡牌初始位置
+    animContainer.style.left = `${handRect.left + handRect.width/2 - 30}px`;
+    animContainer.style.top = `${handRect.top + handRect.height/2 - 45}px`;
+    
+    // 添加飞行动画样式
+    const style = document.createElement('style');
+    const styleId = `ai-card-animation-style-${Date.now()}`;
+    style.id = styleId;
+    style.textContent = `
+      @keyframes aiCardFlyToRiver {
+        0% {
+          transform: translate(0, 0) rotate(0deg) scale(1);
+        }
+        20% {
+          transform: translate(0, -20px) rotate(10deg) scale(1.1);
+        }
+        40% {
+          transform: translate(${(riverRect.left + riverRect.width/2 - handRect.left - handRect.width/2)/2}px, 
+                              ${(riverRect.top + riverRect.height/2 - handRect.top - handRect.height/2)/2}px) 
+                              rotate(180deg) scale(1.1);
+        }
+        100% {
+          transform: translate(${riverRect.left + riverRect.width/2 - handRect.left - handRect.width/2}px, 
+                             ${riverRect.top + riverRect.height/2 - handRect.top - handRect.height/2}px) 
+                             rotate(360deg) scale(1);
+        }
       }
-    }
-    
-    // 添加牌面内容
-    if (card.suit === 'joker') {
-      cardElement.innerHTML = `
-        <div class="card-value">${card.value === 'BJ' ? '大王' : '小王'}</div>
-      `;
-    } else if (card.suit === 'garbage') {
-      cardElement.innerHTML = `
-        <div class="card-value">${card.value.startsWith('PB') ? '塑料瓶' : '麻袋'}</div>
-        <div class="card-value-bottom">-10</div>
-      `;
       
-      if (card.value === 'BAG') {
-        cardElement.style.backgroundColor = '#a5d6a7';
-        cardElement.style.color = '#2e7d32';
-      } else {
-        cardElement.style.backgroundColor = '#90caf9';
-        cardElement.style.color = '#1565c0';
+      .ai-play-card-animation {
+        animation: aiCardFlyToRiver 1s ease-in-out forwards;
       }
-    } else {
-      cardElement.innerHTML = `
-        <div class="card-value">${card.value}</div>
-        <div class="card-suit"></div>
-        <div class="card-value-bottom">${card.value}</div>
-      `;
+      
+      .ai-play-card-animation .card {
+        width: 60px;
+        height: 90px;
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
+        transition: all 0.5s ease;
+      }
+      
+      .ai-play-card-animation .card.flipped {
+        transform: rotateY(180deg);
+        background-color: white;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // 播放音效（如果有）
+    if (typeof playSound === 'function') {
+      playSound('card_play');
     }
-  }, 400);
-  
-  // 动画结束后执行回调
-  setTimeout(() => {
-    if (document.body.contains(animContainer)) {
-      document.body.removeChild(animContainer);
-    }
-    document.head.removeChild(style);
+    
+    // 中途翻转卡牌，显示正面
+    let flipTimeout = setTimeout(() => {
+      cardElement.className = `card ${card.suit}`;
+      
+      // 为大王小王添加特殊样式
+      if (card.suit === 'joker') {
+        cardElement.className = `card joker ${card.value === 'BJ' ? 'big-joker' : 'small-joker'}`;
+        if (card.value === 'BJ') {
+          cardElement.style.backgroundColor = '#f8d8e0';
+          cardElement.style.color = '#e91e63';
+        } else {
+          cardElement.style.backgroundColor = '#d8e8f8';
+          cardElement.style.color = '#2196f3';
+        }
+      }
+      
+      // 添加牌面内容
+      if (card.suit === 'joker') {
+        cardElement.innerHTML = `
+          <div class="card-value">${card.value === 'BJ' ? '大王' : '小王'}</div>
+        `;
+      } else if (card.suit === 'garbage') {
+        cardElement.innerHTML = `
+          <div class="card-value">${card.value.startsWith('PB') ? '塑料瓶' : '麻袋'}</div>
+          <div class="card-value-bottom">-10</div>
+        `;
+        
+        if (card.value === 'BAG') {
+          cardElement.style.backgroundColor = '#a5d6a7';
+          cardElement.style.color = '#2e7d32';
+        } else {
+          cardElement.style.backgroundColor = '#90caf9';
+          cardElement.style.color = '#1565c0';
+        }
+      } else {
+        cardElement.innerHTML = `
+          <div class="card-value">${card.value}</div>
+          <div class="card-suit"></div>
+          <div class="card-value-bottom">${card.value}</div>
+        `;
+      }
+    }, 400);
+    
+    // 动画结束后执行回调
+    let animEndTimeout = setTimeout(() => {
+      if (document.body.contains(animContainer)) {
+        document.body.removeChild(animContainer);
+      }
+      
+      const oldStyle = document.getElementById(styleId);
+      if (oldStyle && oldStyle.parentNode) {
+        oldStyle.parentNode.removeChild(oldStyle);
+      }
+      
+      if (callback) callback();
+    }, 1000);
+    
+    // 保存超时ID以便可以在组件卸载时清除
+    animContainer.dataset.flipTimeoutId = flipTimeout;
+    animContainer.dataset.animEndTimeoutId = animEndTimeout;
+    
+  } catch (error) {
+    console.error("AI出牌动画失败:", error);
+    // 出现错误时也确保回调执行
     if (callback) callback();
-  }, 1000);
+  }
 },
     
-// 修改processAIAction函数，增加延迟
+// 修改processAIAction函数，添加错误处理和超时保护
 processAIAction: function() {
   if (this.gamePhase !== "playing") return;
   
   const aiPlayer = this.players[this.activePlayerIndex];
   
-  // 添加更长的延迟，使AI行动更自然
-  setTimeout(() => {
+  // 防止无效玩家
+  if (!aiPlayer || aiPlayer.isEliminated) {
+    console.error("尝试处理无效AI玩家行动");
+    this.nextPlayer(); // 直接跳到下一个玩家
+    return;
+  }
+  
+  // AI玩家没有牌时处理
+  if (aiPlayer.hand.length === 0) {
+    console.log(`AI玩家 ${aiPlayer.name} 没有牌，标记为已出局`);
+    aiPlayer.isEliminated = true;
+    this.playersInGame--;
+    this.showMessage(`${aiPlayer.name} 出完牌了!`, 2000);
+    
+    // 检查游戏是否结束
+    this.checkGameOver();
+    
+    // 如果游戏未结束，轮到下一个玩家
+    if (this.gamePhase === "playing") {
+      this.nextPlayer();
+    }
+    return;
+  }
+  
+  // 添加超时保护，确保AI动作一定会执行
+  const aiActionTimeout = setTimeout(() => {
     this.aiPlayCard(aiPlayer);
-  }, 500); // 从1000ms增加到1500ms
+  }, 800);
+  
+  // 保存超时ID到游戏状态中
+  this._currentAiActionTimeout = aiActionTimeout;
 },
   
-  // 轮到下一个玩家
-  nextPlayer: function() {
-    if (this.gamePhase !== "playing") return;
+// 修改nextPlayer函数，避免死循环
+nextPlayer: function() {
+  if (this.gamePhase !== "playing") return;
+  
+  // 清除可能的AI动作超时计时器
+  if (this._currentAiActionTimeout) {
+    clearTimeout(this._currentAiActionTimeout);
+    this._currentAiActionTimeout = null;
+  }
+  
+  // 记录初始玩家索引，防止无限循环
+  const startingIndex = this.activePlayerIndex;
+  let loopCount = 0;
+  
+  do {
+    this.activePlayerIndex = (this.activePlayerIndex + 1) % this.players.length;
+    loopCount++;
     
-    do {
-      this.activePlayerIndex = (this.activePlayerIndex + 1) % this.players.length;
-    } while (this.players[this.activePlayerIndex].isEliminated);
-    
-    // 高亮当前玩家
-    this.highlightActivePlayer();
-    
-    // 如果是玩家，启用操作；如果是AI，处理AI行动
-    if (this.activePlayerIndex === 0) {
-      this.enablePlayerActions();
-    } else {
-      this.processAIAction();
+    // 如果循环一轮还没找到可行玩家，说明游戏应该结束
+    if (loopCount > this.players.length) {
+      console.error("无法找到下一个有效玩家，可能所有玩家都已出局");
+      this.gamePhase = "finished";
+      this.showMessage("游戏结束! 所有玩家都已出局", 3000);
+      this.showGameOverModal();
+      return;
     }
-  },
+  } while (this.players[this.activePlayerIndex].isEliminated);
+  
+  // 高亮当前玩家
+  this.highlightActivePlayer();
+  
+  // 如果是玩家，启用操作；如果是AI，处理AI行动
+  if (this.activePlayerIndex === 0) {
+    this.enablePlayerActions();
+  } else {
+    // 使用setTimeout而不是直接调用，避免递归调用栈溢出
+    setTimeout(() => {
+      this.processAIAction();
+    }, 300);
+  }
+},
   
 // 修改检查匹配的函数，调整垃圾牌特殊处理规则
 checkMatch: function(playedCard) {
@@ -1490,7 +1605,7 @@ showFlyingCardEffect: function(playerId, cards) {
   }, 4000);
 },  
 
-// 修改检查游戏是否结束的函数
+// 修改checkGameOver函数，增强稳定性
 checkGameOver: function() {
   // 记录是否有新的玩家出局
   let newEliminationOccurred = false;
@@ -1526,34 +1641,42 @@ checkGameOver: function() {
     }
   }
   
+  // 计算还在游戏中的玩家数量
+  const activePlayers = this.players.filter(p => !p.isEliminated).length;
+  
+  // 如果没有活跃玩家，强制结束游戏
+  if (activePlayers === 0) {
+    console.log("所有玩家都已出局，游戏结束");
+    this.gamePhase = "finished";
+    this.showMessage("游戏结束! 所有玩家都已出局", 3000);
+    this.showGameOverModal();
+    return;
+  }
+  
   // 如果当前玩家出局了，需要调整activePlayerIndex
   if (newEliminationOccurred && this.activePlayerIndex === eliminatedPlayerId) {
     // 轮到下一个未出局的玩家
     this.nextPlayer();
   }
   
-  // 判断游戏是否结束的条件修改为：
-  // 1. 所有AI玩家都出局了，或者
-  // 2. 玩家出局且至少一个AI玩家出局，或者
-  // 3. 所有玩家都出局了
-  
+  // 判断游戏是否结束的条件
   const humanPlayer = this.players[0];
   const aiPlayers = this.players.filter(p => !p.isPlayer);
   const allAIEliminated = aiPlayers.every(p => p.isEliminated);
   const humanEliminated = humanPlayer.isEliminated;
   const anyAIEliminated = aiPlayers.some(p => p.isEliminated);
   
-  if (allAIEliminated || (humanEliminated && anyAIEliminated) || this.playersInGame === 0) {
+  if (allAIEliminated || (humanEliminated && anyAIEliminated) || this.playersInGame <= 1) {
     this.gamePhase = "finished";
     
     // 找出胜利者
     const winner = this.determineWinner();
     
     // 显示游戏结束消息
-    this.showMessage(`游戏结束! ${winner.name} 获胜!`, 3000);
+    this.showMessage(`游戏结束! ${winner ? winner.name : '无人'} 获胜!`, 3000);
     
     // 如果玩家获胜，增加奖励分数
-    if (winner.isPlayer) {
+    if (winner && winner.isPlayer) {
       // 增加胜利奖励
       this.addScore(50);
       // 添加一个明确的消息提示玩家获得了额外奖励
@@ -1568,42 +1691,48 @@ checkGameOver: function() {
     document.getElementById('dragon-reset-btn').disabled = false;
   }
 },
+
   
-  // 确定胜利者
-  determineWinner: function() {
-    // 找出未出局的玩家
-    const remainingPlayers = this.players.filter(p => !p.isEliminated);
-    
-    // 如果只剩下一个玩家，先比较得分
-    if (remainingPlayers.length === 1) {
-      const humanPlayer = this.players[0];
-      // 如果是人类玩家
-      if (remainingPlayers[0].isPlayer) {
-        return remainingPlayers[0];
-      }
-      // 如果是AI玩家，但人类得分更高
-      else if (this.score > remainingPlayers[0].score) {
-        return humanPlayer;
-      }
-      // 否则AI玩家胜利
+// 修改determineWinner函数，增强稳定性
+determineWinner: function() {
+  // 找出未出局的玩家
+  const remainingPlayers = this.players.filter(p => !p.isEliminated);
+  
+  // 如果没有剩余玩家，返回null
+  if (remainingPlayers.length === 0) {
+    return null;
+  }
+  
+  // 如果只剩下一个玩家，先比较得分
+  if (remainingPlayers.length === 1) {
+    const humanPlayer = this.players[0];
+    // 如果是人类玩家
+    if (remainingPlayers[0].isPlayer) {
       return remainingPlayers[0];
     }
-    
-    // 如果都出局了，比较得分
-    // 对于人类玩家，使用游戏总分；对于AI玩家，使用其score属性
-    let highestScore = -1;
-    let winner = null;
-    
-    for (const player of this.players) {
-      const playerScore = player.isPlayer ? this.score : player.score;
-      if (playerScore > highestScore) {
-        highestScore = playerScore;
-        winner = player;
-      }
+    // 如果是AI玩家，但人类得分更高
+    else if (this.score > remainingPlayers[0].score) {
+      return humanPlayer;
     }
-    
-    return winner;
-  },
+    // 否则AI玩家胜利
+    return remainingPlayers[0];
+  }
+  
+  // 如果都出局了，比较得分
+  // 对于人类玩家，使用游戏总分；对于AI玩家，使用其score属性
+  let highestScore = -1;
+  let winner = null;
+  
+  for (const player of this.players) {
+    const playerScore = player.isPlayer ? this.score : player.score;
+    if (playerScore > highestScore) {
+      highestScore = playerScore;
+      winner = player;
+    }
+  }
+  
+  return winner;
+},
   
   // 增加分数
   addScore: function(points) {
