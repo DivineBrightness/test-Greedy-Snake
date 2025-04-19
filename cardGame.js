@@ -620,7 +620,7 @@ aiPlayCard: function(aiPlayer) {
   // 更新AI手牌显示
   this.updatePlayerHand(aiPlayer.id);
   
-  // 检查是否触发霸王龙小分队效果
+  // 检查是否触发霸王龙小分队效果 - 特殊效果检查不受无敌模式影响
   const dinoSquadCheck = this.checkDinoSquadCombo();
   if (dinoSquadCheck.triggered) {
     // 触发霸王龙小分队效果
@@ -631,7 +631,7 @@ aiPlayCard: function(aiPlayer) {
   // 原有的AI出牌逻辑
   let matchIndex = this.checkMatch(card);
   
-  // 在无敌模式下的逻辑
+  // 在无敌模式下的逻辑 - 只针对普通牌匹配，不影响特殊组合
   if (this.godMode && matchIndex !== -1 && Math.random() < 0.3) {
     matchIndex = -1;
     this.showMessage(`${aiPlayer.name} 没看到匹配机会，错过了得分!`, 1500);
