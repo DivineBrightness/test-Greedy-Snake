@@ -520,7 +520,7 @@ getCardNumericValue: function(value) {
     this.updatePlayerInfo();
   },
   
-// 修改playerPlayCard函数，添加出牌动画和延迟
+// 修改playerPlayCard函数，玩家0不播放动画
 playerPlayCard: function(cardIndex) {
   if (this.gamePhase !== "playing" || this.activePlayerIndex !== 0) return;
   
@@ -533,83 +533,81 @@ playerPlayCard: function(cardIndex) {
   // 从玩家手牌中取出一张牌
   const card = player.hand.splice(cardIndex, 1)[0];
   
-  // 创建并展示出牌动画
-  this.showPlayCardAnimation(player.id, card, () => {
-    // 添加到牌河
-    this.river.push({
-      card: card,
-      playerId: player.id,
-      playerName: player.name
-    });
+  // 对于玩家0，跳过动画直接处理逻辑
+  // 添加到牌河
+  this.river.push({
+    card: card,
+    playerId: player.id,
+    playerName: player.name
+  });
+
+  // 更新牌河显示
+  this.updateRiver();
   
-    // 更新牌河显示
-    this.updateRiver();
-    
-    // 高亮最新出的牌
-    this.highlightLastCard();
-    
-    // 更新玩家手牌显示
-    this.updatePlayerHand(player.id);
+  // 高亮最新出的牌
+  this.highlightLastCard();
   
-    // 如果玩家是牛爷爷且打出的是垃圾袋牌，检查是否触发垃圾回收效果
-    if (player.name === "牛爷爷" && card.suit === 'garbage' && card.value === 'BAG') {
-      const garbageCheck = this.checkGarbageCollectionCombo();
-      if (garbageCheck.triggered) {
-        this.triggerGarbageCollectionEffect();
-        return;
-      }
-    }
-  
-    // 检查是否触发霸王龙小分队效果
-    const dinoSquadCheck = this.checkDinoSquadCombo();
-    if (dinoSquadCheck.triggered) {
-      this.triggerDinoSquadEffect(dinoSquadCheck.lastPlayerName);
+  // 更新玩家手牌显示
+  this.updatePlayerHand(player.id);
+
+  // 如果玩家是牛爷爷且打出的是垃圾袋牌，检查是否触发垃圾回收效果
+  if (player.name === "牛爷爷" && card.suit === 'garbage' && card.value === 'BAG') {
+    const garbageCheck = this.checkGarbageCollectionCombo();
+    if (garbageCheck.triggered) {
+      this.triggerGarbageCollectionEffect();
       return;
     }
-  
-    // 常规匹配检测代码
-    const matchIndex = this.checkMatch(card);
-  
-    if (matchIndex !== -1) {
-      // 高亮显示匹配的牌对 - 延迟1秒执行
+  }
+
+  // 检查是否触发霸王龙小分队效果
+  const dinoSquadCheck = this.checkDinoSquadCombo();
+  if (dinoSquadCheck.triggered) {
+    this.triggerDinoSquadEffect(dinoSquadCheck.lastPlayerName);
+    return;
+  }
+
+  // 常规匹配检测代码
+  const matchIndex = this.checkMatch(card);
+
+  if (matchIndex !== -1) {
+    // 高亮显示匹配的牌对 - 延迟1秒执行
+    setTimeout(() => {
+      this.highlightMatchedCards(matchIndex, this.river.length - 1);
+      
+      // 再延迟1.2秒后收集牌
       setTimeout(() => {
-        this.highlightMatchedCards(matchIndex, this.river.length - 1);
+        // 计分逻辑保持不变...
+        const collectedCards = this.river.slice(matchIndex);
+        const cardsCount = collectedCards.length;
         
-        // 再延迟1.2秒后收集牌
-        setTimeout(() => {
-          // 计分逻辑保持不变...
-          const collectedCards = this.river.slice(matchIndex);
-          const cardsCount = collectedCards.length;
-          
-          let totalCardPoints = 0;
-          for (let i = 0; i < collectedCards.length; i++) {
-            if (i !== 0 && i !== collectedCards.length - 1) {
-              totalCardPoints += collectedCards[i].card.numericValue;
-            }
+        let totalCardPoints = 0;
+        for (let i = 0; i < collectedCards.length; i++) {
+          if (i !== 0 && i !== collectedCards.length - 1) {
+            totalCardPoints += collectedCards[i].card.numericValue;
           }
-          
-          const totalScore = cardsCount + totalCardPoints;
-          
-          this.collectCards(player.id, matchIndex);
-          this.addScore(totalScore);
-          
-          if (totalCardPoints < 0) {
-            this.showMessage(`匹配成功! 收集${cardsCount}张牌，但有垃圾牌 ${totalCardPoints}分，总得分：${totalScore}分`, 2500);
-          } else {
-            this.showMessage(`匹配成功! 收集${cardsCount}张牌，中间牌得分：${totalCardPoints}，总得分：${totalScore}分`, 2500);
-          }
-        }, 1200);
-      }, 1000);
-    } else {
-      // 没有匹配，延迟后轮到下一个玩家
-      setTimeout(() => {
-        this.nextPlayer();
-      }, 500);
-    }
-    
-    // 检查游戏是否结束
-    this.checkGameOver();
-  });
+        }
+        
+        const totalScore = cardsCount + totalCardPoints;
+        
+        this.collectCards(player.id, matchIndex);
+        this.addScore(totalScore);
+        
+        if (totalCardPoints < 0) {
+          this.showMessage(`匹配成功! 收集${cardsCount}张牌，但有垃圾牌 ${totalCardPoints}分，总得分：${totalScore}分`, 2500);
+        } else {
+          this.showMessage(`匹配成功! 收集${cardsCount}张牌，中间牌得分：${totalCardPoints}，总得分：${totalScore}分`, 2500);
+        }
+      }, 1200);
+    }, 1000);
+  } else {
+    // 没有匹配，延迟后轮到下一个玩家
+    setTimeout(() => {
+      this.nextPlayer();
+    }, 500);
+  }
+  
+  // 检查游戏是否结束
+  this.checkGameOver();
 },
 
 // 新增函数：出牌动画效果
