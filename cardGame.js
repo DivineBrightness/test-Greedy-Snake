@@ -23,6 +23,9 @@ const dragonGame = {
     // 加载本地存储的高分
     this.highScore = localStorage.getItem('dragonHighScore') || 0;
     
+    // 预加载特效图片
+    this.preloadImages();
+    
     // 创建游戏界面
     this.createGameInterface();
     
@@ -35,7 +38,19 @@ const dragonGame = {
     // 设置无敌模式双击监听
     this.setupGodModeListener();
   },
+  // 添加到dragonGame对象中
+preloadImages: function() {
+  // 创建一个简单的图片预加载函数
+  const preloadImg = (src) => {
+    const img = new Image();
+    img.src = src;
+    console.log(`预加载图片: ${src}`);
+  };
   
+  // 预加载特效图片
+  preloadImg('./image/poke/霸王龙小分队.jpg');
+  preloadImg('./image/poke/图图，随牛爷爷出征！.webp');
+},
   // 创建游戏界面
   createGameInterface: function() {
     // 创建游戏容器
