@@ -1175,3 +1175,73 @@
   transition: all 0.3s ease;
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
 }
+/* 魔法卡风格的牌背 */
+.card.back {
+  background-color: #2c0055; /* 深紫色背景 */
+  background-image: 
+    radial-gradient(circle at center, rgba(128, 0, 255, 0.2) 0%, transparent 70%), 
+    linear-gradient(135deg, rgba(75, 0, 130, 0.8) 0%, rgba(25, 0, 60, 0.8) 100%);
+  position: relative;
+  overflow: hidden;
+  border: none !important;
+  box-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+}
+
+/* 简单的扑克牌背面样式 */
+.card.back {
+  background-color: #bd4b4b; /* 经典红色 */
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.1),
+    rgba(255, 255, 255, 0.1) 5px,
+    transparent 5px,
+    transparent 10px
+  );
+  border: 1px solid #800000; /* 深红色边框 */
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+/* 添加一个简单的内边框效果 */
+.card.back::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  right: 5px;
+  bottom: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 3px;
+  pointer-events: none; /* 确保不影响交互 */
+}
+
+
+
+/* 删除覆盖层 */
+.player-box#player-box-1::before,
+.player-box#player-box-2::before {
+  display: none !important;
+}
+
+/* 简化卡牌背面特效，为玩家1和2的卡牌使用简单背景 */
+#player-hand-1 .card.back,
+#player-hand-2 .card.back {
+  background: none !important;
+  animation: none !important;
+}
+
+/* 移除复杂的背面效果 */
+#player-hand-1 .card.back::before,
+#player-hand-2 .card.back::before,
+#player-hand-1 .card.back::after,
+#player-hand-2 .card.back::after {
+  display: none !important;
+}
+
+/* 移除旋转效果 */
+#player-hand-1 .card.back:nth-child(odd),
+#player-hand-1 .card.back:nth-child(even),
+#player-hand-2 .card.back:nth-child(odd),
+#player-hand-2 .card.back:nth-child(even) {
+  --rotation: 0deg !important;
+  transform: none !important;
+}

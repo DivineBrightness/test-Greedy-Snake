@@ -2,9 +2,14 @@ const dragonGame = {
   // 现有属性保持不变
   isOpen: false,
   deckId: null,
-  gamePhase: "idle", // idle, playing, finished
-    // 添加无敌模式标志
-    godMode: false,
+  gamePhase: "idle",
+  godMode: false,
+  // 添加弃牌堆跟踪
+  discardedCards: [],
+  cardCounter: {
+    enabled: false,
+    remainingCards: {}
+  },
   players: [
     { id: 0, name: "你", isPlayer: true, hand: [], collected: 0, score: 0, isEliminated: false },
     { id: 1, name: "图图", isPlayer: false, hand: [], collected: 0, score: 0, isEliminated: false },
@@ -23,6 +28,9 @@ const dragonGame = {
     // 加载本地存储的高分
     this.highScore = localStorage.getItem('dragonHighScore') || 0;
     
+    // 预加载特效图片
+    this.preloadImages();
+    
     // 创建游戏界面
     this.createGameInterface();
     
@@ -35,7 +43,19 @@ const dragonGame = {
     // 设置无敌模式双击监听
     this.setupGodModeListener();
   },
+  // 添加到dragonGame对象中
+preloadImages: function() {
+  // 创建一个简单的图片预加载函数
+  const preloadImg = (src) => {
+    const img = new Image();
+    img.src = src;
+    console.log(`预加载图片: ${src}`);
+  };
   
+  // 预加载特效图片
+  preloadImg('./image/poke/霸王龙小分队.jpg');
+  preloadImg('./image/poke/图图，随牛爷爷出征！.webp');
+},
   // 创建游戏界面
   createGameInterface: function() {
     // 创建游戏容器
@@ -119,7 +139,33 @@ const dragonGame = {
         <div class="game-message" id="dragon-message"></div>
       </div>
     `;
+    // 修改弃牌堆按钮的添加方式，不使用innerHTML+=，而是创建DOM元素
+    const discardPileButton = document.createElement('div');
+    discardPileButton.className = 'discard-pile-button';
     
+    const cardBack = document.createElement('div');
+    cardBack.className = 'card back';
+    discardPileButton.appendChild(cardBack);
+    
+    const discardBadge = document.createElement('div');
+    discardBadge.className = 'discard-badge';
+    discardBadge.textContent = '0';
+    discardPileButton.appendChild(discardBadge);
+    
+    // 更明确地定位弃牌堆按钮
+    discardPileButton.style.position = 'absolute';
+    discardPileButton.style.top = '190px';  // 修改为更明显的位置
+    discardPileButton.style.right = '20px';
+    discardPileButton.style.width = '60px';
+    discardPileButton.style.height = '90px';
+    discardPileButton.style.zIndex = '500'; // 提高z-index值
+    discardPileButton.style.cursor = 'pointer';
+    discardPileButton.style.transition = 'transform 0.2s';
+    discardPileButton.style.boxShadow = '0 0 10px rgba(255, 255, 255, 0.5)'; // 添加阴影使其更明显
+    
+    // 添加到游戏区域
+    gameContainer.querySelector('.dragon-table').appendChild(discardPileButton);
+  
     // 添加游戏结束模态框
     const modal = document.createElement('div');
     modal.id = 'dragon-modal';
@@ -176,7 +222,13 @@ const dragonGame = {
         this.resetGame();
       });
     }
-    
+      // 弃牌堆按钮
+  const discardPileButton = document.querySelector('.discard-pile-button');
+  if (discardPileButton) {
+    discardPileButton.addEventListener('click', () => {
+      this.showDiscardedCards();
+    });
+  }
     // ESC键返回
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && this.isOpen) {
@@ -391,7 +443,10 @@ toggleGodMode: function() {
     // 重置分数
     this.score = 0;
     document.getElementById('dragon-score').textContent = '0';
-    
+      // 重置弃牌堆
+  this.discardedCards = [];
+  document.querySelector('.discard-badge').textContent = '0';
+  
     // 重置玩家状态
     this.players.forEach(player => {
       player.hand = [];
@@ -532,6 +587,8 @@ playerPlayCard: function(cardIndex) {
   
   // 从玩家手牌中取出一张牌
   const card = player.hand.splice(cardIndex, 1)[0];
+    // 更新弃牌堆
+    this.updateDiscardPile(card);
   
   // 对于玩家0，跳过动画直接处理逻辑
   // 添加到牌河
@@ -605,6 +662,7 @@ playerPlayCard: function(cardIndex) {
       this.nextPlayer();
     }, 500);
   }
+  
   
   // 检查游戏是否结束
   this.checkGameOver();
@@ -904,6 +962,9 @@ aiPlayCard: function(aiPlayer) {
   const cardIndex = Math.floor(Math.random() * aiPlayer.hand.length);
   const card = aiPlayer.hand.splice(cardIndex, 1)[0];
   
+    // 更新弃牌堆
+    this.updateDiscardPile(card);
+
   // 创建并展示出牌动画，带超时保护
   let callbackExecuted = false;
   
@@ -2805,6 +2866,304 @@ displayScoreChange: function(message, newScore, formulaDetails = null) {
       document.body.removeChild(scoreAlert);
     }
   }, 10000);
+},
+// 添加新函数：更新弃牌堆
+updateDiscardPile: function(card) {
+  // 添加牌到弃牌堆
+  this.discardedCards.push(card);
+  
+  // 更新弃牌堆数字显示
+  const discardBadge = document.querySelector('.discard-badge');
+  if (discardBadge) {
+    discardBadge.textContent = this.discardedCards.length;
+  }
+},
+// 改进弃牌堆显示函数
+showDiscardedCards: function() {
+  // 如果弃牌堆为空，显示提示信息
+  if (this.discardedCards.length === 0) {
+    this.showMessage("弃牌堆为空", 1500);
+    return;
+  }
+  
+  // 创建弃牌堆弹窗
+  const modal = document.createElement('div');
+  modal.className = 'discard-pile-modal';
+  modal.style.position = 'fixed';
+  modal.style.top = '50%';
+  modal.style.left = '50%';
+  modal.style.transform = 'translate(-50%, -50%)';
+  modal.style.backgroundColor = 'rgba(0, 0, 0, 0.85)';
+  modal.style.borderRadius = '10px';
+  modal.style.padding = '20px';
+  modal.style.zIndex = '10000';
+  modal.style.width = '90%';
+  modal.style.maxWidth = '800px';
+  modal.style.maxHeight = '80%';
+  modal.style.overflow = 'auto';
+  modal.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.5)';
+  
+  // 添加标题
+  const title = document.createElement('div');
+  title.textContent = `弃牌堆统计 (${this.discardedCards.length}张)`;
+  title.style.color = 'white';
+  title.style.fontSize = '22px';
+  title.style.fontWeight = 'bold';
+  title.style.marginBottom = '15px';
+  title.style.textAlign = 'center';
+  title.style.borderBottom = '1px solid rgba(255, 255, 255, 0.2)';
+  title.style.paddingBottom = '10px';
+  modal.appendChild(title);
+  
+  // 统计牌型数量
+  const stats = {
+    hearts: { A: 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '9': 0, '10': 0, J: 0, Q: 0, K: 0 },
+    diamonds: { A: 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '9': 0, '10': 0, J: 0, Q: 0, K: 0 },
+    clubs: { A: 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '9': 0, '10': 0, J: 0, Q: 0, K: 0 },
+    spades: { A: 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '9': 0, '10': 0, J: 0, Q: 0, K: 0 },
+    joker: { BJ: 0, SJ: 0 },
+    garbage: { PB: 0, BAG: 0 }
+  };
+  
+  // 计算每种牌的数量
+  this.discardedCards.forEach(card => {
+    if (card.suit === 'joker') {
+      stats.joker[card.value]++;
+    } else if (card.suit === 'garbage') {
+      if (card.value === 'BAG') {
+        stats.garbage.BAG++;
+      } else {
+        stats.garbage.PB++;
+      }
+    } else {
+      stats[card.suit][card.value]++;
+    }
+  });
+  
+  // 创建花色统计表
+  const statsContainer = document.createElement('div');
+  statsContainer.style.marginBottom = '20px';
+  
+  // 创建总览表
+  const overviewSection = document.createElement('div');
+  overviewSection.style.backgroundColor = 'rgba(255,255,255,0.1)';
+  overviewSection.style.padding = '10px';
+  overviewSection.style.borderRadius = '8px';
+  overviewSection.style.marginBottom = '15px';
+  overviewSection.style.display = 'flex';
+  overviewSection.style.flexWrap = 'wrap';
+  overviewSection.style.justifyContent = 'space-around';
+  
+  // 计算各花色总数
+  const suitCounts = {
+    hearts: Object.values(stats.hearts).reduce((sum, count) => sum + count, 0),
+    diamonds: Object.values(stats.diamonds).reduce((sum, count) => sum + count, 0),
+    clubs: Object.values(stats.clubs).reduce((sum, count) => sum + count, 0),
+    spades: Object.values(stats.spades).reduce((sum, count) => sum + count, 0),
+    joker: Object.values(stats.joker).reduce((sum, count) => sum + count, 0),
+    garbage: Object.values(stats.garbage).reduce((sum, count) => sum + count, 0)
+  };
+  
+  // 添加各花色总计数据
+  const suitNames = {
+    hearts: '红桃',
+    diamonds: '方片',
+    clubs: '梅花',
+    spades: '黑桃',
+    joker: '王牌',
+    garbage: '垃圾牌'
+  };
+  
+  const suitColors = {
+    hearts: '#e53935',
+    diamonds: '#e53935',
+    clubs: '#212121',
+    spades: '#212121',
+    joker: '#9c27b0',
+    garbage: '#2196f3'
+  };
+  
+  Object.keys(suitCounts).forEach(suit => {
+    const suitBox = document.createElement('div');
+    suitBox.style.textAlign = 'center';
+    suitBox.style.margin = '8px';
+    suitBox.style.minWidth = '80px';
+    
+    const suitIcon = document.createElement('div');
+    suitIcon.style.fontSize = '24px';
+    suitIcon.style.marginBottom = '5px';
+    suitIcon.style.color = suitColors[suit];
+    
+    if (suit === 'hearts') {
+      suitIcon.innerHTML = '♥';
+    } else if (suit === 'diamonds') {
+      suitIcon.innerHTML = '♦';
+    } else if (suit === 'clubs') {
+      suitIcon.innerHTML = '♣';
+    } else if (suit === 'spades') {
+      suitIcon.innerHTML = '♠';
+    } else if (suit === 'joker') {
+      suitIcon.innerHTML = '🃏';
+    } else {
+      suitIcon.innerHTML = '🗑️';
+    }
+    
+    suitBox.appendChild(suitIcon);
+    
+    const suitName = document.createElement('div');
+    suitName.textContent = suitNames[suit];
+    suitName.style.color = 'white';
+    suitName.style.fontSize = '14px';
+    suitBox.appendChild(suitName);
+    
+    const suitCount = document.createElement('div');
+    suitCount.textContent = suitCounts[suit];
+    suitCount.style.color = 'white';
+    suitCount.style.fontSize = '20px';
+    suitCount.style.fontWeight = 'bold';
+    suitBox.appendChild(suitCount);
+    
+    overviewSection.appendChild(suitBox);
+  });
+  
+  statsContainer.appendChild(overviewSection);
+  
+  // 创建详细牌型统计表
+  const detailsContainer = document.createElement('div');
+  detailsContainer.style.display = 'grid';
+  detailsContainer.style.gridTemplateColumns = 'repeat(14, 1fr)';
+  detailsContainer.style.gap = '5px';
+  detailsContainer.style.backgroundColor = 'rgba(255,255,255,0.05)';
+  detailsContainer.style.padding = '15px';
+  detailsContainer.style.borderRadius = '8px';
+  
+  // 添加表头
+  const header = document.createElement('div');
+  header.style.gridColumn = '1 / span 14';
+  header.style.display = 'grid';
+  header.style.gridTemplateColumns = 'repeat(14, 1fr)';
+  header.style.gap = '5px';
+  header.style.marginBottom = '10px';
+  header.style.textAlign = 'center';
+  
+  // 空单元格（左上角）
+  const emptyCell = document.createElement('div');
+  emptyCell.textContent = '';
+  header.appendChild(emptyCell);
+  
+  // 牌面值表头
+  const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+  values.forEach(value => {
+    const valueCell = document.createElement('div');
+    valueCell.textContent = value;
+    valueCell.style.color = 'white';
+    valueCell.style.fontWeight = 'bold';
+    valueCell.style.fontSize = '18px';
+    header.appendChild(valueCell);
+  });
+  
+  detailsContainer.appendChild(header);
+  
+  // 添加行数据
+  const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+  const suitSymbols = {
+    'hearts': '♥',
+    'diamonds': '♦',
+    'clubs': '♣',
+    'spades': '♠'
+  };
+  
+  suits.forEach(suit => {
+    // 添加行表头（花色）
+    const suitCell = document.createElement('div');
+    suitCell.innerHTML = suitSymbols[suit];
+    suitCell.style.color = suitColors[suit];
+    suitCell.style.fontSize = '20px';
+    suitCell.style.fontWeight = 'bold';
+    suitCell.style.textAlign = 'center';
+    detailsContainer.appendChild(suitCell);
+    
+    // 添加行数据（每种牌的数量）
+    values.forEach(value => {
+      const countCell = document.createElement('div');
+      const count = stats[suit][value];
+      countCell.textContent = count > 0 ? count : '-';
+      countCell.style.color = count > 0 ? 'white' : 'gray';
+      countCell.style.fontSize = '16px';
+      countCell.style.textAlign = 'center';
+      countCell.style.backgroundColor = count > 0 ? 'rgba(255,255,255,0.1)' : 'transparent';
+      countCell.style.borderRadius = '4px';
+      countCell.style.padding = '5px 0';
+      detailsContainer.appendChild(countCell);
+    });
+  });
+  
+  // 添加特殊牌类型（王牌和垃圾牌）
+  const specialSection = document.createElement('div');
+  specialSection.style.marginTop = '20px';
+  specialSection.style.display = 'flex';
+  specialSection.style.justifyContent = 'space-around';
+  specialSection.style.backgroundColor = 'rgba(255,255,255,0.05)';
+  specialSection.style.padding = '15px';
+  specialSection.style.borderRadius = '8px';
+  
+  const jokerBox = document.createElement('div');
+  jokerBox.innerHTML = `
+    <div style="text-align:center; margin-bottom:10px; color:white; font-weight:bold;">王牌</div>
+    <div style="display:flex; justify-content:space-around;">
+      <div style="text-align:center; margin:0 10px;">
+        <div style="color:#e91e63; font-size:18px; font-weight:bold;">大王</div>
+        <div style="font-size:20px; color:white;">${stats.joker.BJ}</div>
+      </div>
+      <div style="text-align:center; margin:0 10px;">
+        <div style="color:#2196f3; font-size:18px; font-weight:bold;">小王</div>
+        <div style="font-size:20px; color:white;">${stats.joker.SJ}</div>
+      </div>
+    </div>
+  `;
+  
+  const garbageBox = document.createElement('div');
+  garbageBox.innerHTML = `
+    <div style="text-align:center; margin-bottom:10px; color:white; font-weight:bold;">垃圾牌</div>
+    <div style="display:flex; justify-content:space-around;">
+      <div style="text-align:center; margin:0 10px;">
+        <div style="color:#1565c0; font-size:18px; font-weight:bold;">塑料瓶</div>
+        <div style="font-size:20px; color:white;">${stats.garbage.PB}</div>
+      </div>
+      <div style="text-align:center; margin:0 10px;">
+        <div style="color:#2e7d32; font-size:18px; font-weight:bold;">麻袋</div>
+        <div style="font-size:20px; color:white;">${stats.garbage.BAG}</div>
+      </div>
+    </div>
+  `;
+  
+  specialSection.appendChild(jokerBox);
+  specialSection.appendChild(garbageBox);
+  
+  // 添加所有组件到主容器
+  statsContainer.appendChild(detailsContainer);
+  statsContainer.appendChild(specialSection);
+  modal.appendChild(statsContainer);
+  
+  // 添加关闭按钮
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '关闭';
+  closeBtn.style.display = 'block';
+  closeBtn.style.margin = '15px auto 0';
+  closeBtn.style.padding = '8px 20px';
+  closeBtn.style.backgroundColor = '#4CAF50';
+  closeBtn.style.color = 'white';
+  closeBtn.style.border = 'none';
+  closeBtn.style.borderRadius = '5px';
+  closeBtn.style.cursor = 'pointer';
+  closeBtn.style.fontSize = '16px';
+  closeBtn.onclick = () => {
+    document.body.removeChild(modal);
+  };
+  modal.appendChild(closeBtn);
+  
+  // 添加到页面
+  document.body.appendChild(modal);
 }
 };
 
