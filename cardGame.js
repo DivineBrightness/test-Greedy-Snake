@@ -2,9 +2,14 @@ const dragonGame = {
   // 现有属性保持不变
   isOpen: false,
   deckId: null,
-  gamePhase: "idle", // idle, playing, finished
-    // 添加无敌模式标志
-    godMode: false,
+  gamePhase: "idle",
+  godMode: false,
+  // 添加弃牌堆跟踪
+  discardedCards: [],
+  cardCounter: {
+    enabled: false,
+    remainingCards: {}
+  },
   players: [
     { id: 0, name: "你", isPlayer: true, hand: [], collected: 0, score: 0, isEliminated: false },
     { id: 1, name: "图图", isPlayer: false, hand: [], collected: 0, score: 0, isEliminated: false },
@@ -134,7 +139,33 @@ preloadImages: function() {
         <div class="game-message" id="dragon-message"></div>
       </div>
     `;
+    // 修改弃牌堆按钮的添加方式，不使用innerHTML+=，而是创建DOM元素
+    const discardPileButton = document.createElement('div');
+    discardPileButton.className = 'discard-pile-button';
     
+    const cardBack = document.createElement('div');
+    cardBack.className = 'card back';
+    discardPileButton.appendChild(cardBack);
+    
+    const discardBadge = document.createElement('div');
+    discardBadge.className = 'discard-badge';
+    discardBadge.textContent = '0';
+    discardPileButton.appendChild(discardBadge);
+    
+    // 更明确地定位弃牌堆按钮
+    discardPileButton.style.position = 'absolute';
+    discardPileButton.style.top = '100px';  // 修改为更明显的位置
+    discardPileButton.style.right = '20px';
+    discardPileButton.style.width = '60px';
+    discardPileButton.style.height = '90px';
+    discardPileButton.style.zIndex = '500'; // 提高z-index值
+    discardPileButton.style.cursor = 'pointer';
+    discardPileButton.style.transition = 'transform 0.2s';
+    discardPileButton.style.boxShadow = '0 0 10px rgba(255, 255, 255, 0.5)'; // 添加阴影使其更明显
+    
+    // 添加到游戏区域
+    gameContainer.querySelector('.dragon-table').appendChild(discardPileButton);
+  
     // 添加游戏结束模态框
     const modal = document.createElement('div');
     modal.id = 'dragon-modal';
@@ -191,7 +222,13 @@ preloadImages: function() {
         this.resetGame();
       });
     }
-    
+      // 弃牌堆按钮
+  const discardPileButton = document.querySelector('.discard-pile-button');
+  if (discardPileButton) {
+    discardPileButton.addEventListener('click', () => {
+      this.showDiscardedCards();
+    });
+  }
     // ESC键返回
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && this.isOpen) {
@@ -406,7 +443,10 @@ toggleGodMode: function() {
     // 重置分数
     this.score = 0;
     document.getElementById('dragon-score').textContent = '0';
-    
+      // 重置弃牌堆
+  this.discardedCards = [];
+  document.querySelector('.discard-badge').textContent = '0';
+  
     // 重置玩家状态
     this.players.forEach(player => {
       player.hand = [];
@@ -547,6 +587,8 @@ playerPlayCard: function(cardIndex) {
   
   // 从玩家手牌中取出一张牌
   const card = player.hand.splice(cardIndex, 1)[0];
+    // 更新弃牌堆
+    this.updateDiscardPile(card);
   
   // 对于玩家0，跳过动画直接处理逻辑
   // 添加到牌河
@@ -620,6 +662,7 @@ playerPlayCard: function(cardIndex) {
       this.nextPlayer();
     }, 500);
   }
+  
   
   // 检查游戏是否结束
   this.checkGameOver();
@@ -919,6 +962,9 @@ aiPlayCard: function(aiPlayer) {
   const cardIndex = Math.floor(Math.random() * aiPlayer.hand.length);
   const card = aiPlayer.hand.splice(cardIndex, 1)[0];
   
+    // 更新弃牌堆
+    this.updateDiscardPile(card);
+
   // 创建并展示出牌动画，带超时保护
   let callbackExecuted = false;
   
@@ -2820,6 +2866,190 @@ displayScoreChange: function(message, newScore, formulaDetails = null) {
       document.body.removeChild(scoreAlert);
     }
   }, 10000);
+},
+// 添加新函数：更新弃牌堆
+updateDiscardPile: function(card) {
+  // 添加牌到弃牌堆
+  this.discardedCards.push(card);
+  
+  // 更新弃牌堆数字显示
+  const discardBadge = document.querySelector('.discard-badge');
+  if (discardBadge) {
+    discardBadge.textContent = this.discardedCards.length;
+  }
+},
+// 添加新函数：显示弃牌堆内容
+showDiscardedCards: function() {
+  // 如果弃牌堆为空，显示提示信息
+  if (this.discardedCards.length === 0) {
+    this.showMessage("弃牌堆为空", 1500);
+    return;
+  }
+  
+  // 创建弃牌堆弹窗
+  const modal = document.createElement('div');
+  modal.className = 'discard-pile-modal';
+  modal.style.position = 'fixed';
+  modal.style.top = '50%';
+  modal.style.left = '50%';
+  modal.style.transform = 'translate(-50%, -50%)';
+  modal.style.backgroundColor = 'rgba(0, 0, 0, 0.85)';
+  modal.style.borderRadius = '10px';
+  modal.style.padding = '20px';
+  modal.style.zIndex = '10000';
+  modal.style.maxWidth = '90%';
+  modal.style.maxHeight = '80%';
+  modal.style.overflow = 'auto';
+  modal.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.5)';
+  
+  // 添加标题
+  const title = document.createElement('div');
+  title.textContent = `弃牌堆 (${this.discardedCards.length}张)`;
+  title.style.color = 'white';
+  title.style.fontSize = '20px';
+  title.style.fontWeight = 'bold';
+  title.style.marginBottom = '15px';
+  title.style.textAlign = 'center';
+  title.style.borderBottom = '1px solid rgba(255, 255, 255, 0.2)';
+  title.style.paddingBottom = '10px';
+  modal.appendChild(title);
+  
+  // 对牌进行排序 (按照点数从小到大)
+  const sortedCards = [...this.discardedCards].sort((a, b) => {
+    return a.numericValue - b.numericValue;
+  });
+  
+  // 创建牌容器
+  const cardsContainer = document.createElement('div');
+  cardsContainer.style.display = 'flex';
+  cardsContainer.style.flexWrap = 'wrap';
+  cardsContainer.style.justifyContent = 'center';
+  cardsContainer.style.gap = '10px';
+  cardsContainer.style.padding = '10px';
+  
+  // 添加所有牌
+  sortedCards.forEach(card => {
+    const cardElement = document.createElement('div');
+    
+    // 设置牌的样式
+    if (card.suit === 'joker') {
+      cardElement.className = `card joker ${card.value === 'BJ' ? 'big-joker' : 'small-joker'}`;
+      if (card.value === 'BJ') {
+        cardElement.style.backgroundColor = '#f8d8e0';
+        cardElement.style.color = '#e91e63';
+      } else {
+        cardElement.style.backgroundColor = '#d8e8f8';
+        cardElement.style.color = '#2196f3';
+      }
+    } else {
+      cardElement.className = `card ${card.suit}`;
+    }
+    
+    // 添加牌面内容
+    if (card.suit === 'joker') {
+      cardElement.innerHTML = `<div class="card-value">${card.value === 'BJ' ? '大王' : '小王'}</div>`;
+    } else if (card.suit === 'garbage') {
+      cardElement.innerHTML = `
+        <div class="card-value">${card.value.startsWith('PB') ? '塑料瓶' : '麻袋'}</div>
+        <div class="card-value-bottom">-10</div>
+      `;
+      
+      if (card.value === 'BAG') {
+        cardElement.style.backgroundColor = '#a5d6a7';
+        cardElement.style.color = '#2e7d32';
+      } else {
+        cardElement.style.backgroundColor = '#90caf9';
+        cardElement.style.color = '#1565c0';
+      }
+    } else {
+      cardElement.innerHTML = `
+        <div class="card-value">${card.value}</div>
+        <div class="card-suit"></div>
+        <div class="card-value-bottom">${card.value}</div>
+      `;
+    }
+    
+    cardsContainer.appendChild(cardElement);
+  });
+  
+  modal.appendChild(cardsContainer);
+  
+  // 添加关闭按钮
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '关闭';
+  closeBtn.style.display = 'block';
+  closeBtn.style.margin = '15px auto 0';
+  closeBtn.style.padding = '8px 20px';
+  closeBtn.style.backgroundColor = '#4CAF50';
+  closeBtn.style.color = 'white';
+  closeBtn.style.border = 'none';
+  closeBtn.style.borderRadius = '5px';
+  closeBtn.style.cursor = 'pointer';
+  closeBtn.style.fontSize = '16px';
+  closeBtn.onclick = () => {
+    document.body.removeChild(modal);
+  };
+  modal.appendChild(closeBtn);
+  
+  // 添加弃牌堆CSS样式
+  const style = document.createElement('style');
+  style.textContent = `
+    .discard-pile-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      cursor: pointer;
+      width: 60px;
+      height: 90px;
+      transition: transform 0.2s;
+      z-index: 100;
+    }
+    
+    .discard-pile-button:hover {
+      transform: translateY(-10px);
+    }
+    
+    .discard-pile-button .card {
+      width: 100%;
+      height: 100%;
+      border-radius: 8px;
+    }
+    
+    .discard-badge {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background-color: red;
+      color: white;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      font-size: 14px;
+      border: 2px solid white;
+    }
+    
+    .discard-pile-modal .card {
+      width: 60px;
+      height: 90px;
+      margin: 5px;
+      border-radius: 5px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 5px;
+      box-sizing: border-box;
+      background-color: white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+  `;
+  document.head.appendChild(style);
+  
+  // 添加到页面
+  document.body.appendChild(modal);
 }
 };
 

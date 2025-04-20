@@ -1175,3 +1175,127 @@
   transition: all 0.3s ease;
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
 }
+/* 魔法卡风格的牌背 */
+.card.back {
+  background-color: #2c0055; /* 深紫色背景 */
+  background-image: 
+    radial-gradient(circle at center, rgba(128, 0, 255, 0.2) 0%, transparent 70%), 
+    linear-gradient(135deg, rgba(75, 0, 130, 0.8) 0%, rgba(25, 0, 60, 0.8) 100%);
+  position: relative;
+  overflow: hidden;
+  border: none !important;
+  box-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+}
+
+/* 修改魔法阵为椭圆形 */
+.card.back:before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%; /* 保持宽度 */
+  height: 60%; /* 减小高度使其成为椭圆 */
+  background-image: url('./image/poke/magic-circle.svg');
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.6;
+  animation: rotate 20s linear infinite;
+}
+
+/* 同样修改CSS创建的魔法阵效果为椭圆形 */
+.card.back:not([style*="background-image"]):before {
+  content: "";
+  width: 80%;
+  height: 60%; /* 调整为椭圆比例 */
+  border: 2px solid gold;
+  border-radius: 50%; /* 保持圆角但因为宽高不同会形成椭圆 */
+  box-shadow: 0 0 15px gold;
+  background: transparent;
+  
+  /* 创建魔法五角星 - 保持原有代码不变 */
+  background-image: 
+    linear-gradient(36deg, transparent 40%, gold 40%, gold 60%, transparent 60%),
+    linear-gradient(72deg, transparent 40%, gold 40%, gold 60%, transparent 60%),
+    linear-gradient(108deg, transparent 40%, gold 40%, gold 60%, transparent 60%),
+    linear-gradient(144deg, transparent 40%, gold 40%, gold 60%, transparent 60%),
+    linear-gradient(180deg, transparent 40%, gold 40%, gold 60%, transparent 60%);
+  background-size: 100% 100%;
+  background-position: center;
+  animation: rotate 20s linear infinite, glow 3s ease-in-out infinite;
+}
+
+/* 闪烁的星星 */
+.card.back:after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 30%, white 0%, white 1%, transparent 1.5%),
+    radial-gradient(circle at 70% 20%, white 0%, white 0.5%, transparent 1%),
+    radial-gradient(circle at 40% 80%, white 0%, white 0.8%, transparent 1.2%),
+    radial-gradient(circle at 85% 60%, white 0%, white 0.7%, transparent 1%);
+  opacity: 0.8;
+  animation: twinkle 4s ease-in-out infinite alternate;
+}
+
+/* 弃牌堆按钮卡片样式强化 */
+.discard-pile-button .card.back {
+  box-shadow: 0 0 15px rgba(138, 43, 226, 0.7);
+  transition: all 0.3s ease;
+}
+
+.discard-pile-button:hover .card.back {
+  box-shadow: none !important;
+  transform: translateY(-10px);
+}
+
+/* 动画效果 */
+@keyframes rotate {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes glow {
+  0% { box-shadow: 0 0 5px gold; }
+  50% { box-shadow: 0 0 20px gold, 0 0 30px purple; }
+  100% { box-shadow: 0 0 5px gold; }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.9; }
+}
+/* 删除覆盖层 */
+.player-box#player-box-1::before,
+.player-box#player-box-2::before {
+  display: none !important;
+}
+
+/* 简化卡牌背面特效，为玩家1和2的卡牌使用简单背景 */
+#player-hand-1 .card.back,
+#player-hand-2 .card.back {
+  background: none !important;
+  animation: none !important;
+}
+
+/* 移除复杂的背面效果 */
+#player-hand-1 .card.back::before,
+#player-hand-2 .card.back::before,
+#player-hand-1 .card.back::after,
+#player-hand-2 .card.back::after {
+  display: none !important;
+}
+
+/* 移除旋转效果 */
+#player-hand-1 .card.back:nth-child(odd),
+#player-hand-1 .card.back:nth-child(even),
+#player-hand-2 .card.back:nth-child(odd),
+#player-hand-2 .card.back:nth-child(even) {
+  --rotation: 0deg !important;
+  transform: none !important;
+}
