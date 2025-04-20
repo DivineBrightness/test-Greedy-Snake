@@ -1187,89 +1187,35 @@
   box-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
 }
 
-/* 修改魔法阵为椭圆形 */
-.card.back:before {
+/* 简单的扑克牌背面样式 */
+.card.back {
+  background-color: #bd4b4b; /* 经典红色 */
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.1),
+    rgba(255, 255, 255, 0.1) 5px,
+    transparent 5px,
+    transparent 10px
+  );
+  border: 1px solid #800000; /* 深红色边框 */
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+/* 添加一个简单的内边框效果 */
+.card.back::after {
   content: "";
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 80%; /* 保持宽度 */
-  height: 60%; /* 减小高度使其成为椭圆 */
-  background-image: url('./image/poke/magic-circle.svg');
-  background-size: contain;
-  background-position: center;
-  background-repeat: no-repeat;
-  opacity: 0.6;
-  animation: rotate 20s linear infinite;
+  top: 5px;
+  left: 5px;
+  right: 5px;
+  bottom: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 3px;
+  pointer-events: none; /* 确保不影响交互 */
 }
 
-/* 同样修改CSS创建的魔法阵效果为椭圆形 */
-.card.back:not([style*="background-image"]):before {
-  content: "";
-  width: 80%;
-  height: 60%; /* 调整为椭圆比例 */
-  border: 2px solid gold;
-  border-radius: 50%; /* 保持圆角但因为宽高不同会形成椭圆 */
-  box-shadow: 0 0 15px gold;
-  background: transparent;
-  
-  /* 创建魔法五角星 - 保持原有代码不变 */
-  background-image: 
-    linear-gradient(36deg, transparent 40%, gold 40%, gold 60%, transparent 60%),
-    linear-gradient(72deg, transparent 40%, gold 40%, gold 60%, transparent 60%),
-    linear-gradient(108deg, transparent 40%, gold 40%, gold 60%, transparent 60%),
-    linear-gradient(144deg, transparent 40%, gold 40%, gold 60%, transparent 60%),
-    linear-gradient(180deg, transparent 40%, gold 40%, gold 60%, transparent 60%);
-  background-size: 100% 100%;
-  background-position: center;
-  animation: rotate 20s linear infinite, glow 3s ease-in-out infinite;
-}
 
-/* 闪烁的星星 */
-.card.back:after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: 
-    radial-gradient(circle at 20% 30%, white 0%, white 1%, transparent 1.5%),
-    radial-gradient(circle at 70% 20%, white 0%, white 0.5%, transparent 1%),
-    radial-gradient(circle at 40% 80%, white 0%, white 0.8%, transparent 1.2%),
-    radial-gradient(circle at 85% 60%, white 0%, white 0.7%, transparent 1%);
-  opacity: 0.8;
-  animation: twinkle 4s ease-in-out infinite alternate;
-}
 
-/* 弃牌堆按钮卡片样式强化 */
-.discard-pile-button .card.back {
-  box-shadow: 0 0 15px rgba(138, 43, 226, 0.7);
-  transition: all 0.3s ease;
-}
-
-.discard-pile-button:hover .card.back {
-  box-shadow: none !important;
-  transform: translateY(-10px);
-}
-
-/* 动画效果 */
-@keyframes rotate {
-  0% { transform: translate(-50%, -50%) rotate(0deg); }
-  100% { transform: translate(-50%, -50%) rotate(360deg); }
-}
-
-@keyframes glow {
-  0% { box-shadow: 0 0 5px gold; }
-  50% { box-shadow: 0 0 20px gold, 0 0 30px purple; }
-  100% { box-shadow: 0 0 5px gold; }
-}
-
-@keyframes twinkle {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 0.9; }
-}
 /* 删除覆盖层 */
 .player-box#player-box-1::before,
 .player-box#player-box-2::before {
