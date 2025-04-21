@@ -810,7 +810,7 @@ renderLocalLeaderboard: function(scores, leaderboardElement) {
     game2048.init();
     
     // 添加游戏选择按钮事件
-    const game2048Button = document.getElementById('2048-select-btn');
+    const game2048Button = document.getElementById('g2048-select-btn');
     if (game2048Button) {
       game2048Button.addEventListener('click', () => {
         document.getElementById('games-selection').style.display = 'none';

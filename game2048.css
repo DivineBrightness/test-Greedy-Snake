@@ -449,3 +449,34 @@
         transform: translateX(-50%);
       }
   }
+/* 为2048游戏选择按钮添加图标 */
+#g2048-select-btn {
+    background-image: url('./image/g2048/number-percentage-chart.svg');
+    background-size: 100% auto;
+    background-position: center 30%;
+    background-repeat: no-repeat;
+    background-color: rgba(255, 247, 0, 0.587); /* 淡橙色背景 */
+  }
+  
+  /* 确保文字在底部 */
+  #g2048-select-btn span {
+    position: relative;
+    bottom: 0px;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    font-weight: bold;
+  }
+  
+  /* 游戏选择按钮悬停效果 */
+  #g2048-select-btn:hover {
+    background-color: rgba(255, 119, 0, 0.3);
+    transform: translateY(-5px);
+    box-shadow: 0 15px 25px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* 游戏选择按钮激活效果 */
+  #g2048-select-btn:active {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+  }
