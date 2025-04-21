@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="./cardGame.css?v=1.6.2">
   <link rel="stylesheet" href="./heartMoments.css?v=1.4.1">
   <link rel="stylesheet" href="./dinoGame.css?v=1.5.3">
+  <link rel="stylesheet" href="./game2048.css?v=1.0.0">
   <script src="./lottie.min.js?v=1.0.1"></script>
 </head>
 <body class="spring">
@@ -40,6 +41,7 @@
         <button class="game-select-btn" id="tetris-select-btn"><span>俄罗斯方块</span></button>
         <button class="game-select-btn" id="card-select-btn"><span>扑克牌</span></button>
         <button class="game-select-btn" id="dino-select-btn"><span>恐龙快跑</span></button>
+        <button class="game-select-btn" id="2048-select-btn"><span>2048</span></button>
       </div>
     </div>
     
@@ -241,7 +243,79 @@
         </button>
       </div>
     </div>
-    
+
+    <!-- 在恐龙游戏界面后添加2048游戏界面 -->
+    <div id="game-2048" style="display: none;">
+      <button class="back-btn" id="game-2048-back-btn"></button>
+      <button class="play-pause-btn fixed-btn" id="game-2048-pause-btn">
+        <img src="./image/start.svg" alt="开始/暂停" id="game-2048-pause-icon">
+      </button>
+      <h2>2048方块</h2>
+      <div class="game-info">
+        <div class="game-score">分数: <span id="game-2048-score">0</span></div>
+        <div class="game-high-score">最高分: <span id="game-2048-high-score">0</span></div>
+        <div class="game-2048-leaderboard">
+          <button class="leaderboard-btn" id="game-2048-leaderboard-btn">排行榜</button>
+          <div class="leaderboard-panel" id="game-2048-leaderboard-content" style="display: none;">
+            <!-- 排行榜内容将由JavaScript动态插入 -->
+          </div>
+        </div>
+      </div>
+      
+      <div class="game-2048-board">
+        <div class="game-grid" id="game-grid">
+          <!-- 方块将由JavaScript动态生成 -->
+        </div>
+      </div>
+      
+      <div class="control-panel">
+        <div class="game-2048-controls">
+          <button class="game-2048-btn primary" id="game-2048-new-btn">新游戏</button>
+          <button class="game-2048-btn secondary" id="game-2048-reset-btn">重置</button>
+        </div>
+      </div>
+      
+      <!-- 2048游戏模态框 -->
+      <div id="game-2048-modal" style="display: none;">
+        <div>
+          <button class="modal-close-btn"><img src="./image/x-circle.svg" alt="关闭" class="close-icon"></button>
+          <div class="modal-header">
+            <h2 style="color: rgb(3, 93, 61); margin-bottom: 15px; font-size: 24px;">游戏结束!</h2>
+          </div>
+          <p style="font-size: 20px; margin-bottom: 20px;">最终得分: <strong id="game-2048-final-score">0</strong></p>
+          <p style="margin-bottom: 15px;">选择你的名字提交成绩:</p>
+          <select id="game-2048-player-select">
+            <option value="">请选择</option>
+          </select>
+          <div class="custom-name-container">
+            <span>或者</span>
+            <input type="text" id="game-2048-custom-name" placeholder="输入自定义名字" maxlength="20">
+          </div>
+          <button id="game-2048-submit-btn">提交成绩</button>
+        </div>
+      </div>
+      
+      <!-- 移动端控制 -->
+      <div class="mobile-controls game-2048-mobile-controls">
+        <div class="control-row">
+          <button class="control-btn direction-btn" id="game-2048-up-btn">
+            <img src="./image/up.svg" alt="上" class="control-icon">
+          </button>
+        </div>
+        <div class="control-row">
+          <button class="control-btn direction-btn" id="game-2048-left-btn">
+            <img src="./image/left.svg" alt="左" class="control-icon">
+          </button>
+          <button class="control-btn direction-btn" id="game-2048-down-btn">
+            <img src="./image/down.svg" alt="下" class="control-icon">
+          </button>
+          <button class="control-btn direction-btn" id="game-2048-right-btn">
+            <img src="./image/right.svg" alt="右" class="control-icon">
+          </button>
+        </div>
+      </div>
+    </div>
+
     <footer>© 2025 四季 | 小游戏集合 & 赏析</footer>
   </div>
   <script src="./leaderboard.js?v=1.5.5"></script>
@@ -256,6 +330,7 @@
   <script defer src="./cardGame.js?v=1.6.3"></script>
   <script defer src="./daily.js?v=1.0.1"></script>
   <script defer src="./dinoGame.js?v=1.5.5"></script>
+  <script src="./game2048.js?v=1.0.0"></script>
   <script>
     // 页面加载完成后发送访问记录
     document.addEventListener('DOMContentLoaded', () => {
@@ -298,6 +373,13 @@
         <div class="game-instruction-section">
           <h3>恐龙快跑</h3>
           <p>按空格键、上箭头或点击画面使恐龙快跑。随着分数增加，游戏速度会逐渐加快。</p>
+          <p>P键可暂停/继续游戏。</p>
+        </div>
+
+        <!-- 在游戏说明部分添加2048游戏说明 -->
+        <div class="game-instruction-section">
+          <h3>2048方块</h3>
+          <p>使用方向键或WASD键或触屏按钮控制，将相同数字的方块合并，目标是得到2048或更高的方块。</p>
           <p>P键可暂停/继续游戏。</p>
         </div>
       </div>
