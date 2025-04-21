@@ -1,0 +1,482 @@
+/* 2048游戏专用样式 */
+#game-2048 {
+    font-family: Arial, sans-serif;
+    background-color: #f8f5f0; /* 稍微柔和的背景色 */
+    color: #645B52; /* 更深的文字颜色 */
+    text-align: center;
+    padding: 20px;
+    max-width: 500px;
+    margin: 0 auto;
+    position: relative;
+  }
+  
+  /* 游戏头部样式 */
+  #game-2048 h2 {
+    font-size: 36px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    margin-top: 10px;
+    color: #FF7700; /* 明亮的橙色标题 */
+  }
+  
+  /* 游戏信息 */
+  #game-2048 .game-info {
+    display: flex;
+    justify-content: space-around;
+    padding: 10px;
+    margin-bottom: 20px;
+  }
+  
+  #game-2048 .game-score,
+  #game-2048 .game-high-score {
+    background-color: #FF9500; /* 更亮的橙色 */
+    color: white;
+    padding: 8px 15px;
+    border-radius: 3px;
+    font-weight: bold;
+  }
+  
+  /* 游戏板样式 */
+  .game-2048-board {
+    background-color: #b0a090; /* 稍微暗一点的背景 */
+    border-radius: 6px;
+    padding: 15px;
+    position: relative;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    width: 350px;
+    height: 350px;
+    margin: 0 auto;
+  }
+  
+  .game-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-gap: 15px;
+    background-color: #bbada0;
+    width: 100%;
+    height: 100%;
+  }
+  
+  .grid-cell {
+    background-color: rgba(238, 228, 218, 0.35);
+    border-radius: 3px;
+    position: relative;
+  }
+  
+  .tile {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 35px;
+    font-weight: bold;
+    border-radius: 3px;
+    transition: all 0.15s ease-in-out;
+  }
+  
+  /* 方块颜色 */
+  .tile-2 {
+    background-color: #eee6d8;
+    color: #776e65;
+  }
+  
+  .tile-4 {
+    background-color: #eddfc8;
+    color: #776e65;
+  }
+  
+  .tile-8 {
+    background-color: #ffb375; /* 更鲜亮的橙色 */
+    color: #f9f6f2;
+  }
+  
+  .tile-16 {
+    background-color: #ff9248; /* 更饱和的橙色 */
+    color: #f9f6f2;
+  }
+  
+  .tile-32 {
+    background-color: #ff7a4a; /* 更红的橙色 */
+    color: #f9f6f2;
+  }
+  
+  .tile-64 {
+    background-color: #ff5c3d; /* 橙红色 */
+    color: #f9f6f2;
+  }
+  
+  .tile-128 {
+    background-color: #f5d76c; /* 更亮的金色 */
+    color: #f9f6f2;
+    font-size: 28px;
+  }
+  
+  .tile-256 {
+    background-color: #f3ce58;
+    color: #f9f6f2;
+    font-size: 28px;
+  }
+  
+  .tile-512 {
+    background-color: #f0c847;
+    color: #f9f6f2;
+    font-size: 28px;
+  }
+  
+  .tile-1024 {
+    background-color: #edc336;
+    color: #f9f6f2;
+    font-size: 24px;
+  }
+  
+  .tile-2048 {
+    background-color: #edc125; /* 更明亮的金色 */
+    color: #f9f6f2;
+    font-size: 24px;
+  }
+  
+  /* 更高数值 */
+  .tile-4096 {
+    background-color: #3d3c34;
+    color: #f9f6f2;
+    font-size: 24px;
+  }
+  
+  .tile-8192 {
+    background-color: #2d2d26;
+    color: #f9f6f2;
+    font-size: 22px;
+  }
+  
+  /* 控制按钮 */
+  .control-panel {
+    margin: 20px 0;
+  }
+  
+  .game-2048-controls {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+  }
+  
+  .game-2048-btn {
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  
+  .game-2048-btn.primary {
+    background-color: #FF7700; /* 主按钮使用橙色 */
+    color: white;
+  }
+  
+  .game-2048-btn.secondary {
+    background-color: #b0a090;
+    color: white;
+  }
+  
+  /* 返回按钮 */
+  .back-btn {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 40px;
+    height: 40px;
+    background-image: url('./image/back.svg');
+    background-size: 24px;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+  }
+  
+  /* 暂停按钮 */
+  .play-pause-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+  }
+  
+  /* 游戏消息 */
+  .game-2048-message {
+    position: fixed;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: bold;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  
+  /* 移动端控制 */
+  .game-2048-mobile-controls {
+    display: none;
+    max-width: 200px;
+    margin: 20px auto;
+  }
+  
+  @media (max-width: 768px) {
+    .game-2048-mobile-controls {
+      display: block;
+    }
+    
+    .control-row {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+    
+    .direction-btn {
+      width: 50px;
+      height: 50px;
+      border: none;
+      background-color: #FF7700; /* 主色调橙色 */
+      border-radius: 5px;
+      margin: 0 5px;
+      cursor: pointer;
+    }
+    
+    .control-icon {
+      width: 24px;
+      height: 24px;
+    }
+  }
+  
+  /* 游戏结束模态框 */
+  #game-2048-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+  }
+  
+  #game-2048-modal > div {
+    background-color: #faf8ef;
+    padding: 30px;
+    border-radius: 5px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    position: relative;
+  }
+  
+  .modal-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .close-icon {
+    width: 20px;
+    height: 20px;
+  }
+  
+  /* 特别为2048排行榜设计的样式，不影响其他游戏 */
+  #game-2048 .game-2048-leaderboard {
+    position: relative;
+    display: inline-block; /* 改为内联块级元素 */
+  }
+  
+  #game-2048 .leaderboard-btn {
+    background-color: #ff7700; /* 保持不变，与其他主按钮一致 */
+    color: white;
+    border: none;
+    top: -8px;;
+    left: 20%;
+    padding: 8px 15px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  
+  #game-2048 .leaderboard-panel {
+    position: absolute;
+    top: 100%;
+    left: 50px; /* 从右对齐改为居中 */
+    transform: translateX(-50%); /* 使用transform居中 */
+    width: 350px;
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    z-index: 500;
+    color: #776e65;
+    margin-top: 10px;
+    text-align: left;
+  }
+  
+  #game-2048 .leaderboard-header {
+    padding: 15px;
+    background-color: #FF7700; /* 与主色调一致 */
+    color: white;
+    font-weight: bold;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    text-align: center;
+  }
+  
+  /* 特别为2048排行榜表格设计的样式 */
+  #game-2048-leaderboard-content .leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+  }
+  
+  #game-2048-leaderboard-content th,
+  #game-2048-leaderboard-content td {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+  }
+  
+  #game-2048-leaderboard-content th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+  }
+  
+  #game-2048-leaderboard-content tr.top-rank {
+    background-color: rgba(255, 119, 0, 0.08); 
+  }
+  
+  #game-2048-leaderboard-content tr:hover {
+    background-color: rgba(255, 119, 0, 0.12); /* 悬停色也使用主色调 */
+  }
+  
+  /* 自定义名称容器 */
+  .custom-name-container {
+    margin: 15px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .custom-name-container span {
+    margin: 0 10px;
+    color: #776e65;
+  }
+  
+  #game-2048-custom-name {
+    padding: 8px;
+    border: 1px solid #bbada0;
+    border-radius: 3px;
+    width: 200px;
+  }
+  
+  #game-2048-player-select {
+    padding: 8px;
+    border: 1px solid #bbada0;
+    border-radius: 3px;
+    width: 200px;
+    margin-top: 5px;
+  }
+  
+  #game-2048-submit-btn {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #FF7700; /* 主色调橙色 */
+    color: white;
+    border: none;
+    border-radius: 3px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  
+  #game-2048-submit-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+  
+  /* 响应式调整 */
+  @media (max-width: 500px) {
+    #game-2048 {
+      padding: 10px;
+    }
+    
+    .game-2048-board {
+      width: 280px;
+      height: 280px;
+      padding: 10px;
+    }
+    
+    .game-grid {
+      grid-gap: 10px;
+    }
+    
+    .tile {
+      font-size: 28px;
+    }
+    
+    .tile-128, 
+    .tile-256, 
+    .tile-512 {
+      font-size: 22px;
+    }
+    
+    .tile-1024, 
+    .tile-2048 {
+      font-size: 18px;
+    }
+    
+    #game-2048 .leaderboard-panel {
+        width: 300px;
+        left: -70px; /* 确保在小屏幕上也居中 */
+        transform: translateX(-50%);
+      }
+  }
+/* 为2048游戏选择按钮添加图标 */
+#g2048-select-btn {
+    background-image: url('./image/g2048/number-percentage-chart.svg');
+    background-size: 100% auto;
+    background-position: center 30%;
+    background-repeat: no-repeat;
+    background-color: rgba(255, 247, 0, 0.587); /* 淡橙色背景 */
+  }
+  
+  /* 确保文字在底部 */
+  #g2048-select-btn span {
+    position: relative;
+    bottom: 0px;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    font-weight: bold;
+  }
+  
+  /* 游戏选择按钮悬停效果 */
+  #g2048-select-btn:hover {
+    background-color: rgba(255, 119, 0, 0.3);
+    transform: translateY(-5px);
+    box-shadow: 0 15px 25px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* 游戏选择按钮激活效果 */
+  #g2048-select-btn:active {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+  }
