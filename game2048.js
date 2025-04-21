@@ -696,30 +696,40 @@ if (leaderboardBtn) {
       }
     },
     
-    // 填充玩家选择器
-    populatePlayerSelect: function() {
-      const playerSelect = document.getElementById('game-2048-player-select');
-      if (!playerSelect) return;
-      
-      // 清空现有选项
-      playerSelect.innerHTML = '<option value="">请选择</option>';
-      
-      // 从localStorage获取玩家列表
-      const playerListString = localStorage.getItem('playerList');
-      if (playerListString) {
-        try {
-          const playerList = JSON.parse(playerListString);
-          playerList.forEach(player => {
-            const option = document.createElement('option');
-            option.value = player;
-            option.textContent = player;
-            playerSelect.appendChild(option);
-          });
-        } catch (e) {
-          console.error('解析玩家列表失败:', e);
-        }
+// 填充玩家选择器
+populatePlayerSelect: function() {
+    const playerSelect = document.getElementById('game-2048-player-select');
+    if (!playerSelect) return;
+    
+    // 清空现有选项
+    playerSelect.innerHTML = '<option value="">请选择</option>';
+    
+    // 优先使用scenes.js中的通用函数
+    if (typeof window.populateSelect === 'function') {
+      window.populateSelect('game-2048-player-select');
+    } else if (typeof tianGangCharacters !== 'undefined' && Array.isArray(tianGangCharacters)) {
+      // 直接使用tianGangCharacters变量
+      tianGangCharacters.forEach(character => {
+        const option = document.createElement('option');
+        option.value = character;
+        option.textContent = character;
+        playerSelect.appendChild(option);
+      });
+    } else {
+      // 如果以上方法都不可用，使用本地存储的玩家列表
+      try {
+        const playerList = JSON.parse(localStorage.getItem('playerList') || '[]');
+        playerList.forEach(player => {
+          const option = document.createElement('option');
+          option.value = player;
+          option.textContent = player;
+          playerSelect.appendChild(option);
+        });
+      } catch (e) {
+        console.error('解析玩家列表失败:', e);
       }
-    },
+    }
+  },
     
     // 显示提示信息
     showMessage: function(message, duration = 2000) {
