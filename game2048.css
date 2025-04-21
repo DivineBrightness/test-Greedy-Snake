@@ -21,8 +21,7 @@
   /* 游戏信息 */
   #game-2048 .game-info {
     display: flex;
-    flex-direction: column; /* 改为纵向排列 */
-    align-items: center; /* 水平居中 */
+    justify-content: space-around;
     padding: 10px;
     margin-bottom: 20px;
   }
@@ -306,9 +305,11 @@
   }
   
   #game-2048 .leaderboard-btn {
-    background-color: #8f7a66;
+    background-color: #ff7700;
     color: white;
     border: none;
+    top: -8px;;
+    left: 20%;
     padding: 8px 15px;
     border-radius: 3px;
     cursor: pointer;
@@ -318,7 +319,7 @@
   #game-2048 .leaderboard-panel {
     position: absolute;
     top: 100%;
-    left: 50%; /* 从右对齐改为居中 */
+    left: 50px; /* 从右对齐改为居中 */
     transform: translateX(-50%); /* 使用transform居中 */
     width: 350px;
     background-color: white;
@@ -443,7 +444,7 @@
     
     #game-2048 .leaderboard-panel {
         width: 300px;
-        left: 50%; /* 确保在小屏幕上也居中 */
+        left: -70px; /* 确保在小屏幕上也居中 */
         transform: translateX(-50%);
       }
   }
