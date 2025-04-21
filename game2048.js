@@ -1,3 +1,4 @@
+
 const game2048 = {
     isOpen: false,
     isPlaying: false,
@@ -149,6 +150,7 @@ const game2048 = {
         pauseBtn.addEventListener('click', () => this.togglePause());
       }
       
+// filepath: [game2048.js](http://_vscodecontentref_/0)
 // 修改submitBtn的事件处理，添加本地排行榜支持
 const submitBtn = document.getElementById('game-2048-submit-btn');
 if (submitBtn) {
@@ -167,7 +169,7 @@ if (submitBtn) {
         return;
       }
       
-      // 禁用按钮防止重复提交
+      // 禁用按钮防止重复提交，但不依赖submitScore函数处理按钮状态
       submitBtn.disabled = true;
       submitBtn.textContent = '提交中...';
       
@@ -207,46 +209,41 @@ if (submitBtn) {
           return false;
         }
       };
+
+      // 保存本地分数（无论API是否成功）
+      saveLocalScore();
       
-      // 尝试提交到服务器
-      if (typeof window.submitScore === 'function') {
-        window.submitScore('game2048', playerName, this.score)
-          .then(() => {
-            // 成功提交到服务器
-            alert("成绩提交成功!");
-            document.getElementById('game-2048-modal').style.display = 'none';
-          })
-          .catch(e => {
-            console.error('远程提交分数失败:', e);
-            // 远程提交失败后尝试本地保存
-            const savedLocally = saveLocalScore();
-            if (savedLocally) {
-              alert(`服务器连接失败，但成绩已保存在本地！${playerName}: ${this.score}`);
-              document.getElementById('game-2048-modal').style.display = 'none';
-            } else {
-              alert("成绩保存失败");
-            }
-          })
-          .finally(() => {
-            // 恢复按钮状态
-            submitBtn.disabled = false;
-            submitBtn.textContent = '提交成绩';
-          });
-      } else {
-        // window.submitScore不存在，直接使用本地存储
-        console.warn('全局submitScore函数不可用，使用本地存储');
-        const savedLocally = saveLocalScore();
-        if (savedLocally) {
-          alert(`成绩已保存在本地！${playerName}: ${this.score}`);
-          document.getElementById('game-2048-modal').style.display = 'none';
-        } else {
-          alert("成绩保存失败");
-        }
-        
+      // 参考cardGame.js的实现，直接调用API
+      fetch(`${API_URL || 'https://331600.xyz'}/submit-score`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          game: 'game2048', 
+          player_name: playerName, 
+          score: this.score 
+        })
+      })
+      .then(response => {
+        return response.json();
+      })
+      .then(data => {
+        // 成功提交到服务器
+        alert("成绩提交成功!");
+        document.getElementById('game-2048-modal').style.display = 'none';
+      })
+      .catch(e => {
+        console.error('远程提交分数失败:', e);
+        // 远程提交失败但本地已保存
+        alert(`服务器连接失败，但成绩已保存在本地！${playerName}: ${this.score}`);
+        document.getElementById('game-2048-modal').style.display = 'none';
+      })
+      .finally(() => {
         // 恢复按钮状态
         submitBtn.disabled = false;
         submitBtn.textContent = '提交成绩';
-      }
+      });
     } catch (e) {
       console.error('处理提交按钮时出错:', e);
       // 恢复按钮状态

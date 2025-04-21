@@ -56,7 +56,7 @@ async function submitScore(game, playerName, score) {
   }
 }
 
-// 更新 loadLeaderboard 函数确保HTML结构一致
+// 更新 loadLeaderboard 函数确保HTML结构一致，并添加对game2048的支持
 async function loadLeaderboard(game, elementId) {
   const leaderboardElement = document.getElementById(elementId);
   if (!leaderboardElement) {
@@ -76,7 +76,9 @@ async function loadLeaderboard(game, elementId) {
       } else if (game === 'dino') {
         gameTitle = '恐龙快跑';
       } else if (game === 'dragon') {
-        gameTitle = '翻斗扑克';  // 添加对翻斗扑克游戏的支持
+        gameTitle = '翻斗扑克';
+      } else if (game === 'game2048') {
+        gameTitle = '2048方块';  // 添加对2048游戏的支持
       } else {
         gameTitle = '游戏';
       }
@@ -131,9 +133,29 @@ async function loadLeaderboard(game, elementId) {
     
     const leaderboardBody = leaderboardElement.querySelector('.leaderboard-body');
     if (leaderboardBody) {
-      leaderboardBody.innerHTML = `<div class="error">获取排行榜数据失败: ${error.message}</div>`;
+      leaderboardBody.innerHTML = `<div class="error">获取排行榜数据失败</div>`;
       
-      // 模拟数据，确保界面依然可用
+      // 尝试显示本地排行榜数据
+      if (game === 'game2048') {
+        try {
+          const localData = JSON.parse(localStorage.getItem('game2048Leaderboard') || '[]');
+          if (localData && localData.length > 0) {
+            // 格式转换
+            const formattedData = localData.map(item => ({
+              player_name: item.playerName,
+              score: item.score,
+              date: item.date
+            }));
+            renderScores(formattedData, game, leaderboardBody);
+            leaderboardBody.insertAdjacentHTML('afterbegin', '<div class="local-data-notice">显示本地数据 (API连接失败)</div>');
+            return;
+          }
+        } catch (e) {
+          console.error('读取本地数据失败:', e);
+        }
+      }
+      
+      // 如果没有本地数据，使用模拟数据
       const mockScores = [
         { player_name: "玩家1", score: 100 },
         { player_name: "玩家2", score: 80 },
