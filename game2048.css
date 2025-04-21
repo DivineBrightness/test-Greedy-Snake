@@ -306,8 +306,8 @@
   }
   
   #game-2048 .leaderboard-btn {
-    background-color: #ff7700; /* 保持不变，与其他主按钮一致 */
-    color: white;
+    background-color: #ff7700!important; /* 保持不变，与其他主按钮一致 */
+    color: white !important;
     border: none;
     top: -8px;;
     left: 20%;
