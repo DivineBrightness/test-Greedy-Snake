@@ -21,7 +21,8 @@
   /* 游戏信息 */
   #game-2048 .game-info {
     display: flex;
-    justify-content: space-around;
+    flex-direction: column; /* 改为纵向排列 */
+    align-items: center; /* 水平居中 */
     padding: 10px;
     margin-bottom: 20px;
   }
@@ -301,6 +302,7 @@
   /* 特别为2048排行榜设计的样式，不影响其他游戏 */
   #game-2048 .game-2048-leaderboard {
     position: relative;
+    display: inline-block; /* 改为内联块级元素 */
   }
   
   #game-2048 .leaderboard-btn {
@@ -316,7 +318,8 @@
   #game-2048 .leaderboard-panel {
     position: absolute;
     top: 100%;
-    right: 0;
+    left: 50%; /* 从右对齐改为居中 */
+    transform: translateX(-50%); /* 使用transform居中 */
     width: 350px;
     background-color: white;
     border-radius: 5px;
@@ -439,6 +442,8 @@
     }
     
     #game-2048 .leaderboard-panel {
-      width: 300px;
-    }
+        width: 300px;
+        left: 50%; /* 确保在小屏幕上也居中 */
+        transform: translateX(-50%);
+      }
   }
