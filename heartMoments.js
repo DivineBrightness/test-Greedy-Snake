@@ -79,12 +79,12 @@ heartMomentsElement.innerHTML = `
 <div class="heart-moments-content">
   <button class="back-btn" id="heart-moments-back-btn"></button>
   <div class="heart-moments-header">
-    <h2>心动瞬间</h2>
+    <h2>Heart Moments</h2>
     <div class="heart-shine"></div>
   </div>
   
   <div class="heart-moments-form">
-    <textarea id="new-moment" placeholder="记录一个心动瞬间..." maxlength="2000"></textarea>
+    <textarea id="new-moment" placeholder="记录一个moment..." maxlength="2000"></textarea>
     <button id="save-moment-btn">保存</button>
   </div>
   
@@ -573,7 +573,7 @@ renderCloudMoments: function(cloudMoments) {
     <div class="moment-item cloud-moment" data-id="${moment.id}">
       <div class="moment-content">${this.escapeHTML(moment.content)}</div>
       <div class="moment-meta">
-        <span class="moment-user">${this.escapeHTML(moment.user_name || 'anonymous')}</span>
+        <span class="moment-user">${this.escapeHTML('')}</span>
         <span class="moment-time">${moment.created_at || '未知时间'}</span>
       </div>
       <div class="moment-actions">
