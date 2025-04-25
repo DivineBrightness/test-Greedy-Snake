@@ -74,33 +74,34 @@ syncWithCloud: function() {
     heartMomentsElement.className = 'heart-moments-container';
     
     // 修改 show 函数的 HTML 内容，将"加载中..."替换为加载按钮
-    heartMomentsElement.innerHTML = `
-    <div class="heart-moments-content">
-      <button class="back-btn" id="heart-moments-back-btn"></button>
-      <div class="heart-moments-header">
-        <h2>Heart Moments</h2>
-        <div class="heart-shine"></div>
-      </div>
-      
-      <div class="heart-moments-form">
-        <textarea id="new-moment" placeholder="记录一个moment..." maxlength="2000"></textarea>
-        <button id="save-moment-btn">保存</button>
-      </div>
-      
-      <div class="heart-moments-list">
-        <h3>我的记录</h3>
-        <div id="moments-container">
-          ${this.renderMoments()}
-        </div>
-      </div>
-      
-      <div class="cloud-moments-list">
-        <div id="cloud-moments-container">
-          <button id="load-cloud-moments-btn" class="load-cloud-btn">加载云端~</button>
-        </div>
-      </div>
+// 在 show 方法中更新 HTML 内容
+heartMomentsElement.innerHTML = `
+<div class="heart-moments-content">
+  <button class="back-btn" id="heart-moments-back-btn"></button>
+  <div class="heart-moments-header">
+    <h2>心动瞬间</h2>
+    <div class="heart-shine"></div>
+  </div>
+  
+  <div class="heart-moments-form">
+    <textarea id="new-moment" placeholder="记录一个心动瞬间..." maxlength="2000"></textarea>
+    <button id="save-moment-btn">保存</button>
+  </div>
+  
+  <div class="heart-moments-list">
+    <h3>我的记录</h3>
+    <div id="moments-container">
+      ${this.renderMoments()}
     </div>
-    `;
+  </div>
+  
+  <div class="cloud-moments-list">
+    <div id="cloud-moments-container">
+      <button id="load-cloud-moments-btn" class="load-cloud-btn">云端记录</button>
+    </div>
+  </div>
+</div>
+`;
     
     // 添加到文档
     document.querySelector('.container').appendChild(heartMomentsElement);
