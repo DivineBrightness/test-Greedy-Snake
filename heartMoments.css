@@ -261,7 +261,7 @@
 .moment-time {
   font-size: 12px;
   color: #aaa;
-  text-align: right;
+  text-align: left; /* 改为左对齐 */
 }
 
 .delete-moment-btn {
@@ -308,11 +308,14 @@
 }
 
 .moment-meta {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  color: #aaa;
+  position: absolute;
+  bottom: 10px;
+  left: 15px;
+  margin-top: 0;
+  padding-right: 0;
+  width: auto;
 }
+
 
 .moment-user {
   font-style: italic;
@@ -351,19 +354,6 @@
   opacity: 1;
 }
 
-/* 删除云端记录按钮样式 */
-.delete-cloud-moment-btn {
-  position: static;
-  top: 10px;
-  right: 10px;
-  background: none;
-  border: none;
-  color: #a3c2ff;
-  cursor: pointer;
-  font-size: 14px;
-  opacity: 0.6;
-  transition: opacity 0.2s;
-}
 
 .delete-cloud-moment-btn:hover {
   opacity: 1;
@@ -422,26 +412,233 @@
   background: #e5e5e5;
 }
 
-/* 编辑和删除按钮容器 */
 .moment-actions {
   position: absolute;
-  top: 10px;
+  bottom: 10px;
   right: 10px;
   display: flex;
-  gap: 8px;
-}
-
-/* 编辑按钮样式 */
-.edit-cloud-moment-btn {
-  background: none;
-  border: none;
-  color: #b5c5ff;
-  cursor: pointer;
-  font-size: 14px;
-  opacity: 0.6;
-  transition: opacity 0.2s;
+  gap: 5px; /* 按钮之间的间距 */
+  width: auto; /* 确保容器宽度自适应内容 */
 }
 
 .edit-cloud-moment-btn:hover {
   opacity: 1;
+}
+/* 移动端优化 */
+@media (max-width: 768px) {
+  /* 基础容器调整 */
+  .heart-moments-content {
+    background: linear-gradient(145deg, #fff8fa, #ffe6ec);
+    padding-top: 10px;
+  }
+  
+  /* 页头调整 */
+  .heart-moments-header {
+    margin: 20px 0 15px;
+  }
+  
+  .heart-moments-header h2 {
+    font-size: 24px;
+  }
+  
+  /* 返回按钮优化 */
+  #heart-moments .back-btn {
+    top: 15px;
+    left: 15px;
+    width: 36px;
+    height: 36px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23e78599' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='19' y1='12' x2='5' y2='12'%3E%3C/line%3E%3Cpolyline points='12 19 5 12 12 5'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 24px;
+  }
+
+  /* 表单区域调整 */
+  .heart-moments-form {
+    margin: 0 auto 20px;
+    width: 92%;
+  }
+  
+  #new-moment {
+    height: 70px;
+    border-radius: 15px;
+    box-shadow: 0 2px 8px rgba(255, 208, 216, 0.3);
+    font-size: 15px;
+  }
+  
+  #save-moment-btn {
+    padding: 8px 18px;
+    font-size: 15px;
+  }
+  
+  /* 记录列表优化 */
+  .heart-moments-list {
+    width: 92%;
+    padding-bottom: 30px;
+  }
+  
+  .heart-moments-list h3, 
+  .cloud-moments-list h3 {
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+  
+  .moment-item {
+    padding: 12px;
+    border-radius: 15px;
+    box-shadow: 0 2px 8px rgba(255, 208, 216, 0.15);
+    border-left-width: 3px;
+  }
+  
+  .moment-content {
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  
+  /* 云端记录区域 */
+  .cloud-moments-list {
+    width: 92%;
+    margin: auto auto 0;
+    padding-bottom: 30px;
+  }
+  
+  .load-cloud-btn {
+    padding: 8px 18px;
+    border-radius: 18px;
+    font-size: 15px;
+    margin-top: 20px;
+  }
+  
+  /* 弹窗优化 */
+  .moments-modal-content {
+    width: 92%;
+    padding: 20px;
+    border-radius: 18px;
+  }
+  
+  .moments-modal .modal-header h2 {
+    font-size: 20px;
+  }
+  
+  .moments-modal .modal-close-btn {
+    top: 12px;
+    right: 12px;
+  }
+  
+  .moments-modal .close-icon {
+    width: 20px;
+    height: 20px;
+  }
+  
+  #edit-moment-content {
+    border-radius: 12px;
+  }
+}
+
+/* 添加可爱装饰元素 */
+.moment-item {
+  position: relative;
+}
+
+.moment-item::before {
+  content: '❤️';
+  position: absolute;
+  left: -15px;
+  top: 14px;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.cloud-moment::before {
+  content: '☁️';
+}
+
+/* 优化滚动体验 */
+.heart-moments-content {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 改善文本输入体验 */
+#new-moment, #edit-moment-content {
+  transition: border-color 0.2s ease;
+}
+
+#new-moment:focus, #edit-moment-content:focus {
+  border-color: #ff9bac;
+  box-shadow: 0 0 0 2px rgba(255, 155, 180, 0.25);
+  outline: none;
+}
+/* 防止文本内容与操作按钮重叠 */
+.moment-item {
+  position: relative;
+  padding-bottom: 40px; /* 增加底部空间，为按钮留出位置 */
+}
+
+.moment-meta {
+  margin-top: 10px;
+  padding-right: 75px; /* 为右侧按钮留出空间 */
+}
+
+.moment-actions {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  display: flex;
+  gap: 8px; /* 按钮之间的间距 */
+}
+
+/* 进一步优化按钮样式，使其更小更紧凑 */
+.edit-cloud-moment-btn,
+.delete-cloud-moment-btn {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid #ffccd5;
+  border-radius: 6px; /* 减小圆角 */
+  padding: 0 4px; /* 减小水平内边距 */
+  height: 20px; /* 固定高度 */
+  line-height: 18px; /* 调整行高以垂直居中文本 */
+  font-size: 10px; /* 小字体 */
+  color: #e78599;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 0; /* 移除最小宽度限制 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-cloud-moment-btn:hover,
+.delete-cloud-moment-btn:hover {
+  background: #ffebf0;
+  color: #e05e7a;
+}
+/* 优化移动端体验 */
+@media (max-width: 768px) {
+  .moment-meta {
+    bottom: 6px;
+    left: 12px;
+  }
+  
+  .moment-actions {
+    bottom: 6px; 
+    right: 6px;
+  }
+  
+  /* 适当调整间距 */
+  .moment-item {
+    padding-bottom: 32px; /* 确保底部有足够空间放置时间和按钮 */
+  }
+  
+  .moment-content {
+    margin-bottom: 16px; /* 增加内容与底部元素间距 */
+  }
+}
+
+/* 编辑按钮和删除按钮调整相同大小 */
+.edit-cloud-moment-btn,
+.delete-cloud-moment-btn {
+  height: 20px;
+  line-height: 18px;
+  padding: 0 4px;
+  font-size: 10px;
 }

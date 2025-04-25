@@ -74,34 +74,34 @@ syncWithCloud: function() {
     heartMomentsElement.className = 'heart-moments-container';
     
     // 修改 show 函数的 HTML 内容，将"加载中..."替换为加载按钮
-    heartMomentsElement.innerHTML = `
-    <div class="heart-moments-content">
-      <button class="back-btn" id="heart-moments-back-btn"></button>
-      <div class="heart-moments-header">
-        <h2>Heart Moments</h2>
-        <div class="heart-shine"></div>
-      </div>
-      
-      <div class="heart-moments-form">
-        <textarea id="new-moment" placeholder="记录一个moment..." maxlength="200"></textarea>
-        <button id="save-moment-btn">保存</button>
-      </div>
-      
-      <div class="heart-moments-list">
-        <h3>我的记录</h3>
-        <div id="moments-container">
-          ${this.renderMoments()}
-        </div>
-      </div>
-      
-      <div class="cloud-moments-list">
-        <h3>云端</h3>
-        <div id="cloud-moments-container">
-          <button id="load-cloud-moments-btn" class="load-cloud-btn">加载云端记录</button>
-        </div>
-      </div>
+// 在 show 方法中更新 HTML 内容
+heartMomentsElement.innerHTML = `
+<div class="heart-moments-content">
+  <button class="back-btn" id="heart-moments-back-btn"></button>
+  <div class="heart-moments-header">
+    <h2>Heart Moments</h2>
+    <div class="heart-shine"></div>
+  </div>
+  
+  <div class="heart-moments-form">
+    <textarea id="new-moment" placeholder="记录一个moment..." maxlength="2000"></textarea>
+    <button id="save-moment-btn">保存</button>
+  </div>
+  
+  <div class="heart-moments-list">
+    <h3>我的记录</h3>
+    <div id="moments-container">
+      ${this.renderMoments()}
     </div>
-    `;
+  </div>
+  
+  <div class="cloud-moments-list">
+    <div id="cloud-moments-container">
+      <button id="load-cloud-moments-btn" class="load-cloud-btn">云端记录</button>
+    </div>
+  </div>
+</div>
+`;
     
     // 添加到文档
     document.querySelector('.container').appendChild(heartMomentsElement);
@@ -342,7 +342,7 @@ fetchCloudMoments: function() {
   .then(data => {
     // 恢复按钮状态
     if (loadCloudBtn) {
-      loadCloudBtn.textContent = '加载云端记录';
+      loadCloudBtn.textContent = '加载云端~';
       loadCloudBtn.disabled = false;
     }
     
@@ -360,7 +360,7 @@ fetchCloudMoments: function() {
     
     // 恢复按钮状态
     if (loadCloudBtn) {
-      loadCloudBtn.textContent = '加载云端记录';
+      loadCloudBtn.textContent = '加载云端~';
       loadCloudBtn.disabled = false;
     }
   });
@@ -379,7 +379,7 @@ showCloudMomentsModal: function(cloudMoments) {
     <div class="moments-modal-content">
       <button class="modal-close-btn"><img src="./image/x-circle.svg" alt="关闭" class="close-icon"></button>
       <div class="modal-header">
-        <h2>云端记录</h2>
+        <h2>云~</h2>
       </div>
       <div class="modal-body">
         ${this.renderCloudMoments(cloudMoments)}
@@ -399,7 +399,7 @@ showCloudMomentsModal: function(cloudMoments) {
       // 在关闭弹窗时恢复"加载云端记录"按钮
       const cloudContainer = document.getElementById('cloud-moments-container');
       if (cloudContainer) {
-        cloudContainer.innerHTML = '<button id="load-cloud-moments-btn" class="load-cloud-btn">加载云端记录</button>';
+        cloudContainer.innerHTML = '<button id="load-cloud-moments-btn" class="load-cloud-btn">加载云端~</button>';
         // 重新绑定按钮事件
         const newLoadBtn = document.getElementById('load-cloud-moments-btn');
         if (newLoadBtn) {
@@ -444,7 +444,7 @@ showEditModal: function(id, content) {
         <h2>编辑记录</h2>
       </div>
       <div class="modal-body">
-        <textarea id="edit-moment-content" maxlength="200">${content}</textarea>
+        <textarea id="edit-moment-content" maxlength="2000">${content}</textarea>
         <div class="modal-actions">
           <button id="update-moment-btn" data-id="${id}">保存</button>
           <button id="cancel-edit-btn">取消</button>
@@ -573,7 +573,6 @@ renderCloudMoments: function(cloudMoments) {
     <div class="moment-item cloud-moment" data-id="${moment.id}">
       <div class="moment-content">${this.escapeHTML(moment.content)}</div>
       <div class="moment-meta">
-        <span class="moment-user">${this.escapeHTML(moment.user_name || 'anonymous')}</span>
         <span class="moment-time">${moment.created_at || '未知时间'}</span>
       </div>
       <div class="moment-actions">

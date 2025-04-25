@@ -415,7 +415,6 @@ openHeartMomentsAfterVerification: function() {
   }
 },
 
-// 添加方法：播放心形动画
 playHeartAnimation: function(callback) {
   // 创建动画容器
   const animContainer = document.createElement('div');
@@ -452,22 +451,41 @@ playHeartAnimation: function(callback) {
     animContainer.style.opacity = '1';
   }, 10);
   
-  // 加载Lottie库(如果尚未加载)
+  // 加载Lottie库后播放动画
   this.loadLottieIfNeeded(() => {
-    // 播放动画
-    const animation = lottie.loadAnimation({
-      container: animElement,
-      renderer: 'svg',
-      loop: false,
-      autoplay: true,
-      path: './image/heart.json' // 使用相对路径
-    });
+    // 使用预加载的动画数据（如果可用）
+    let animation;
     
-    // 设置播放速度为正常速度的50%，使动画更慢
+    if (window.preloadedResources && window.preloadedResources['valentine-letter']) {
+      console.log('使用预加载的动画数据');
+      animation = lottie.loadAnimation({
+        container: animElement,
+        renderer: 'svg',
+        loop: false,
+        autoplay: true,
+        animationData: window.preloadedResources['valentine-letter'] // 使用预加载的数据
+      });
+    } else {
+      // 如果预加载失败，回退到常规加载
+      console.log('使用常规加载动画');
+      animation = lottie.loadAnimation({
+        container: animElement,
+        renderer: 'svg',
+        loop: false,
+        autoplay: true,
+        path: './image/valentine-letter.json'
+      });
+    }
+    
+    // 调整播放速度
     animation.setSpeed(0.5);
     
-    // 动画完成后淡出并移除
-    animation.addEventListener('complete', () => {
+    // 设置播放完毕后的回调
+    setTimeout(() => {
+      // 停止动画
+      animation.stop();
+      
+      // 淡出并移除动画容器
       animContainer.style.opacity = '0';
       setTimeout(() => {
         animContainer.remove();
@@ -475,7 +493,7 @@ playHeartAnimation: function(callback) {
           callback();
         }
       }, 300);
-    });
+    }, 4000); // 动画持续约4秒（实际时间为2秒，以0.5倍速播放约为4秒）
   });
 },
 
