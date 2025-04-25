@@ -83,7 +83,7 @@ syncWithCloud: function() {
       </div>
       
       <div class="heart-moments-form">
-        <textarea id="new-moment" placeholder="记录一个moment..." maxlength="200"></textarea>
+        <textarea id="new-moment" placeholder="记录一个moment..." maxlength="2000"></textarea>
         <button id="save-moment-btn">保存</button>
       </div>
       
@@ -444,7 +444,7 @@ showEditModal: function(id, content) {
         <h2>编辑记录</h2>
       </div>
       <div class="modal-body">
-        <textarea id="edit-moment-content" maxlength="200">${content}</textarea>
+        <textarea id="edit-moment-content" maxlength="2000">${content}</textarea>
         <div class="modal-actions">
           <button id="update-moment-btn" data-id="${id}">保存</button>
           <button id="cancel-edit-btn">取消</button>
