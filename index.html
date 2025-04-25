@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="./styles.css?v=1.4.2">
   <link rel="stylesheet" href="./snakeGame.css?v=1.5.1">
   <link rel="stylesheet" href="./cardGame.css?v=1.6.2">
-  <link rel="stylesheet" href="./heartMoments.css?v=1.4.1">
+  <link rel="stylesheet" href="./heartMoments.css?v=1.5.0">
   <link rel="stylesheet" href="./dinoGame.css?v=1.5.3">
   <link rel="stylesheet" href="./game2048.css?v=1.0.1">
   <script src="./lottie.min.js?v=1.0.1"></script>
@@ -319,8 +319,8 @@
   </div>
   <script src="./leaderboard.js?v=1.5.6"></script>
   <script src="./scenes.js?v=1.5.5"></script>
-  <script src="./treasureBox.js?v=1.4.2"></script>
-  <script src="./heartMoments.js?v=1.4.1"></script>
+  <script src="./treasureBox.js?v=1.5.0"></script>
+  <script src="./heartMoments.js?v=1.5.0"></script>
   <script defer src="./snakeGame.js?v=1.5.2"></script>
   <script defer src="./tetrisGame.js?v=1.4.2"></script>
   <script src="./floatingFruits.js?v=1.4.1"></script>
@@ -384,6 +384,45 @@
       </div>
     </div>
   </div>
+  <!-- 在body结束标签前添加以下脚本 -->
+<script>
+  // 页面加载完成后预加载动画文件
+  document.addEventListener('DOMContentLoaded', () => {
+    // 发送访问记录
+    const trackingPixel = new Image();
+    trackingPixel.src = `https://331600.xyz/track-visit?site=362422.xyz&path=${encodeURIComponent(location.pathname)}&ref=${encodeURIComponent(document.referrer)}&t=${Date.now()}`;
+    
+    // 预加载valentine-letter.json动画文件
+    preloadAnimationFiles();
+  });
+  
+  // 预加载动画文件函数
+  function preloadAnimationFiles() {
+    console.log('预加载动画文件...');
+    
+    // 创建一个全局对象存储预加载的资源
+    window.preloadedResources = window.preloadedResources || {};
+    
+    // 预加载valentine-letter.json
+    fetch('./image/valentine-letter.json')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('动画文件加载失败');
+        }
+        return response.json();
+      })
+      .then(animData => {
+        // 存储动画数据到全局对象
+        window.preloadedResources['valentine-letter'] = animData;
+        console.log('心动动画文件预加载完成');
+      })
+      .catch(error => {
+        console.error('预加载心动动画文件出错:', error);
+      });
+      
+    // 如果有其他需要预加载的资源，可以在这里添加
+  }
+</script>
 </body>
 </html>
 <script>
