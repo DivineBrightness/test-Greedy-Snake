@@ -573,7 +573,6 @@ renderCloudMoments: function(cloudMoments) {
     <div class="moment-item cloud-moment" data-id="${moment.id}">
       <div class="moment-content">${this.escapeHTML(moment.content)}</div>
       <div class="moment-meta">
-        <span class="moment-user">${this.escapeHTML('')}</span>
         <span class="moment-time">${moment.created_at || '未知时间'}</span>
       </div>
       <div class="moment-actions">
