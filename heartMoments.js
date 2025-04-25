@@ -96,7 +96,7 @@ syncWithCloud: function() {
       
       <div class="cloud-moments-list">
         <div id="cloud-moments-container">
-          <button id="load-cloud-moments-btn" class="load-cloud-btn">加载云端记录</button>
+          <button id="load-cloud-moments-btn" class="load-cloud-btn">加载云端~</button>
         </div>
       </div>
     </div>
@@ -341,7 +341,7 @@ fetchCloudMoments: function() {
   .then(data => {
     // 恢复按钮状态
     if (loadCloudBtn) {
-      loadCloudBtn.textContent = '加载云端记录';
+      loadCloudBtn.textContent = '加载云端~';
       loadCloudBtn.disabled = false;
     }
     
@@ -359,7 +359,7 @@ fetchCloudMoments: function() {
     
     // 恢复按钮状态
     if (loadCloudBtn) {
-      loadCloudBtn.textContent = '加载云端记录';
+      loadCloudBtn.textContent = '加载云端~';
       loadCloudBtn.disabled = false;
     }
   });
@@ -398,7 +398,7 @@ showCloudMomentsModal: function(cloudMoments) {
       // 在关闭弹窗时恢复"加载云端记录"按钮
       const cloudContainer = document.getElementById('cloud-moments-container');
       if (cloudContainer) {
-        cloudContainer.innerHTML = '<button id="load-cloud-moments-btn" class="load-cloud-btn">加载云端记录</button>';
+        cloudContainer.innerHTML = '<button id="load-cloud-moments-btn" class="load-cloud-btn">加载云端~</button>';
         // 重新绑定按钮事件
         const newLoadBtn = document.getElementById('load-cloud-moments-btn');
         if (newLoadBtn) {
