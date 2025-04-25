@@ -95,7 +95,6 @@ syncWithCloud: function() {
       </div>
       
       <div class="cloud-moments-list">
-        <h3>云端</h3>
         <div id="cloud-moments-container">
           <button id="load-cloud-moments-btn" class="load-cloud-btn">加载云端记录</button>
         </div>
@@ -379,7 +378,7 @@ showCloudMomentsModal: function(cloudMoments) {
     <div class="moments-modal-content">
       <button class="modal-close-btn"><img src="./image/x-circle.svg" alt="关闭" class="close-icon"></button>
       <div class="modal-header">
-        <h2>云端记录</h2>
+        <h2>云~</h2>
       </div>
       <div class="modal-body">
         ${this.renderCloudMoments(cloudMoments)}
