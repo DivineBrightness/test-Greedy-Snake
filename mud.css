@@ -221,3 +221,24 @@
   body.mud-active {
     overflow: hidden;
   }
+  /* 添加在文件底部 */
+
+/* 场景过渡效果 */
+.mud-scene {
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.mud-scene.fade-in {
+  opacity: 1;
+}
+
+.mud-scene.fade-out {
+  opacity: 0;
+}
+
+/* 加强点击反馈效果 */
+.mud-option:active {
+  transform: translateY(1px);
+  background-color: #555555;
+}
