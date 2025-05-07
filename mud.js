@@ -9,12 +9,71 @@ const mudGame = {
     get scenes() {
         return window.mudScenes;
       },
-      
+
     // 游戏初始化
     init: function() {
-      this.setupEventListeners();
+    this.setupEventListeners();
+    this.setupItemClickListeners(); // 添加这一行
     },
+    // 新增方法：设置物品点击监听
+setupItemClickListeners: function() {
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('mud-inventory-item')) {
+        const itemName = e.target.textContent;
+        this.showItemDescription(itemName);
+      }
+      
+      // 点击其他区域关闭物品描述
+      if (!e.target.classList.contains('mud-inventory-item') && 
+          !e.target.closest('.mud-item-description')) {
+        this.hideItemDescription();
+      }
+    });
+  },
+  
+  // 新增方法：显示物品描述
+  showItemDescription: function(itemName) {
+    // 隐藏任何已存在的物品描述
+    this.hideItemDescription();
     
+    // 获取物品描述
+    const description = window.itemDescriptions[itemName] || '一个神秘的物品，没人知道它的来历和用途。';
+    
+    // 创建物品描述元素
+    const descriptionEl = document.createElement('div');
+    descriptionEl.className = 'mud-item-description';
+    descriptionEl.innerHTML = `
+      <h4>${itemName}</h4>
+      <p>${description}</p>
+      <div class="close-btn">×</div>
+    `;
+    
+    // 添加到游戏容器
+    const gameContainer = document.getElementById('mud-game');
+    gameContainer.appendChild(descriptionEl);
+    
+    // 添加关闭按钮事件
+    const closeBtn = descriptionEl.querySelector('.close-btn');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => this.hideItemDescription());
+    }
+    
+    // 显示动画
+    setTimeout(() => {
+      descriptionEl.classList.add('show');
+    }, 10);
+  },
+  
+  // 新增方法：隐藏物品描述
+  hideItemDescription: function() {
+    const descriptionEl = document.querySelector('.mud-item-description');
+    if (descriptionEl) {
+      descriptionEl.classList.remove('show');
+      setTimeout(() => {
+        descriptionEl.remove();
+      }, 300); // 等待动画完成再移除
+    }
+  },
     // 设置事件监听器保持不变
     setupEventListeners: function() {
       // 选项点击事件代理
@@ -113,15 +172,15 @@ const mudGame = {
         <h3>${scene.title}</h3>
         <p>${scene.description}</p>`;
       
-      // 如果有物品栏，显示物品
-      if (this.inventory.length > 0) {
-        html += `<div class="mud-inventory">
-          <h4>背包:</h4>
-          <ul>
-            ${this.inventory.map(item => `<li>${item}</li>`).join('')}
-          </ul>
-        </div>`;
-      }
+        // 修改物品栏生成代码
+        if (this.inventory.length > 0) {
+            html += `<div class="mud-inventory">
+            <h4>背包:</h4>
+            <ul>
+                ${this.inventory.map(item => `<li class="mud-inventory-item">${item}</li>`).join('')}
+            </ul>
+            </div>`;
+        }
       
       // 添加选项
       if (scene.options && scene.options.length > 0) {
