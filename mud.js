@@ -148,6 +148,10 @@ const mudGame = {
     goToScene: function(sceneId) {
         const scene = this.scenes[sceneId];
         
+        // 保存血量和辐射旧值，用于之后比较变化
+        const oldHealth = this.health;
+        const oldRadiation = this.radiation;
+        
         // 记录访问过的区域
         if (scene.isArea && !this.visitedAreas.includes(sceneId)) {
             this.visitedAreas.push(sceneId);
@@ -163,8 +167,11 @@ const mudGame = {
             this.inventory = this.inventory.filter(item => item !== scene.removeItem);
         }
         
-        // 处理血量变化 - 修复这里使用healthChange属性
+        // 处理血量变化 - 存储变化类型用于动画
         if (scene.healthChange) {
+            // 记录是加血还是掉血
+            this.healthChangeType = scene.healthChange > 0 ? 'healing' : 'damaged';
+            
             this.health = Math.max(0, this.health + scene.healthChange);
             if (this.health <= 0) {
                 // 如果血量为0，直接前往死亡场景
@@ -174,10 +181,15 @@ const mudGame = {
             }
             // 确保不超过最大血量
             this.health = Math.min(this.maxHealth, this.health);
+        } else {
+            this.healthChangeType = null;
         }
         
-        // 处理辐射值变化 - 修复这里使用radiationChange属性
+        // 处理辐射值变化
         if (scene.radiationChange) {
+            // 记录辐射是否变化
+            this.radiationChanged = true;
+            
             this.radiation = Math.max(0, this.radiation + scene.radiationChange);
             if (this.radiation >= 100) {
                 // 辐射值过高，前往辐射死亡场景
@@ -185,6 +197,8 @@ const mudGame = {
                 this.renderCurrentScene();
                 return;
             }
+        } else {
+            this.radiationChanged = false;
         }
         
         // 处理派系信任度
@@ -202,10 +216,74 @@ const mudGame = {
             this.endingReached = sceneId;
         }
         
-        this.currentScene = sceneId;
-        this.renderCurrentScene();
+        // 如果有血量或辐射变化，先显示动画再切换场景
+        if (this.healthChangeType || this.radiationChanged) {
+            this.animateHealthChanges(oldHealth, oldRadiation, () => {
+                this.currentScene = sceneId;
+                this.renderCurrentScene();
+            });
+        } else {
+            // 没有变化，直接切换场景
+            this.currentScene = sceneId;
+            this.renderCurrentScene();
+        }
     },
-    
+
+    // 添加新方法：血量变化动画
+    animateHealthChanges: function(oldHealth, oldRadiation, callback) {
+        // 获取当前显示的血量区域
+        const healthDisplay = document.querySelector('.mud-health');
+        if (!healthDisplay) {
+            // 如果找不到健康显示区域，直接执行回调
+            callback();
+            return;
+        }
+        
+        // 渲染带动画的血量
+        let healthHTML = '';
+        for (let i = 1; i <= this.maxHealth; i++) {
+            if (i <= this.health) {
+                // 如果是变化的那个血量，添加动画类
+                if (this.healthChangeType === 'healing' && i > oldHealth && i <= this.health) {
+                    healthHTML += '<span class="heart full healing">❤️</span>';
+                } else if (this.healthChangeType === 'damaged' && i === this.health) {
+                    healthHTML += '<span class="heart full damaged">❤️</span>';
+                } else {
+                    healthHTML += '<span class="heart full">❤️</span>';
+                }
+            } else {
+                healthHTML += '<span class="heart empty">🖤</span>';
+            }
+        }
+        
+        // 添加辐射值显示
+        let radiationClass = 'radiation';
+        
+        // 根据辐射级别添加颜色类
+        if (this.radiation < 25) {
+            radiationClass += ' low';
+        } else if (this.radiation < 50) {
+            radiationClass += ' medium';
+        } else if (this.radiation < 75) {
+            radiationClass += ' high';
+        } else {
+            radiationClass += ' critical';
+        }
+        
+        // 如果辐射值变化了，添加动画类
+        if (this.radiationChanged) {
+            radiationClass += ' changing';
+        }
+        
+        healthHTML += `<span class="${radiationClass}">☢️ ${this.radiation}%</span>`;
+        
+        // 更新血量显示
+        healthDisplay.innerHTML = healthHTML;
+        
+        // 等待动画播放结束后执行回调
+        setTimeout(callback, 1500);
+    },
+
     // 渲染血量方法
     renderHealth: function() {
         let healthHTML = '<div class="mud-health">';
@@ -217,8 +295,19 @@ const mudGame = {
             }
         }
         
-        // 添加辐射值显示
-        healthHTML += `<span class="radiation">☢️ ${this.radiation}%</span>`;
+        // 添加辐射值显示，并根据辐射级别添加颜色
+        let radiationClass = 'radiation';
+        if (this.radiation < 25) {
+            radiationClass += ' low';
+        } else if (this.radiation < 50) {
+            radiationClass += ' medium';
+        } else if (this.radiation < 75) {
+            radiationClass += ' high';
+        } else {
+            radiationClass += ' critical';
+        }
+        
+        healthHTML += `<span class="${radiationClass}">☢️ ${this.radiation}%</span>`;
         healthHTML += '</div>';
         
         return healthHTML;

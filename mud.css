@@ -314,3 +314,44 @@
     background-color: rgba(0, 0, 0, 0.5);
     z-index: -1;
   }
+  /* 血量变化动画 */
+@keyframes heal-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.5); filter: brightness(1.5); }
+    100% { transform: scale(1); }
+  }
+  
+  @keyframes damage-shake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    50% { transform: translateX(5px); }
+    75% { transform: translateX(-5px); }
+    100% { transform: translateX(0); }
+  }
+  
+  .heart.healing {
+    animation: heal-pulse 0.6s;
+    color: #00ff00;
+  }
+  
+  .heart.damaged {
+    animation: damage-shake 0.5s;
+    color: #ff0000;
+  }
+  
+  /* 辐射值动画 */
+  @keyframes radiation-pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+  }
+  
+  .radiation.changing {
+    animation: radiation-pulse 1s;
+  }
+  
+  /* 辐射值颜色等级 */
+  .radiation.low { color: #00ff00; }
+  .radiation.medium { color: #ffcc00; }
+  .radiation.high { color: #ff6600; }
+  .radiation.critical { color: #ff0000; }
