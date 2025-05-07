@@ -1,0 +1,357 @@
+/* mud.css - 末世废土文字冒险游戏样式 */
+#mud-game {
+    font-family: 'Courier New', monospace;
+    background-color: #2a3b2a; /* 深森林绿色背景 */
+    color: #e0e0e0;
+    text-align: left;
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+    min-height: 600px;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  }
+
+  #mud-game h2 {
+    font-size: 32px;
+    color: #8fbc8f; /* 嫩绿色标题 */
+    text-align: center;
+    margin-bottom: 30px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  }
+
+  .mud-content {
+    background-color: #1a291a; /* 更深的森林绿色 */
+    border: 1px solid #3a5a3a;
+    padding: 25px;
+    border-radius: 5px;
+    min-height: 400px;
+    position: relative;
+    overflow: hidden;
+  }
+
+.mud-scene {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.mud-scene h3 {
+    color: #d2b48c; /* 棕褐色标题 */
+    font-size: 24px;
+    border-bottom: 1px solid #3a5a3a;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+  }
+
+.mud-scene p {
+  font-size: 18px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  white-space: pre-line;
+}
+
+/* 将物品栏改为"背包" */
+.mud-inventory {
+    background-color: #3a4a3a;
+    padding: 10px;
+    margin: 15px 0;
+    border-radius: 4px;
+    border-left: 3px solid #8fbc8f;
+  }
+.mud-inventory h4 {
+  color: #d2b48c;
+  margin: 0 0 10px 0;
+}
+
+.mud-inventory ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* 物品栏样式增强 */
+.mud-inventory li {
+    display: inline-block;
+    background-color: #4a5a4a;
+    margin: 5px;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 14px;
+    color: #ffd700; /* 物品为金色 */
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .mud-inventory li:hover {
+    background-color: #5a6a5a;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  .mud-inventory li:active {
+    transform: translateY(0);
+  }
+
+
+
+.mud-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 30px;
+}
+
+.mud-option {
+    background-color: #3a4a3a;
+    border: none;
+    color: #fff;
+    padding: 12px 15px;
+    text-align: left;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .mud-option:hover {
+    background-color: #4a5a4a;
+    transform: translateY(-2px);
+  }
+
+.mud-option:active {
+  transform: translateY(1px);
+}
+
+.mud-option.disabled {
+  background-color: #252525;
+  color: #777;
+  cursor: not-allowed;
+}
+
+.mud-restart {
+    background-color: #8fbc8f; /* 嫩绿色按钮 */
+    color: #1a291a; /* 深绿色文字 */
+  }
+
+  .mud-restart:hover {
+    background-color: #6b8e6b;
+  }
+
+/* 响应式设计 */
+@media (max-width: 600px) {
+  #mud-game {
+    padding: 10px;
+  }
+  
+  .mud-content {
+    padding: 15px;
+  }
+  
+  .mud-scene p {
+    font-size: 16px;
+  }
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 特殊按钮样式 - 修正文字居中问题 */
+#mud-select-btn {
+    background-image: url('./image/compass.svg'); /* 需要创建或更换为指南针图标 */
+    background-size: 60% auto;
+    background-position: center 30%;
+    background-repeat: no-repeat;
+    background-color: rgba(42, 59, 42, 0.8); /* 深森林绿色 */
+    position: relative;
+  }
+
+  #mud-select-btn span {
+    position: relative;
+    bottom: 0px;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    font-weight: bold;
+    display: block;
+    margin-top: 70%;
+  }
+/* 修改响应式设计，实现全屏显示 */
+@media (max-width: 768px) {
+    #mud-game {
+      max-width: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 10px;
+      min-height: 100vh;
+      height: 100vh;
+      border-radius: 0;
+      box-shadow: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1000;
+      overflow-y: auto;
+    }
+    
+    .container {
+      padding: 0;
+      max-width: 100%;
+    }
+    
+    #mud-game h2 {
+      margin-top: 40px;
+    }
+    
+    .mud-content {
+      min-height: calc(100vh - 150px);
+      margin-bottom: 20px;
+    }
+    
+    /* 确保返回按钮可见 */
+    #mud-game .back-btn {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 1010;
+    }
+  }
+  
+  /* 为body添加类，当游戏显示时防止页面滚动 */
+  body.mud-active {
+    overflow: hidden;
+  }
+  /* 添加在文件底部 */
+
+/* 场景过渡效果 */
+.mud-scene {
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.mud-scene.fade-in {
+  opacity: 1;
+}
+
+.mud-scene.fade-out {
+  opacity: 0;
+}
+
+/* 加强点击反馈效果 */
+.mud-option:active {
+  transform: translateY(1px);
+  background-color: #555555;
+}
+/* 物品描述弹窗 */
+.mud-item-description {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    background-color: #2a3b2a;
+    border: 1px solid #8fbc8f;
+    border-radius: 5px;
+    padding: 15px 20px;
+    max-width: 80%;
+    width: 350px;
+    z-index: 1100;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+    opacity: 0;
+    transition: all 0.3s ease;
+  }
+  
+  .mud-item-description.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  
+  .mud-item-description h4 {
+    color: #ffd700;
+    margin: 0 0 10px 0;
+    border-bottom: 1px solid #8fbc8f;
+    padding-bottom: 5px;
+    font-size: 18px;
+  }
+  
+  .mud-item-description p {
+    color: #e0e0e0;
+    font-size: 15px;
+    line-height: 1.6;
+    margin: 0;
+    font-style: italic;
+    text-align: justify;
+  }
+  
+  .mud-item-description .close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+    color: #8fbc8f;
+    font-size: 20px;
+    cursor: pointer;
+    user-select: none;
+  }
+  
+  .mud-item-description .close-btn:hover {
+    color: #e0e0e0;
+  }
+  
+  /* 添加模糊背景效果 */
+  .mud-item-description::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: -1;
+  }
+  /* 血量变化动画 */
+@keyframes heal-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.5); filter: brightness(1.5); }
+    100% { transform: scale(1); }
+  }
+  
+  @keyframes damage-shake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    50% { transform: translateX(5px); }
+    75% { transform: translateX(-5px); }
+    100% { transform: translateX(0); }
+  }
+  
+  .heart.healing {
+    animation: heal-pulse 0.6s;
+    color: #00ff00;
+  }
+  
+  .heart.damaged {
+    animation: damage-shake 0.5s;
+    color: #ff0000;
+  }
+  
+  /* 辐射值动画 */
+  @keyframes radiation-pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+  }
+  
+  .radiation.changing {
+    animation: radiation-pulse 1s;
+  }
+  
+  /* 辐射值颜色等级 */
+  .radiation.low { color: #00ff00; }
+  .radiation.medium { color: #ffcc00; }
+  .radiation.high { color: #ff6600; }
+  .radiation.critical { color: #ff0000; }
