@@ -20,6 +20,36 @@ const mudScenes = {
       { text: '', nextScene: 'start' }
     ]
   },
+  'suburbanRuins': {
+  title: '城郊废墟',
+  description: '你来到一片曾经是高档社区的城郊废墟。如今，这些曾经象征着"美国梦"的别墅只剩下坍塌的框架和杂草丛生的院子。一座歪斜的邮箱上的"欢迎来到森林湖社区"标志讽刺地迎接着你。几只变异的松鼠在废弃的儿童游乐设施上警惕地注视着你，它们异常巨大的眼睛在暮色中反射着诡异的光。远处，一栋保存相对完好的双层别墅引起了你的注意。',
+  radiationChange: 5,
+  options: [
+    { text: '探索保存较好的别墅', nextScene: 'exploreIntactHouse' },
+    { text: '搜寻附近的便利店残骸', nextScene: 'searchConvenienceStore' },
+    { text: '返回废弃公路', nextScene: 'abandonedHighway' }
+  ]
+},
+
+'exploreIntactHouse': {
+  title: '模范家庭',
+  description: '你推开吱呀作响的大门，走进这栋双层别墅。客厅里，一家四口的骨架仍然整齐地坐在沙发上，面对着早已无信号的电视机，仿佛在等待世界末日特别节目的插播广告结束。餐桌上摆着完美保存的假水果和塑料蛋糕，上面积满了厚厚的辐射尘。楼梯旁的照片墙展示着这家人从幸福到恐慌的渐变表情集。"嗯，至少他们没有分开，"蛇哥干巴巴地评论道，"在末日来临时，家庭团聚总是最重要的。"',
+  options: [
+    { text: '搜索二楼卧室', nextScene: 'searchUpstairs' },
+    { text: '检查地下室', nextScene: 'checkBasement' },
+    { text: '返回城郊废墟', nextScene: 'suburbanRuins' }
+  ]
+},
+
+'searchConvenienceStore': {
+  title: '永不打烊',
+  description: '废弃便利店的招牌上"24小时营业"的霓虹灯早已熄灭，讽刺地应验了这个承诺——确实永远不会关门了，因为已经没有门了。店内，货架东倒西歪，大部分商品早被洗劫一空。柜台后方，一具骨架穿着褪色的员工背心，胸前的名牌写着"史蒂夫"，旁边贴着"本月最佳员工"的徽章。"看来末日也没能让史蒂夫逃离他的岗位，"你自言自语道，"真是敬业啊。"在角落里，你发现一个被锁住的药品柜，奇迹般地保持完好。',
+  options: [
+    { text: '尝试撬开药品柜', nextScene: 'unlockMedicineCabinet' },
+    { text: '检查收银机', nextScene: 'checkCashRegister' },
+    { text: '返回城郊废墟', nextScene: 'suburbanRuins' }
+  ]
+},
 
 'start': {
         title: '逃离辐射区',

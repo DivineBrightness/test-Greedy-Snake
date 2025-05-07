@@ -10,6 +10,8 @@ const mudGame = {
     health: 3,
     radiation: 0, // 辐射值
     trust: {}, // 派系信任度
+    isTransitioning: false, // 添加场景转换状态标记
+   
     
     get scenes() {
         return window.mudScenes;
@@ -81,12 +83,15 @@ const mudGame = {
         }
     },
     
-    // 设置事件监听器
+    // 修改事件监听器函数
     setupEventListeners: function() {
         // 选项点击事件代理
         const gameContainer = document.getElementById('mud-game');
         if (gameContainer) {
             gameContainer.addEventListener('click', (e) => {
+                // 如果正在场景转换中，忽略点击事件
+                if (this.isTransitioning) return;
+                
                 if (e.target.classList.contains('mud-option')) {
                     const nextScene = e.target.getAttribute('data-scene');
                     if (nextScene) this.goToScene(nextScene);
@@ -97,13 +102,17 @@ const mudGame = {
         // 重新开始按钮
         const restartBtn = document.getElementById('mud-restart-btn');
         if (restartBtn) {
-            restartBtn.addEventListener('click', () => this.restart());
+            restartBtn.addEventListener('click', () => {
+                if (!this.isTransitioning) this.restart();
+            });
         }
         
         // 返回按钮
         const backBtn = document.getElementById('mud-back-btn');
         if (backBtn) {
-            backBtn.addEventListener('click', () => this.hide());
+            backBtn.addEventListener('click', () => {
+                if (!this.isTransitioning) this.hide();
+            });
         }
     },
     
@@ -133,7 +142,12 @@ const mudGame = {
         }
     },
     
+    // 修改重启函数
     restart: function() {
+        // 如果正在场景转换中，直接返回
+        if (this.isTransitioning) return;
+        
+        this.isTransitioning = true;
         this.currentScene = 'start';
         this.inventory = [];
         this.visitedAreas = [];
@@ -142,11 +156,29 @@ const mudGame = {
         this.radiation = 0;
         this.trust = {};
         this.renderCurrentScene();
+        
+        // 重置场景转换状态(延时一点以确保渲染完成)
+        setTimeout(() => {
+            this.isTransitioning = false;
+        }, 300);
     },
     
-    // 修改前往场景方法，添加血量和辐射处理
+    // 修改场景切换函数
     goToScene: function(sceneId) {
+        // 如果正在场景转换中，直接返回
+        if (this.isTransitioning) return;
+        
+        // 设置转换状态为true，阻止后续点击
+        this.isTransitioning = true;
+        
         const scene = this.scenes[sceneId];
+        
+        // 如果场景不存在，输出错误并退出
+        if (!scene) {
+            console.error(`场景 "${sceneId}" 不存在!`);
+            this.isTransitioning = false;
+            return;
+        }
         
         // 保存血量和辐射旧值，用于之后比较变化
         const oldHealth = this.health;
@@ -226,6 +258,8 @@ const mudGame = {
                     this.currentScene = sceneId;
                 }
                 this.renderCurrentScene();
+                // 重置场景转换状态
+                this.isTransitioning = false;
             });
         } else {
             // 没有变化，直接切换场景
@@ -237,6 +271,8 @@ const mudGame = {
                 this.currentScene = sceneId;
             }
             this.renderCurrentScene();
+            // 重置场景转换状态
+            this.isTransitioning = false;
         }
     },
 
@@ -413,7 +449,9 @@ const mudGame = {
                 // 绑定重新开始按钮事件
                 const restartBtn = document.getElementById('mud-restart-btn');
                 if (restartBtn) {
-                    restartBtn.addEventListener('click', () => this.restart());
+                    restartBtn.addEventListener('click', () => {
+                        if (!this.isTransitioning) this.restart();
+                    });
                 }
             }, 200); // 200毫秒等待淡出完成
         } else {
