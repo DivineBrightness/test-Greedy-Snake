@@ -151,6 +151,8 @@ const mudGame = {
         // 保存血量和辐射旧值，用于之后比较变化
         const oldHealth = this.health;
         const oldRadiation = this.radiation;
+        let shouldGoToDeath = false; // 标记是否应该跳转到死亡场景
+        let shouldGoToRadiationDeath = false; // 标记是否应该跳转到辐射死亡场景
         
         // 记录访问过的区域
         if (scene.isArea && !this.visitedAreas.includes(sceneId)) {
@@ -174,10 +176,8 @@ const mudGame = {
             
             this.health = Math.max(0, this.health + scene.healthChange);
             if (this.health <= 0) {
-                // 如果血量为0，直接前往死亡场景
-                this.currentScene = 'death';
-                this.renderCurrentScene();
-                return;
+                // 如果血量为0，标记需要前往死亡场景
+                shouldGoToDeath = true;
             }
             // 确保不超过最大血量
             this.health = Math.min(this.maxHealth, this.health);
@@ -192,10 +192,8 @@ const mudGame = {
             
             this.radiation = Math.max(0, this.radiation + scene.radiationChange);
             if (this.radiation >= 100) {
-                // 辐射值过高，前往辐射死亡场景
-                this.currentScene = 'radiationDeath';
-                this.renderCurrentScene();
-                return;
+                // 辐射值过高，标记需要前往辐射死亡场景
+                shouldGoToRadiationDeath = true;
             }
         } else {
             this.radiationChanged = false;
@@ -219,12 +217,25 @@ const mudGame = {
         // 如果有血量或辐射变化，先显示动画再切换场景
         if (this.healthChangeType || this.radiationChanged) {
             this.animateHealthChanges(oldHealth, oldRadiation, () => {
-                this.currentScene = sceneId;
+                // 动画结束后检查是否应该前往死亡场景
+                if (shouldGoToDeath) {
+                    this.currentScene = 'death';
+                } else if (shouldGoToRadiationDeath) {
+                    this.currentScene = 'radiationDeath';
+                } else {
+                    this.currentScene = sceneId;
+                }
                 this.renderCurrentScene();
             });
         } else {
             // 没有变化，直接切换场景
-            this.currentScene = sceneId;
+            if (shouldGoToDeath) {
+                this.currentScene = 'death';
+            } else if (shouldGoToRadiationDeath) {
+                this.currentScene = 'radiationDeath';
+            } else {
+                this.currentScene = sceneId;
+            }
             this.renderCurrentScene();
         }
     },
