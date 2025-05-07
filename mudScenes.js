@@ -2306,7 +2306,308 @@ const mudScenes = {
   ] 
 },
 
+// 添加到mudScenes对象中
 
+'checkCommotion': {
+    title: '窗外骚动',
+    description: '你走到窗边，小心地向外窥视。医院停车场上，一队挖坟人正与另一群陌生人发生冲突。他们似乎在争夺一批医疗物资。这场骚动使大多数守卫都被吸引过去，可能是你离开的好机会。你迅速将需要的药品塞进背包，准备离开。',
+    options: [
+      { text: '趁机离开药房', nextScene: 'leavePharmacyQuickly' },
+      { text: '继续观察冲突', nextScene: 'observeConflictFurther' }
+    ]
+  },
+  
+  'observeConflictFurther': {
+    title: '持续观察',
+    description: '你继续观察外面的冲突。挖坟人首领塔洛斯亲自出面，他摘下面具对陌生人说了什么。出人意料的是，那群陌生人突然放下武器，似乎达成了某种协议。他们开始一起搬运箱子进入医院。虽然你不确定发生了什么，但这可能预示着更多人将进入医院，你需要尽快离开。',
+    options: [
+      { text: '立即离开药房', nextScene: 'leavePharmacyQuickly' }
+    ]
+  },
+  
+  'leavePharmacyQuickly': {
+    title: '悄然离去',
+    description: '药品已经到手，你决定趁着骚动离开药房。走廊上空无一人，大多数挖坟人都被吸引到外面的冲突。你轻手轻脚地走向出口，每一步都小心翼翼以避免发出声音。几分钟后，你成功抵达医院侧门，没有被任何人发现。外面的空气中弥漫着辐射尘，但至少你已经安全脱离了危险区域。',
+    options: [
+      { text: '返回铁锈集市', nextScene: 'returnToMarketWithMedicine' }
+    ]
+  },
+  
+  'hideFromGuards': {
+    title: '紧急藏匿',
+    description: '你迅速躲到一个大型药柜后面，屏住呼吸。两名挖坟人守卫进入药房，环顾四周。"我听到这里有动静，"其中一人说道，"可能是老鼠吧。"另一人注意到被撬开的柜子，立刻警觉起来："有人闯入了！搜查整个房间！"你的心跳加速，希望自己的藏身之处足够安全。守卫们搜索了几分钟后，无线电里传来外面发生骚动的消息。"算了，外面出事了，"领头的守卫说，"先去支援，回头再处理这个。"他们匆忙离开，给了你逃脱的机会。',
+    options: [
+      { text: '迅速离开药房', nextScene: 'leavePharmacyHastily' }
+    ]
+  },
+  
+  'leavePharmacyHastily': {
+    title: '仓促撤离',
+    description: '确认守卫离开后，你从藏身处出来，迅速将药品装进背包。外面的喧闹声越来越大，似乎发生了某种冲突。你不想卷入其中，决定走另一条路。通过员工通道，你找到了一个较少使用的出口。推开铁门，刺眼的阳光和辐射尘扑面而来。你已经成功从医院撤离，现在需要尽快返回铁锈集市。',
+    options: [
+      { text: '返回铁锈集市', nextScene: 'returnToMarketWithMedicine' }
+    ]
+  },
+  
+  'sneakOutOfBasement': {
+    title: '悄然撤离',
+    description: '你决定不冒险继续观察这诡异的仪式，小心翼翼地向后退去。黑暗成了你的掩护，你沿着来时的路慢慢离开。一阵刺骨的冷风从深处吹来，让你不禁打了个寒颤。某处传来金属碰撞的声音，你加快了脚步。最终，你找到了通往一楼的楼梯，逃离了那个充满诡异能量的地下室。',
+    radiationChange: -5,
+    options: [
+      { text: '寻找药品', nextScene: 'searchForCabinetKey' },
+      { text: '直接离开医院', nextScene: 'escapeHospital' }
+    ]
+  },
+  
+  'watchRitualInSilence': {
+    title: '仪式见证',
+    description: '你决定继续观察这个神秘仪式，藏在黑暗中。随着仪式进行，新成员的身体开始发生变化，皮肤逐渐呈现出淡蓝色，眼睛也开始发出微弱的蓝光。其他挖坟人开始整齐地低声吟唱，声音中充满狂热崇拜。突然，一名挖坟人朝你的方向转过头来，似乎感知到了你的存在。你不得不立即撤退，期望他们没有真正发现你。',
+    radiationChange: 15,
+    options: [
+      { text: '迅速撤离地下室', nextScene: 'fleeBasementDiscovered' }
+    ]
+  },
+  
+  'fleeBasementDiscovered': {
+    title: '狼狈逃窜',
+    description: '你转身就跑，身后传来警报声和喊叫。黑暗中你几乎看不清路，但恐惧驱使你向前。脚步声越来越近，你在一个拐角处发现了一条小通道，钻了进去。这是一条维修通道，勉强容纳一个人通过。你在管道中爬行，最终找到了一个通往一楼的垂直管道。气喘吁吁地爬上去后，你发现自己在医院的储物间内。辐射仪表嘀嘀作响，提醒你在地下室吸收了不少辐射。',
+    healthChange: -1,
+    options: [
+      { text: '尝试找到药房', nextScene: 'searchForCabinetKey' },
+      { text: '立即离开医院', nextScene: 'escapeHospital' }
+    ]
+  },
+  
+  'continueWatching': {
+    title: '持续观察',
+    description: '你保持静止，继续观察这些蓝眼睛的"人形"。它们的动作极为有序，像是在执行预设程序，完全没有人类工作时的随意性。你注意到它们似乎能无声交流，偶尔交换眼神就能协调复杂任务。更令人不安的是，它们对辐射似乎完全免疫，直接接触明显带有辐射的部件时没有任何防护。当一个适应体转向你的方向时，你迅速缩回掩体后，心跳加速。',
+    radiationChange: 5,
+    options: [
+      { text: '尝试绕过它们', nextScene: 'findPathToBypassThem' },
+      { text: '撤退寻找其他路线', nextScene: 'retreatSilently' }
+    ]
+  },
+  
+  'retreatSilently': {
+    title: '安静撤退',
+    description: '你决定不冒险接近那些诡异的蓝眼生物，小心翼翼地后退。正当你准备转身时，不慎踢到了一个空罐子，金属撞击声在寂静的走廊中格外刺耳。几个"适应体"立即转向你的方向，眼中的蓝光闪烁。你不再犹豫，转身就跑，身后传来整齐的脚步声。拐过几个弯后，你钻进一个窄小的维修通道，屏住呼吸等待追兵经过。幸运的是，它们似乎没有发现你的藏身之处，脚步声渐渐远去。',
+    options: [
+      { text: '寻找另一条路线', nextScene: 'findAlternateRoute' },
+      { text: '尝试返回控制室', nextScene: 'returnToControlRoom' }
+    ]
+  },
+  
+  'findAlternateRoute': {
+    title: '寻找替代路线',
+    description: '你在迷宫般的走廊中小心前行，寻找另一条通往净水系统的路径。墙上的指示牌大多已经模糊不清，但你还是找到了一条标有"辅助水泵控制"的通道。这条路看起来很少被使用，灰尘厚重，但也意味着可能没有那些蓝眼生物巡逻。向前走了约十分钟，你发现了一个小型控制室，里面的设备似乎仍在运行。',
+    options: [
+      { text: '检查控制室', nextScene: 'examineAuxiliaryControl' },
+      { text: '继续寻找主净水系统', nextScene: 'continueToMainWaterSystem' }
+    ]
+  },
+  
+  'returnToControlRoom': {
+    title: '返回控制室',
+    description: '你决定回到之前发现的控制室，希望从那里找到更安全的方法接近净水系统。路上你格外小心，避开了几次巡逻的"适应体"。回到控制室后，你更详细地研究了监控系统和基地地图，发现有一条维护通道可能绕过主要的活动区域，直接通向净水核心。',
+    options: [
+      { text: '使用维护通道', nextScene: 'useMaintenanceTunnel' },
+      { text: '尝试从控制室操作系统', nextScene: 'operateFromControlRoom' }
+    ]
+  },
+  
+  'examineAuxiliaryControl': {
+    title: '辅助控制室',
+    description: '这个小型控制室管理着基地的辅助水泵系统。虽然不是主要净水设备，但它负责将处理后的水输送到各个区域。控制台上的读数显示系统运行正常，但效率只有40%。你研究了控制面板，发现可以从这里增加水流向某个特定的外部连接点——比如铁锈集市可能建立的管道。',
+    options: [
+      { text: '调整水流方向', nextScene: 'redirectWaterFlow' },
+      { text: '继续寻找主净水系统', nextScene: 'continueToMainWaterSystem' }
+    ]
+  },
+  
+  'redirectWaterFlow': {
+    title: '重定向水流',
+    description: '你仔细操作控制台，将水流重定向到最接近铁锈集市方向的外部连接点。系统显示操作成功，处理后的净水开始流向新的目标区域。这不是最理想的解决方案，但至少可以为集市提供部分水源。如果能找到主净水系统，或许可以进一步增加水流量。现在，你需要决定是否继续深入基地。',
+    options: [
+      { text: '满足于当前成果并撤离', nextScene: 'retreatWithPartialSuccess' },
+      { text: '继续寻找主净水系统', nextScene: 'continueToMainWaterSystem' }
+    ]
+  },
+  
+  'retreatWithPartialSuccess': {
+    title: '部分胜利',
+    description: '你决定不再冒险，已经取得的成果足以改善铁锈集市的处境。你记下了控制室的位置和操作方法，以便将来可能的进一步调整。沿着来时的路小心撤离，避开任何可能的"适应体"巡逻。经过几次惊险的躲避后，你终于回到了入口通风井，爬出地面，迎接废土刺眼的阳光。',
+    options: [
+      { text: '返回铁锈集市', nextScene: 'returnToMarketWithPartialSuccess' }
+    ]
+  },
+  
+  'continueToMainWaterSystem': {
+    title: '深入探索',
+    description: '你决定继续寻找主净水系统，希望能获得更完整的控制权。根据墙上的指示，你小心前进，每次转角都先侦查情况。途中你看到更多的"适应体"，但它们似乎没有主动攻击性，只要不干扰它们的工作就不会注意你。最终，你来到了一个巨大的门前，标记为"中央净水处理核心"。',
+    options: [
+      { text: '尝试进入核心区域', nextScene: 'enterWaterCoreArea' },
+      { text: '观察核心区域活动', nextScene: 'observeWaterCoreActivities' }
+    ]
+  },
+  
+  'enterWaterCoreArea': {
+    title: '净水核心',
+    description: '你谨慎地推开沉重的门，进入中央净水处理核心。这是一个巨大的环形室，中央是一个发出蓝色光芒的水池，周围环绕着各种净水设备。几个"适应体"正在不同工作站操作，但由于房间很大，你的进入并未立即引起注意。控制平台位于远端，似乎是整个系统的中枢。',
+    radiationChange: 8,
+    options: [
+      { text: '悄悄靠近控制平台', nextScene: 'approachControlPlatform' },
+      { text: '观察净水过程', nextScene: 'studyWaterPurificationProcess' }
+    ]
+  },
+  
+  'observeWaterCoreActivities': {
+    title: '远程观察',
+    description: '你选择不冒险进入，而是通过门上的小窗观察内部活动。中央净水核心是一个巨大的圆形设施，各种管道和机械装置有序运转。"适应体"们在其中穿梭，维护设备，定期从中央水池采集样本进行分析。整个系统运作得像精密钟表一般，但效率似乎不高。由于外部没有控制台，你无法从这里调整系统参数。',
+    options: [
+      { text: '尝试进入核心区域', nextScene: 'enterWaterCoreArea' },
+      { text: '返回辅助控制室', nextScene: 'returnToAuxiliaryControl' }
+    ]
+  },
+  
+  'returnToAuxiliaryControl': {
+    title: '返回辅助控制',
+    description: '你决定返回之前发现的辅助控制室，那里虽然功能有限，但至少可以安全操作。途中你遇到一队巡逻的"适应体"，但幸运地藏在设备后躲过了它们的注意。回到控制室后，你尝试从这里优化水流和净化效率，虽然不能完全控制主系统，但仍然可以显著改善输出。',
+    options: [
+      { text: '最大化辅助系统效率', nextScene: 'maximizeAuxiliaryEfficiency' },
+      { text: '寻找返回地面的路径', nextScene: 'findPathToSurface' }
+    ]
+  },
+  
+  'maximizeAuxiliaryEfficiency': {
+    title: '系统优化',
+    description: '你仔细研究控制面板，通过微调各个参数，成功将辅助系统的效率从40%提升到65%。这意味着铁锈集市将获得更多干净的水。系统显示当前设置可以稳定运行至少三个月，之后可能需要维护。你记录下所有重要的设置和参数，以便将来参考。任务已经取得了相当的成功，是时候考虑撤离了。',
+    options: [
+      { text: '寻找返回地面的路径', nextScene: 'findPathToSurface' }
+    ]
+  },
+  
+  'findPathToSurface': {
+    title: '撤离路线',
+    description: '完成系统调整后，你开始寻找返回地面的路径。通过控制室的终端，你调出了基地的紧急疏散路线图。最近的出口在东北方向，通过一系列维护通道可以到达。你小心地导航，避开已知的"适应体"活动区域。途中，你发现了一个小型储物室，里面可能有有用的物资。',
+    options: [
+      { text: '检查储物室', nextScene: 'checkStorageRoom' },
+      { text: '直接前往出口', nextScene: 'headDirectlyToExit' }
+    ]
+  },
+  
+  'checkStorageRoom': {
+    title: '意外发现',
+    description: '储物室里大部分架子都空了，但在角落里你发现了一个锁着的金属箱。用工具撬开后，里面是一套完整的技术文档，详细记录了净水系统的设计、维护和修复方法。这些文件对铁锈集市来说价值连城，可以帮助他们建立自己的小型净水系统。还有一瓶完好的高级抗辐射药剂，看起来是军方特供版本。',
+    item: '净水系统技术文档',
+    item: '高级抗辐射药剂',
+    options: [
+      { text: '继续前往出口', nextScene: 'headDirectlyToExit' }
+    ]
+  },
+  
+  'headDirectlyToExit': {
+    title: '最后冲刺',
+    description: '你沿着紧急疏散路线快速前进。通道灯光昏暗，但标识清晰可见。当你接近出口时，远处传来机械运行声增强的声音，似乎你的调整导致系统开始更积极地运转。最终，你找到了一个通往地面的紧急出口梯子。爬上去后，你推开沉重的井盖，新鲜(相对而言)的废土空气扑面而来。你成功完成了任务，为铁锈集市带回了希望。',
+    options: [
+      { text: '返回铁锈集市', nextScene: 'returnToMarketWithSuccess' }
+    ]
+  },
+  
+  'returnToMarketWithPartialSuccess': {
+    title: '带回希望',
+    description: '你返回铁锈集市，向老莫和蛇哥报告了你的发现和行动。"虽然没能完全控制主系统，但我重定向了部分水流到我们可以连接的地方，"你解释道。老莫立刻派人前往你指示的地点，开始铺设管道。几天后，第一批干净的水流入铁锈集市的储水罐。尽管不是最理想的解决方案，但这已经显著改善了居民的生活。蛇哥拍拍你的肩膀："做得好，这比我们预期的要好得多。"',
+    options: [
+      { text: '计划未来的探索', nextScene: 'planFutureExploration' },
+      { text: '庆祝当前的成功', nextScene: 'celebrateCurrentSuccess' }
+    ]
+  },
+  
+  'returnToMarketWithSuccess': {
+    title: '凯旋归来',
+    description: '当你回到铁锈集市，带着净水系统技术文档和成功激活系统的消息，人们几乎不敢相信自己的耳朵。老莫亲自迎接你，脸上罕见地露出了笑容："你做到了，孩子！"工作队很快被派往你指示的连接点，铺设管道连接铁锈集市。第一批水流入时，整个集市爆发出欢呼。你交给阿萍和几位技术人员的文档将确保长期的水源供应，甚至可能帮助他们在未来建立自己的小型净水系统。',
+    options: [
+      { text: '向众人解释发现', nextScene: 'explainDiscoveries' },
+      { text: '与核心成员私下讨论', nextScene: 'discussPrivately' }
+    ]
+  },
+  
+  'planFutureExploration': {
+    title: '未来计划',
+    description: '有了初步的成功，你开始与蛇哥和老枪计划未来更深入的探索。"如果能完全控制主净水系统，我们可以获得更多水，甚至可能扩展到其他区域，"你解释道。老枪点点头："我可以帮忙绘制更详细的军事基地地图，标出危险区和可能的进入点。"蛇哥则建议："我们应该组建一个专门的探索队，定期维护和改进水源连接。"尽管面临挑战，未来看起来比几周前更加光明。',
+    isEnding: true,
+    endingType: '探索者结局',
+    options: [
+      { text: '重新开始', nextScene: 'start' }
+    ]
+  },
+  
+  'celebrateCurrentSuccess': {
+    title: '庆祝胜利',
+    description: '铁锈集市举行了一个简单但欢乐的庆祝活动，纪念净水供应的到来。人们欢笑、歌唱，甚至奢侈地使用清水洗澡。你成为集市的英雄，得到了老莫的特别表彰和更好的住所。虽然水源有限，但通过精心管理，足以大大改善集市居民的生活。看着孩子们玩耍，成人们规划增加种植区，你意识到有时即使不完美的胜利也能带来巨大改变。在这个残酷的废土上，每一滴水都是生命的礼物。',
+    isEnding: true,
+    endingType: '建设者结局',
+    options: [
+      { text: '重新开始', nextScene: 'start' }
+    ]
+  },
+  
+  'explainDiscoveries': {
+    title: '公开真相',
+    description: '你召集铁锈集市的居民，详细解释了军事基地的发现，包括神秘的"适应体"和基地的原始用途。"那里不仅有净水系统，还有危险的秘密，"你警告道，"不过我们现在已经安全地接入了水源，并且有技术知识来维护它。"居民们对你的诚实表示感谢，集体决定组建一个"水源委员会"，由代表不同群体的成员共同管理这一珍贵资源。在接下来的几年里，铁锈集市在民主管理下蓬勃发展，成为废土上罕见的和平与进步的灯塔。',
+    isEnding: true,
+    endingType: '真相结局',
+    options: [
+      { text: '重新开始', nextScene: 'start' }
+    ]
+  },
+  
+  'discussPrivately': {
+    title: '权力核心',
+    description: '你选择只与老莫、蛇哥、阿萍和老枪等关键人物分享全部细节。"控制水源就是控制一切，"老莫洞察地说，"我们需要谨慎管理这一力量。"在你们的领导下，铁锈集市实施了配给制度，确保水源公平分配，同时也作为吸引新成员和建立联盟的筹码。随着时间推移，铁锈集市从一个简陋的交易点发展成为废土上最有影响力的定居点之一，你也从一个陌生的旅行者成长为核心领导层的重要一员。权力有时沉重，但在这个世界，强者生存并非没有道理。',
+    isEnding: true,
+    endingType: '领导者结局',
+    options: [
+      { text: '重新开始', nextScene: 'start' }
+    ]
+  },
+  
+  'fleeFromCreatures': {
+    title: '紧急撤离',
+    description: '你和蛇哥转身就跑，身后传来那些"人形生物"整齐划一的脚步声。"这些是什么鬼东西？"你气喘吁吁地问道。"我猜是某种辐射实验的产物，"蛇哥边跑边回答，"就像变异鼠一样，只不过原料是人！"你们冲进一条维修通道，蛇哥猛地关上防火门并用工具卡住门把。"知道我从不来这种地方的原因吗？"他苦笑道，"因为末日后的科研设施就像脱口秀演员——实验总是失败，但却永远不会离场！"',
+    options: [
+      { text: '探索附近区域寻找线索', nextScene: 'exploreNearbyArea' },
+      { text: '尝试找到控制室', nextScene: 'seekControlRoom' }
+    ]
+  },
+  
+  'defendWithWeapons': {
+    title: '绝境反击',
+    description: '你拔出老枪的左轮，朝最靠近的生物开火。子弹击中它的胸部，但它只是踉跄了一下就继续前进。更诡异的是，伤口处流出的不是血液，而是发着蓝光的粘稠液体。"常规武器对它们没用！"蛇哥大喊，一边拉着你后退，"我们得想别的办法！"他指向不远处的控制台，"那里！也许能关闭水处理系统的某些部分！"',
+    radiationChange: 3,
+    options: [
+      { text: '冲向控制台', nextScene: 'dashToControlPanel' },
+      { text: '撤退寻找出路', nextScene: 'retreatToFindExit' }
+    ]
+  },
+  
+  'dashToControlPanel': {
+    title: '控制台争夺',
+    description: '你们冲向水处理区的控制台，身后的蓝眼生物步调一致地追赶。蛇哥一把推开挡在控制台前的生物，它的身体冰冷得像金属。"挡住它们！"他喊道，同时开始操作控制台。你用左轮抵住最近的追兵，但更多的"人"正从各个管道入口涌来。蛇哥疯狂地按着按钮，突然，整个区域响起刺耳的警报声，几个闸门开始缓缓关闭。"出口要关了，快走！"',
+    healthChange: -1,
+    options: [
+      { text: '跟随蛇哥冲向出口', nextScene: 'rushToExit' },
+      { text: '继续战斗掩护后撤', nextScene: 'fightToCoverRetreat' }
+    ]
+  },
+  
+  'retreatToFindExit': {
+    title: '战略撤退',
+    description: '你们边打边退，寻找任何可能的出口。蓝眼生物步伐虽慢但从未停止，而且数量不断增加。"那边！"蛇哥指向一条标着"紧急撤离"的通道，"这应该通向某个安全区域！"跑进通道后，你们发现这是一个老式的减压室，可能是为了防止辐射污染。蛇哥迅速关闭内门，启动了减压程序。透过小窗，你们看到蓝眼生物站在门外，一动不动地盯着你们，没有任何情绪——这比愤怒或仇恨更加令人不安。',
+    options: [
+      { text: '等待减压完成', nextScene: 'waitForDecompression' },
+      { text: '检查减压室内部', nextScene: 'examineDecompressionChamber' }
+    ]
+  }
 
   };
   
