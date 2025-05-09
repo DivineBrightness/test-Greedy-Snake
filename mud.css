@@ -1,154 +1,567 @@
-/* mud.css - 末世废土文字冒险游戏样式 */
-#mud-game {
-    font-family: 'Courier New', monospace;
-    background-color: #2a3b2a; /* 深森林绿色背景 */
-    color: #e0e0e0;
-    text-align: left;
-    padding: 20px;
-    max-width: 800px;
-    margin: 0 auto;
-    position: relative;
-    min-height: 600px;
-    border-radius: 8px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-  }
+/* wasteland.css - 末世废土文字冒险游戏样式 */
 
-  #mud-game h2 {
-    font-size: 32px;
-    color: #8fbc8f; /* 嫩绿色标题 */
-    text-align: center;
-    margin-bottom: 30px;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-  }
-
-  .mud-content {
-    background-color: #1a291a; /* 更深的森林绿色 */
-    border: 1px solid #3a5a3a;
-    padding: 25px;
-    border-radius: 5px;
-    min-height: 400px;
-    position: relative;
-    overflow: hidden;
-  }
-
-.mud-scene {
-  animation: fadeIn 0.5s ease-in-out;
+/* 游戏主容器 */
+#wasteland-game {
+  font-family: 'Courier New', monospace;
+  background-color: #2a3b2a; /* 深森林绿色背景 */
+  color: #e0e0e0;
+  text-align: left;
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+  position: relative;
+  min-height: 600px;
+  border-radius: 8px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  background-image: url('./image/compass.svg'); /* 可选的纹理背景 */
+  background-blend-mode: overlay;
+  border: 1px solid #3a4a3a;
 }
 
-.mud-scene h3 {
-    color: #d2b48c; /* 棕褐色标题 */
-    font-size: 24px;
-    border-bottom: 1px solid #3a5a3a;
-    padding-bottom: 10px;
-    margin-bottom: 15px;
-  }
+#wasteland-game h2 {
+  color: #d2b48c; /* 棕褐色标题 */
+  font-size: 28px;
+  text-align: center;
+  margin-bottom: 20px;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+  border-bottom: 2px solid #3a5a3a;
+  padding-bottom: 15px;
+}
 
-.mud-scene p {
+/* 修改内容区域，增加底部内边距以防止内容被选项容器遮挡 */
+.wasteland-content {
+  position: relative;
+  height: 60vh; /* 固定高度 */
+  max-height: 500px;
+  overflow-y: auto; /* 允许滚动 */
+  padding-bottom: 150px; /* 增加底部内边距，确保选项不会遮挡内容 */
+  margin-bottom: 10px;
+}
+/* 修改选项容器样式，确保不会完全遮挡内容 */
+.wasteland-options-container {
+  position: fixed; /* 改为固定定位，而非sticky */
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 40px); /* 考虑到左右边距 */
+  max-width: 760px; /* 与游戏容器宽度匹配 */
+  background-color: rgba(42, 59, 42, 0.95);
+  padding: 15px;
+  box-shadow: 0 -5px 10px rgba(0, 0, 0, 0.3);
+  border-top: 1px solid #3a5a3a;
+  z-index: 100;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* 确保场景内容也有足够的底部空间 */
+.wasteland-scene {
+  animation: fadeIn 0.5s ease-in-out;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 30px; /* 增加底部边距 */
+}
+
+.wasteland-scene h3 {
+  color: #d2b48c; /* 棕褐色标题 */
+  font-size: 24px;
+  border-bottom: 1px solid #3a5a3a;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.wasteland-scene p {
   font-size: 18px;
   line-height: 1.6;
   margin-bottom: 20px;
   white-space: pre-line;
+  text-shadow: 0px 0px 1px rgba(0, 0, 0, 0.1);
 }
 
-/* 将物品栏改为"背包" */
-.mud-inventory {
-    background-color: #3a4a3a;
-    padding: 10px;
-    margin: 15px 0;
-    border-radius: 4px;
-    border-left: 3px solid #8fbc8f;
-  }
-.mud-inventory h4 {
+/* 属性状态显示 */
+.wasteland-attributes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+  border-left: 3px solid #8fbc8f;
+}
+
+.attribute-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px;
+  background-color: rgba(58, 74, 58, 0.7);
+  border-radius: 3px;
+}
+
+/* 各属性特定样式 */
+.heart.full, .food.full, .water.full {
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.3));
+}
+
+.heart.empty, .food.empty, .water.empty {
+  opacity: 0.4;
+}
+
+.radiation.low {
+  color: #7fff00; /* 浅绿色，表示低辐射 */
+}
+
+.radiation.medium {
+  color: #ffa500; /* 橙色，表示中等辐射 */
+}
+
+.radiation.high {
+  color: #ff0000; /* 红色，表示高辐射 */
+  animation: pulse 1.5s infinite;
+}
+
+.sanity.positive {
+  color: #7fff00; /* 浅绿色，表示积极精神状态 */
+}
+
+.sanity.negative {
+  color: #ff6347; /* 红橙色，表示负面精神状态 */
+}
+
+/* 物品栏样式 */
+.wasteland-inventory {
+  background-color: rgba(58, 74, 58, 0.7);
+  padding: 12px;
+  margin: 15px 0;
+  border-radius: 4px;
+  border-left: 3px solid #8fbc8f;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.wasteland-inventory h4 {
   color: #d2b48c;
   margin: 0 0 10px 0;
+  font-size: 18px;
 }
 
-.mud-inventory ul {
+.wasteland-inventory ul {
   list-style-type: none;
   padding: 0;
   margin: 0;
-}
-
-/* 物品栏样式增强 */
-.mud-inventory li {
-    display: inline-block;
-    background-color: #4a5a4a;
-    margin: 5px;
-    padding: 5px 10px;
-    border-radius: 3px;
-    font-size: 14px;
-    color: #ffd700; /* 物品为金色 */
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .mud-inventory li:hover {
-    background-color: #5a6a5a;
-    transform: translateY(-2px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  }
-  .mud-inventory li:active {
-    transform: translateY(0);
-  }
-
-
-
-.mud-options {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 30px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.mud-option {
-    background-color: #3a4a3a;
-    border: none;
-    color: #fff;
-    padding: 12px 15px;
-    text-align: left;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.3s;
-    position: relative;
-    overflow: hidden;
-  }
+.wasteland-inventory li {
+  display: inline-block;
+  background-color: #4a5a4a;
+  margin: 5px;
+  padding: 8px 12px;
+  border-radius: 3px;
+  font-size: 14px;
+  color: #ffd700; /* 物品为金色 */
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
 
-  .mud-option:hover {
-    background-color: #4a5a4a;
-    transform: translateY(-2px);
-  }
+.wasteland-inventory li:hover {
+  background-color: #5a6a5a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
 
-.mud-option:active {
+.wasteland-inventory li:active {
+  transform: translateY(0);
+}
+
+.empty-inventory {
+  color: #888;
+  font-style: italic;
+  text-align: center;
+}
+
+
+/* 修改选项按钮样式为深色调 */
+.wasteland-option {
+  background-color: #2a3a2a; /* 深绿色背景 */
+  border: none;
+  color: #c5d5c5; /* 柔和的浅绿色文字 */
+  padding: 14px 18px;
+  text-align: left;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+  font-size: 16px;
+  border-left: 3px solid #8fbc8f;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  margin-bottom: 8px;
+  width: 100%;
+}
+
+.wasteland-option:hover {
+  background-color: #384a38; /* 悬停时稍微亮一点 */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.wasteland-option:active {
   transform: translateY(1px);
+  background-color: #445a44; /* 点击时更亮一些 */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
-.mud-option.disabled {
+.wasteland-option.disabled {
   background-color: #252525;
-  color: #777;
+  color: #666; /* 稍微提高禁用时的对比度 */
   cursor: not-allowed;
+  border-left-color: #555;
+  box-shadow: none;
 }
 
-.mud-restart {
-    background-color: #8fbc8f; /* 嫩绿色按钮 */
-    color: #1a291a; /* 深绿色文字 */
-  }
+/* 重新开始按钮 */
+.wasteland-restart {
+  background-color: #8fbc8f; /* 嫩绿色按钮 */
+  color: #1a291a; /* 深绿色文字 */
+  border: none;
+  padding: 12px 24px;
+  font-size: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: block;
+  margin: 20px auto;
+  transition: background-color 0.3s, transform 0.2s;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+}
 
-  .mud-restart:hover {
-    background-color: #6b8e6b;
-  }
+.wasteland-restart:hover {
+  background-color: #a0d6a0;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+}
 
-/* 响应式设计 */
-@media (max-width: 600px) {
-  #mud-game {
-    padding: 10px;
-  }
-  
-  .mud-content {
-    padding: 15px;
-  }
-  
-  .mud-scene p {
-    font-size: 16px;
-  }
+/* 返回按钮 */
+#wasteland-back-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: #ddd;
+  border: 1px solid #555;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+#wasteland-back-btn:hover {
+  background-color: rgba(0, 0, 0, 0.7);
+  transform: scale(1.1);
+}
+
+/* 排行榜按钮 */
+#wasteland-leaderboard-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background-color: rgba(143, 188, 143, 0.7);
+  color: #222;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+#wasteland-leaderboard-btn:hover {
+  background-color: rgba(160, 214, 160, 0.9);
+}
+
+/* 排行榜面板 */
+#wasteland-leaderboard {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  max-width: 600px;
+  background-color: #2a3b2a;
+  border: 1px solid #8fbc8f;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+  z-index: 100;
+  display: none;
+}
+
+#wasteland-leaderboard h3 {
+  color: #d2b48c;
+  text-align: center;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #3a5a3a;
+}
+
+.wasteland-leaderboard-close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  color: #ddd;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.wasteland-leaderboard-close-btn:hover {
+  color: #fff;
+}
+
+/* 排行榜内容样式 */
+#wasteland-leaderboard-content {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.leaderboard-row {
+  display: flex;
+  padding: 10px;
+  border-bottom: 1px solid #3a5a3a;
+}
+
+.leaderboard-row:last-child {
+  border-bottom: none;
+}
+
+.leaderboard-row.top-rank {
+  background-color: rgba(255, 215, 0, 0.1);
+}
+
+.leaderboard-row .rank {
+  width: 10%;
+  text-align: center;
+  font-weight: bold;
+}
+
+.leaderboard-row .player {
+  width: 35%;
+}
+
+.leaderboard-row .ending {
+  width: 35%;
+  color: #8fbc8f;
+}
+
+.leaderboard-row .date {
+  width: 20%;
+  text-align: right;
+  color: #999;
+  font-size: 0.9em;
+}
+
+.loading, .error, .no-data {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+}
+
+.error {
+  color: #ff6347;
+}
+
+/* 结局提交弹窗 */
+.wasteland-ending-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.wasteland-ending-modal.show {
+  opacity: 1;
+}
+
+.wasteland-ending-content {
+  background-color: #2a3b2a;
+  border: 2px solid #8fbc8f;
+  border-radius: 8px;
+  padding: 30px;
+  max-width: 500px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+  position: relative;
+}
+
+.wasteland-ending-content h3 {
+  color: #d2b48c;
+  margin-bottom: 20px;
+  font-size: 22px;
+}
+
+.wasteland-ending-content p {
+  margin-bottom: 25px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+#wasteland-player-name {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 20px;
+  border: 1px solid #555;
+  background-color: #1a291a;
+  color: #fff;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.wasteland-modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.wasteland-modal-buttons button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+#wasteland-submit-ending {
+  background-color: #8fbc8f;
+  color: #1a291a;
+}
+
+#wasteland-submit-ending:hover {
+  background-color: #a0d6a0;
+}
+
+#wasteland-close-modal {
+  background-color: #555;
+  color: #eee;
+}
+
+#wasteland-close-modal:hover {
+  background-color: #666;
+}
+
+/* 物品描述弹窗 */
+.wasteland-item-description {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+  background-color: #2a3b2a;
+  border: 1px solid #8fbc8f;
+  border-radius: 5px;
+  padding: 15px 20px;
+  max-width: 80%;
+  width: 350px;
+  z-index: 1100;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.wasteland-item-description.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.wasteland-item-description h4 {
+  color: #d2b48c;
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 18px;
+  border-bottom: 1px solid #3a5a3a;
+  padding-bottom: 10px;
+}
+
+.wasteland-item-description p {
+  margin-bottom: 20px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.wasteland-item-description .use-item-btn {
+  background-color: #8fbc8f;
+  color: #1a291a;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.wasteland-item-description .use-item-btn:hover {
+  background-color: #a0d6a0;
+}
+
+.wasteland-item-description .close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  cursor: pointer;
+  font-size: 18px;
+  color: #ddd;
+}
+
+.wasteland-item-description .close-btn:hover {
+  color: #fff;
+}
+
+/* 消息提示 */
+.wasteland-message {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 5px;
+  font-size: 16px;
+  opacity: 0;
+  transition: all 0.3s;
+  z-index: 1200;
+  max-width: 80%;
+  text-align: center;
+  border-left: 3px solid #8fbc8f;
+}
+
+.wasteland-message.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 /* 动画效果 */
@@ -157,201 +570,421 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* 特殊按钮样式 - 修正文字居中问题 */
-#mud-select-btn {
-    background-image: url('./image/compass.svg'); /* 需要创建或更换为指南针图标 */
-    background-size: 60% auto;
-    background-position: center 30%;
-    background-repeat: no-repeat;
-    background-color: rgba(42, 59, 42, 0.8); /* 深森林绿色 */
-    position: relative;
-  }
-
-  #mud-select-btn span {
-    position: relative;
-    bottom: 0px;
-    left: 0;
-    width: 100%;
-    text-align: center;
-    font-weight: bold;
-    display: block;
-    margin-top: 70%;
-  }
-/* 修改响应式设计，实现全屏显示 */
-@media (max-width: 768px) {
-    #mud-game {
-      max-width: 100%;
-      width: 100%;
-      margin: 0;
-      padding: 10px;
-      min-height: 100vh;
-      height: 100vh;
-      border-radius: 0;
-      box-shadow: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 1000;
-      overflow-y: auto;
-    }
-    
-    .container {
-      padding: 0;
-      max-width: 100%;
-    }
-    
-    #mud-game h2 {
-      margin-top: 40px;
-    }
-    
-    .mud-content {
-      min-height: calc(100vh - 150px);
-      margin-bottom: 20px;
-    }
-    
-    /* 确保返回按钮可见 */
-    #mud-game .back-btn {
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      z-index: 1010;
-    }
-  }
-  
-  /* 为body添加类，当游戏显示时防止页面滚动 */
-  body.mud-active {
-    overflow: hidden;
-  }
-  /* 添加在文件底部 */
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
 
 /* 场景过渡效果 */
-.mud-scene {
+.wasteland-scene {
   opacity: 0;
   transition: opacity 0.2s ease-in-out;
 }
 
-.mud-scene.fade-in {
+.wasteland-scene.fade-in {
   opacity: 1;
 }
 
-.mud-scene.fade-out {
+.wasteland-scene.fade-out {
   opacity: 0;
 }
 
-/* 加强点击反馈效果 */
-.mud-option:active {
-  transform: translateY(1px);
-  background-color: #555555;
-}
-/* 物品描述弹窗 */
-.mud-item-description {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.9);
-    background-color: #2a3b2a;
-    border: 1px solid #8fbc8f;
-    border-radius: 5px;
-    padding: 15px 20px;
-    max-width: 80%;
-    width: 350px;
-    z-index: 1100;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
-    opacity: 0;
-    transition: all 0.3s ease;
-  }
-  
-  .mud-item-description.show {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  
-  .mud-item-description h4 {
-    color: #ffd700;
-    margin: 0 0 10px 0;
-    border-bottom: 1px solid #8fbc8f;
-    padding-bottom: 5px;
-    font-size: 18px;
-  }
-  
-  .mud-item-description p {
-    color: #e0e0e0;
-    font-size: 15px;
-    line-height: 1.6;
-    margin: 0;
-    font-style: italic;
-    text-align: justify;
-  }
-  
-  .mud-item-description .close-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 20px;
-    height: 20px;
-    line-height: 20px;
-    text-align: center;
-    color: #8fbc8f;
-    font-size: 20px;
-    cursor: pointer;
-    user-select: none;
-  }
-  
-  .mud-item-description .close-btn:hover {
-    color: #e0e0e0;
-  }
-  
-  /* 添加模糊背景效果 */
-  .mud-item-description::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: -1;
-  }
-  /* 血量变化动画 */
+/* 血量变化动画 */
 @keyframes heal-pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.5); filter: brightness(1.5); }
-    100% { transform: scale(1); }
+  0% { transform: scale(1); }
+  50% { transform: scale(1.5); filter: brightness(1.5); }
+  100% { transform: scale(1); }
+}
+
+@keyframes damage-shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  50% { transform: translateX(2px); }
+  75% { transform: translateX(-2px); }
+  100% { transform: translateX(0); }
+}
+
+.heart.healing {
+  animation: heal-pulse 0.8s;
+}
+
+.heart.damaged {
+  animation: damage-shake 0.5s;
+}
+
+/* 特殊按钮样式 - 游戏选择按钮 */
+#wasteland-select-btn {
+  background-image: url('./image/compass.svg');
+  background-size: 60% auto;
+  background-position: center 30%;
+  background-repeat: no-repeat;
+  background-color: rgba(42, 59, 42, 0.8);
+  position: relative;
+  border: 2px solid rgba(143, 188, 143, 0.5);
+}
+
+#wasteland-select-btn span {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+}
+
+#wasteland-select-btn:hover {
+  background-color: rgba(58, 74, 58, 0.9);
+  border-color: rgba(143, 188, 143, 0.8);
+  transform: translateY(-5px);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  #wasteland-game {
+      padding: 15px 10px;
+      width: 100vw;
+      min-width: 100vw;
+      max-width: 100vw;
+      height: 100vh;
+      min-height: 100vh;
+      margin: 0;
+      border-radius: 0;
+      position: fixed;
+      top: 0;
+      left: 0;
+  }
+  html body #wasteland-game:not([style*="display: none"]) ~ .fruit-basket,
+  body:has(#wasteland-game:not([style*="display: none"])) .fruit-basket {
+    z-index: -1 !important; /* 确保在游戏上方 */
+  }
+  .container {
+      padding: 0;
   }
   
-  @keyframes damage-shake {
-    0% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    50% { transform: translateX(5px); }
-    75% { transform: translateX(-5px); }
-    100% { transform: translateX(0); }
+  #wasteland-game h2 {
+      font-size: 22px;
   }
   
-  .heart.healing {
-    animation: heal-pulse 0.6s;
-    color: #00ff00;
+  .wasteland-content {
+      min-height: 80vh;
   }
   
-  .heart.damaged {
-    animation: damage-shake 0.5s;
-    color: #ff0000;
+  /* 确保返回按钮可见 */
+  #wasteland-game .back-btn {
+      top: 10px;
+      left: 10px;
   }
   
-  /* 辐射值动画 */
-  @keyframes radiation-pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.5; }
-    100% { opacity: 1; }
+  .wasteland-scene h3 {
+      font-size: 20px;
   }
   
-  .radiation.changing {
-    animation: radiation-pulse 1s;
+  .wasteland-scene p {
+      font-size: 16px;
   }
   
-  /* 辐射值颜色等级 */
-  .radiation.low { color: #00ff00; }
-  .radiation.medium { color: #ffcc00; }
-  .radiation.high { color: #ff6600; }
-  .radiation.critical { color: #ff0000; }
+  .wasteland-option {
+      padding: 12px 15px;
+      font-size: 15px;
+  }
+  
+  .wasteland-inventory li {
+      padding: 6px 10px;
+      font-size: 13px;
+  }
+  
+  .wasteland-ending-content {
+      padding: 20px 15px;
+  }
+}
+
+/* 为body添加类，当游戏显示时防止页面滚动 */
+body.wasteland-active {
+  overflow: hidden;
+}
+
+/* 移动物品栏到一个按钮中 */
+.wasteland-inventory-toggle {
+  position: fixed;
+  top: 70px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #3a4a3a;
+  border: 2px solid #8fbc8f;
+  color: #d2b48c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 101;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s;
+}
+
+.wasteland-inventory-toggle:hover {
+  transform: scale(1.1);
+  background-color: #4a5a4a;
+}
+
+.wasteland-inventory-toggle .badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #8fbc8f;
+  color: #1a291a;
+  font-size: 12px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* 弹出式物品栏 */
+.wasteland-inventory-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #2a3b2a;
+  border: 2px solid #8fbc8f;
+  border-radius: 8px;
+  padding: 15px;
+  width: 80%;
+  max-width: 350px;
+  z-index: 1000;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  display: none;
+}
+
+.wasteland-inventory-popup.active {
+  display: block;
+  animation: fadeIn 0.3s;
+}
+/* 确保响应式布局中选项始终可见 */
+@media (max-width: 768px) {
+  .wasteland-content {
+    height: calc(65vh - 100px);
+    max-height: none;
+  }
+  
+  .wasteland-options-container {
+    padding: 10px;
+  }
+  
+  .wasteland-option {
+    padding: 12px;
+    font-size: 14px;
+  }
+  
+  .wasteland-inventory-toggle {
+    top: 60px;
+    right: 15px;
+    width: 40px;
+    height: 40px;
+  }
+}
+/* 添加到 mud.css 文件 */
+.inventory-scroll {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+  padding-right: 5px;
+}
+
+.inventory-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wasteland-inventory-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  margin-bottom: 5px;
+  background-color: #4a5a4a;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.wasteland-inventory-item:hover {
+  background-color: #5a6a5a;
+  transform: translateY(-2px);
+}
+
+.item-count {
+  background-color: rgba(0,0,0,0.3);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.8em;
+  margin-left: 8px;
+}
+/* 废土地图样式 */
+.wasteland-map {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 300px;
+  height: 300px;
+  background-color: rgba(20, 20, 20, 0.95);
+  border: 2px solid #555;
+  border-radius: 8px;
+  z-index: 100;
+  display: none;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+  color: #aaa;
+  font-family: monospace;
+}
+
+.wasteland-map.active {
+  display: block;
+}
+
+.map-header {
+  padding: 8px;
+  text-align: center;
+  border-bottom: 1px solid #555;
+  font-weight: bold;
+  font-size: 16px;
+  color: #ccc;
+}
+
+.map-canvas {
+  position: relative;
+  width: 100%;
+  height: 230px;
+  background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAAEH5aAAAAAACXBIWXMAAAsSAAALEgHS3X78AAAA') center center;
+  background-color: #1a1a1a;
+  background-size: 100% 100%;
+  opacity: 0.9;
+}
+
+.map-marker {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background-color: #555;
+  border: 1px solid #777;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.3s;
+}
+
+.map-marker.current {
+  background-color: #4abb7c;
+  box-shadow: 0 0 8px rgba(74, 187, 124, 0.8);
+  width: 10px;
+  height: 10px;
+}
+
+.player-marker {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background-color: #ff9900;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 10px rgba(255, 153, 0, 0.8);
+  transition: all 0.5s;
+  z-index: 5;
+}
+
+.map-info {
+  padding: 8px;
+  font-size: 12px;
+  text-align: center;
+  color: #bbb;
+  height: 30px;
+  overflow: hidden;
+}
+
+.map-close {
+  position: absolute;
+  top: 5px;
+  right: 10px;
+  cursor: pointer;
+  font-size: 18px;
+  color: #999;
+}
+
+.map-close:hover {
+  color: #fff;
+}
+
+.wasteland-map-toggle {
+  position: fixed;
+  top: 10px;
+  right: 70px;
+  background-color: #333;
+  color: #eee;
+  border: 1px solid #555;
+  border-radius: 5px;
+  padding: 5px 10px;
+  font-size: 14px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.wasteland-map-toggle:hover {
+  background-color: #444;
+}
+/* 增强废土地图样式 */
+.map-canvas {
+  background-color: #1a2a1a !important; /* 确保背景颜色显示 */
+  border: 1px solid #4a5a4a;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.map-marker {
+  width: 12px !important;
+  height: 12px !important;
+  background-color: #8fbc8f !important; /* 使用更明显的绿色 */
+  border: 1px solid #fff !important;
+  position: relative;
+}
+
+.region-label {
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  color: #aaa;
+  font-size: 8px;
+  text-shadow: 0 0 2px #000;
+  pointer-events: none;
+}
+
+.player-marker {
+  width: 16px !important;
+  height: 16px !important;
+  background-color: #ff9900 !important;
+  border: 2px solid #fff !important;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 153, 0, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(255, 153, 0, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 153, 0, 0); }
+}
+
+.wasteland-map-toggle {
+  position: fixed;
+  top: 70px !important; /* 将地图按钮放在物品栏按钮旁边 */
+  right: 70px !important;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #3a4a3a;
+  border: 2px solid #8fbc8f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

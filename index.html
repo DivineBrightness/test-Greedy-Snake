@@ -43,7 +43,7 @@
         <button class="game-select-btn" id="card-select-btn"><span>扑克牌</span></button>
         <button class="game-select-btn" id="dino-select-btn"><span>恐龙快跑</span></button>
         <button class="game-select-btn" id="g2048-select-btn"><span>2048方块</span></button>
-        <button class="game-select-btn" id="mud-select-btn"><span>末世废土</span></button>      
+        <button class="game-select-btn" id="wasteland-select-btn"><span>末世废土</span></button>   
       </div>
     </div>
     
@@ -318,15 +318,22 @@
       </div>
     </div>
       
-    <!-- 添加文字冒险游戏界面 -->
-    <div id="mud-game" style="display: none;">
-      <button class="back-btn" id="mud-back-btn"></button>
+    <!-- 在games-selection后面添加废土游戏容器 -->
+    <div id="wasteland-game" style="display: none;">
+      <button id="wasteland-back-btn" class="back-btn"></button>
+      <button id="wasteland-leaderboard-btn">排行榜</button>
       <h2>末世废土</h2>
-      <div class="mud-content">
-        <!-- 游戏内容将由JavaScript动态渲染 -->
+      <div class="wasteland-content">
+        <!-- 场景内容将由JavaScript动态渲染 -->
+      </div>
+      
+      <!-- 排行榜面板 -->
+      <div id="wasteland-leaderboard" style="display: none;">
+        <h3>废土编年史</h3>
+        <button class="wasteland-leaderboard-close-btn">×</button>
+        <div id="wasteland-leaderboard-content"></div>
       </div>
     </div>
-    <footer>© 2025 四季 | 小游戏集合 & 赏析</footer>
   </div>
   <script src="./leaderboard.js?v=1.5.6"></script>
   <script src="./scenes.js?v=1.5.5"></script>
@@ -341,7 +348,14 @@
   <script defer src="./daily.js?v=1.0.1"></script>
   <script defer src="./dinoGame.js?v=1.5.5"></script>
   <script src="./game2048.js?v=1.0.1"></script>
+  <script src="wastelandMap.js"></script>
   <script src="mudScenes.js"></script>
+  <script src="scenes/common.js"></script>
+  <script src="scenes/endings/scavenger.js"></script>
+  <script src="scenes/endings/martyr.js"></script>
+  <script src="scenes/endings/spark.js"></script>
+  <script src="scenes/endings/skycity.js"></script>
+  <script src="scenes/index.js"></script>
   <script src="./mud.js?v=1.0.0"></script>
   <script>
     // 页面加载完成后发送访问记录
@@ -397,8 +411,8 @@
 
         <div class="game-instruction-section">
           <h3>末世废土</h3>
-          <p>文字冒险游戏：通过做出不同选择来探索一座神秘鬼屋，寻找线索，解开谜题。</p>
-          <p>游戏有多种结局，取决于你的选择和发现的线索。勇敢探索，揭开鬼屋的真相！</p>
+          <p>文字冒险游戏：通过做出不同选择来探索废土，寻找线索，解开谜题。</p>
+          <p>游戏有多种结局，取决于你的选择和发现的线索。勇敢探索，揭开真相！</p>
         </div>
       </div>
     </div>

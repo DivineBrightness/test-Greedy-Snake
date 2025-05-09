@@ -1,39 +1,152 @@
-// mud.js - 废土余生文字冒险游戏
-const mudGame = {
+// 废土余生：60秒风格文字冒险游戏
+const wastelandGame = {
+    // 修改物品存储结构从数组改为对象
+    inventory: [],      // 保持原有属性名，但改变内部实现
+    inventoryMap: {},   // 新增物品计数映射
+    
+    // 其他属性保持不变
     isOpen: false,
     currentScene: 'start',
-    inventory: [],
     visitedAreas: [],
     endingReached: null,
-    // 添加血量系统
-    maxHealth: 3,
-    health: 3,
-    radiation: 0, // 辐射值
-    trust: {}, // 派系信任度
-    isTransitioning: false, // 添加场景转换状态标记
-   
+    round: 1,
+    maxRounds: 60,
     
-    get scenes() {
-        return window.mudScenes;
+    // 生存属性
+    attributes: {
+        health: 5,
+        hunger: 5,
+        thirst: 5,
+        radiation: 1,
+        sanity: 100
     },
+    
+    // 人性点数
+    humanityPoints: 0,
+    
+    
+    isTransitioning: false,
+    
+  // 修改场景获取方法
+  get scenes() {
+    // 如果场景尚未加载，则尝试加载
+    if (!window.wastelandScenes) {
+      console.warn('场景数据尚未加载，尝试加载...');
+      if (typeof loadAllScenes === 'function') {
+        loadAllScenes();
+      }
+    }
+    return window.wastelandScenes || {};
+  },
+    
+// 在init函数中添加地图按钮初始化
+init: function() {
+    // 保留原有代码
+    if (!document.getElementById('wasteland-game')) {
+      console.log('创建废土游戏基本结构');
+      this.createBasicStructure();
+    }
+    
+    if (!document.querySelector('.wasteland-content')) {
+      console.log('创建内容容器');
+      const game = document.getElementById('wasteland-game');
+      if (game) {
+        const content = document.createElement('div');
+        content.className = 'wasteland-content';
+        game.appendChild(content);
+      }
+    }
+    
+    this.setupEventListeners();
+    this.setupItemClickListeners();
+    this.addInventoryButton(); // 添加物品栏按钮
+    this.addMapButton(); // 添加地图按钮
+  },
 
-    // 游戏初始化
-    init: function() {
-        this.setupEventListeners();
-        this.setupItemClickListeners();
-    },
+  addMapButton: function() {
+    // 检查按钮是否已存在
+    if (document.querySelector('.wasteland-map-toggle')) {
+        console.log("地图按钮已存在");
+        return;
+    }
     
-    // 设置物品点击监听
+    console.log("创建地图按钮");
+    
+    // 创建按钮
+    const btnEl = document.createElement('button');
+    btnEl.className = 'wasteland-map-toggle';
+    btnEl.innerHTML = '🗺️'; // 使用地图表情符号
+    
+    // 添加到游戏界面
+    const gameContainer = document.getElementById('wasteland-game');
+    if (gameContainer) {
+        gameContainer.appendChild(btnEl);
+        console.log("地图按钮已添加到游戏容器");
+    } else {
+        console.error("找不到游戏容器");
+    }
+    
+    // 初始化地图
+    if (window.wastelandMap) {
+        try {
+            window.wastelandMap.init();
+            // 根据当前场景立即更新位置
+            window.wastelandMap.updatePosition(this.currentScene);
+            console.log("地图初始化成功");
+        } catch (e) {
+            console.error("地图初始化失败", e);
+        }
+    } else {
+        console.error("找不到wastelandMap对象");
+    }
+    
+    // 绑定点击事件
+    btnEl.addEventListener('click', () => {
+        console.log("点击地图按钮");
+        if (window.wastelandMap) {
+            window.wastelandMap.toggleMap();
+        }
+    });
+},
+  // 创建基本结构
+  createBasicStructure: function() {
+    const container = document.createElement('div');
+    container.id = 'wasteland-game';
+    container.style.display = 'none';
+    
+    container.innerHTML = `
+      <button id="wasteland-back-btn" class="back-btn">&larr;</button>
+      <button id="wasteland-leaderboard-btn">排行榜</button>
+      <h2>末世废土</h2>
+      <div class="wasteland-content">
+        <!-- 场景内容将由JavaScript动态渲染 -->
+      </div>
+      
+      <!-- 排行榜面板 -->
+      <div id="wasteland-leaderboard" style="display: none;">
+        <h3>废土编年史</h3>
+        <button class="wasteland-leaderboard-close-btn">×</button>
+        <div id="wasteland-leaderboard-content"></div>
+      </div>
+    `;
+    
+    document.body.appendChild(container);
+  },
+    
+    // 1. 修复物品点击监听器 - 替换整个函数
     setupItemClickListeners: function() {
         document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('mud-inventory-item')) {
-                const itemName = e.target.textContent;
+            // 使用事件代理处理物品点击
+            const itemElement = e.target.closest('.wasteland-inventory-item');
+            if (itemElement) {
+                // 使用 data-item 属性获取纯物品名称，而不是包含数量的文本内容
+                const itemName = itemElement.getAttribute('data-item');
                 this.showItemDescription(itemName);
             }
             
-            // 点击其他区域关闭物品描述
-            if (!e.target.classList.contains('mud-inventory-item') && 
-                !e.target.closest('.mud-item-description')) {
+            // 点击非物品描述区域时隐藏描述
+            if (!e.target.closest('.wasteland-inventory-item') && 
+                !e.target.closest('.wasteland-item-description')) {
                 this.hideItemDescription();
             }
         });
@@ -41,29 +154,32 @@ const mudGame = {
     
     // 显示物品描述
     showItemDescription: function(itemName) {
-        // 隐藏任何已存在的物品描述
         this.hideItemDescription();
         
-        // 获取物品描述
         const description = window.itemDescriptions[itemName] || '一个神秘的物品，没人知道它的来历和用途。';
         
-        // 创建物品描述元素
         const descriptionEl = document.createElement('div');
-        descriptionEl.className = 'mud-item-description';
+        descriptionEl.className = 'wasteland-item-description';
         descriptionEl.innerHTML = `
             <h4>${itemName}</h4>
             <p>${description}</p>
+            <button class="use-item-btn">使用物品</button>
             <div class="close-btn">×</div>
         `;
         
-        // 添加到游戏容器
-        const gameContainer = document.getElementById('mud-game');
+        const gameContainer = document.getElementById('wasteland-game');
         gameContainer.appendChild(descriptionEl);
         
         // 添加关闭按钮事件
         const closeBtn = descriptionEl.querySelector('.close-btn');
         if (closeBtn) {
             closeBtn.addEventListener('click', () => this.hideItemDescription());
+        }
+        
+        // 添加使用物品按钮事件
+        const useItemBtn = descriptionEl.querySelector('.use-item-btn');
+        if (useItemBtn) {
+            useItemBtn.addEventListener('click', () => this.useItem(itemName));
         }
         
         // 显示动画
@@ -74,415 +190,876 @@ const mudGame = {
     
     // 隐藏物品描述
     hideItemDescription: function() {
-        const descriptionEl = document.querySelector('.mud-item-description');
+        const descriptionEl = document.querySelector('.wasteland-item-description');
         if (descriptionEl) {
             descriptionEl.classList.remove('show');
             setTimeout(() => {
                 descriptionEl.remove();
-            }, 300); // 等待动画完成再移除
+            }, 300);
         }
     },
     
-    // 修改事件监听器函数
+    // 物品使用函数
+    useItem: function(itemName) {
+        // 检查物品是否存在
+        if (!this.inventoryMap[itemName] || this.inventoryMap[itemName] <= 0) {
+            this.showMessage('你没有这个物品');
+            return;
+        }
+        
+        // 根据物品类型应用效果
+        switch(itemName) {
+            case '罐头食物':
+                this.attributes.hunger = Math.min(5, this.attributes.hunger + 2);
+                this.showMessage('你吃了罐头食物，饥饿感减轻了。');
+                break;
+            case '净水罐':
+                this.attributes.thirst = Math.min(5, this.attributes.thirst + 2);
+                this.showMessage('你喝了净水，口渴感减轻了。');
+                break;
+            case '草药团':
+                this.attributes.radiation = Math.max(0, this.attributes.radiation - 2);
+                this.showMessage('你使用了草药，体内辐射减少了。');
+                break;
+            case '镇静丸':
+                this.attributes.sanity = Math.min(100, this.attributes.sanity + 10);
+                this.showMessage('你服用了镇静丸，感到更加镇定。');
+                break;
+            case '急救包':
+                this.attributes.health = Math.min(5, this.attributes.health + 2);
+                this.showMessage('你使用了急救包，伤口得到了处理。');
+                break;
+            default:
+                this.showMessage('这个物品现在无法使用。');
+                return;
+        }
+        
+        // 减少物品数量
+        this.inventoryMap[itemName]--;
+        if (this.inventoryMap[itemName] <= 0) {
+            delete this.inventoryMap[itemName];
+        }
+        
+        // 更新物品数组
+        this.updateInventoryArray();
+        
+        // 隐藏物品描述
+        this.hideItemDescription();
+        
+        // 更新游戏界面
+        this.renderCurrentScene();
+    },
+    
+    // 显示消息
+    showMessage: function(message) {
+        const messageEl = document.createElement('div');
+        messageEl.className = 'wasteland-message';
+        messageEl.textContent = message;
+        
+        const gameContainer = document.getElementById('wasteland-game');
+        gameContainer.appendChild(messageEl);
+        
+        // 显示动画
+        setTimeout(() => {
+            messageEl.classList.add('show');
+        }, 10);
+        
+        // 自动消失
+        setTimeout(() => {
+            messageEl.classList.remove('show');
+            setTimeout(() => {
+                messageEl.remove();
+            }, 300);
+        }, 3000);
+    },
+    
+    // 设置事件监听
     setupEventListeners: function() {
-        // 选项点击事件代理
-        const gameContainer = document.getElementById('mud-game');
+        const gameContainer = document.getElementById('wasteland-game');
         if (gameContainer) {
+            // 使用事件委托机制监听选项点击
             gameContainer.addEventListener('click', (e) => {
-                // 如果正在场景转换中，忽略点击事件
                 if (this.isTransitioning) return;
                 
-                if (e.target.classList.contains('mud-option')) {
+                console.log('点击事件触发, 目标元素:', e.target);
+                
+                if (e.target.classList.contains('wasteland-option')) {
                     const nextScene = e.target.getAttribute('data-scene');
+                    console.log('选择了选项,下一场景:', nextScene);
                     if (nextScene) this.goToScene(nextScene);
                 }
             });
         }
         
-        // 重新开始按钮
-        const restartBtn = document.getElementById('mud-restart-btn');
+        const restartBtn = document.getElementById('wasteland-restart-btn');
         if (restartBtn) {
             restartBtn.addEventListener('click', () => {
                 if (!this.isTransitioning) this.restart();
             });
         }
         
-        // 返回按钮
-        const backBtn = document.getElementById('mud-back-btn');
+        const backBtn = document.getElementById('wasteland-back-btn');
         if (backBtn) {
             backBtn.addEventListener('click', () => {
                 if (!this.isTransitioning) this.hide();
             });
         }
+        
+        // 添加排行榜按钮
+        const leaderboardBtn = document.getElementById('wasteland-leaderboard-btn');
+        if (leaderboardBtn) {
+            leaderboardBtn.addEventListener('click', () => {
+                this.toggleLeaderboard();
+            });
+        }
+        
+        // 添加排行榜关闭按钮
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('wasteland-leaderboard-close-btn')) {
+                document.getElementById('wasteland-leaderboard').style.display = 'none';
+            }
+        });
     },
     
-    show: function() {
-        const gameContainer = document.getElementById('mud-game');
-        if (gameContainer) {
-            gameContainer.style.display = 'block';
-            document.body.classList.add('mud-active');
-            this.isOpen = true;
-            
-            // 如果是新游戏，重置状态
-            if (this.currentScene === 'start' && this.visitedAreas.length === 0) {
-                this.restart();
-            } else {
-                this.renderCurrentScene();
-            }
+    // 切换排行榜显示
+    toggleLeaderboard: function() {
+        const leaderboard = document.getElementById('wasteland-leaderboard');
+        if (leaderboard.style.display === 'none') {
+            leaderboard.style.display = 'block';
+            this.loadLeaderboard();
+        } else {
+            leaderboard.style.display = 'none';
         }
     },
     
+    // 加载排行榜数据
+    loadLeaderboard: function() {
+        const leaderboardContent = document.getElementById('wasteland-leaderboard-content');
+        leaderboardContent.innerHTML = '<div class="loading">加载中...</div>';
+        
+        fetch('https://331600.xyz/leaderboard?game=wasteland')
+            .then(response => response.json())
+            .then(data => {
+                let html = '';
+                if (data && data.length > 0) {
+                    data.forEach((item, index) => {
+                        html += `
+                            <div class="leaderboard-row ${index < 3 ? 'top-rank' : ''}">
+                                <div class="rank">${index + 1}</div>
+                                <div class="player">${item.player_name}</div>
+                                <div class="ending">${item.ending || '未知结局'}</div>
+                                <div class="date">${new Date(item.timestamp).toLocaleDateString()}</div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    html = '<div class="no-data">暂无排行数据</div>';
+                }
+                leaderboardContent.innerHTML = html;
+            })
+            .catch(error => {
+                leaderboardContent.innerHTML = '<div class="error">加载失败，请稍后再试</div>';
+                console.error('获取排行榜数据失败:', error);
+            });
+    },
+    
+    // 显示游戏结束与排行榜提交弹窗
+    showEndingModal: function(ending) {
+        const endingName = this.getEndingName(ending);
+        
+        const modalEl = document.createElement('div');
+        modalEl.className = 'wasteland-ending-modal';
+        modalEl.innerHTML = `
+            <div class="wasteland-ending-content">
+                <h3>你达成了结局：${endingName}</h3>
+                <p>你要将此结局记录在废土编年史中吗？</p>
+                <input type="text" id="wasteland-player-name" placeholder="输入你的名字" maxlength="20">
+                <div class="wasteland-modal-buttons">
+                    <button id="wasteland-submit-ending">记录结局</button>
+                    <button id="wasteland-close-modal">关闭</button>
+                </div>
+            </div>
+        `;
+        
+        const gameContainer = document.getElementById('wasteland-game');
+        gameContainer.appendChild(modalEl);
+        
+        // 显示动画
+        setTimeout(() => {
+            modalEl.classList.add('show');
+        }, 10);
+        
+        // 添加事件监听
+        const submitBtn = document.getElementById('wasteland-submit-ending');
+        if (submitBtn) {
+            submitBtn.addEventListener('click', () => {
+                const playerName = document.getElementById('wasteland-player-name').value.trim();
+                if (playerName) {
+                    this.submitEnding(playerName, ending);
+                    this.closeEndingModal();
+                } else {
+                    alert('请输入你的名字');
+                }
+            });
+        }
+        
+        const closeBtn = document.getElementById('wasteland-close-modal');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                this.closeEndingModal();
+            });
+        }
+    },
+    
+    // 关闭结局弹窗
+    closeEndingModal: function() {
+        const modalEl = document.querySelector('.wasteland-ending-modal');
+        if (modalEl) {
+            modalEl.classList.remove('show');
+            setTimeout(() => {
+                modalEl.remove();
+            }, 300);
+        }
+    },
+    
+    // 提交结局到排行榜
+    submitEnding: function(playerName, ending) {
+        fetch('https://331600.xyz/submit-score', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                game: 'wasteland',
+                player_name: playerName,
+                score: 0,
+                ending: this.getEndingName(ending)
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            this.showMessage('你的结局已被记录在废土编年史中');
+        })
+        .catch(error => {
+            this.showMessage('结局记录失败，可能是辐射干扰了信号');
+            console.error('提交结局失败:', error);
+        });
+    },
+    
+    // 获取结局名称
+    getEndingName: function(endingId) {
+        const endings = {
+            'death': '死亡结局',
+            'radiationDeath': '辐射死亡',
+            'despair': '绝望结局',
+            'scavenger': '拾荒者结局',
+            'martyr': '殉道者结局',
+            'spark': '火种结局'
+        };
+        return endings[endingId] || '神秘结局';
+    },
+    
+
+    // 在show方法开头添加调试输出
+    show: function() {
+        const gameContainer = document.getElementById('wasteland-game');
+        if (gameContainer) {
+            console.log('显示游戏容器');
+            console.log('当前场景ID:', this.currentScene);
+            console.log('当前场景数据:', this.scenes[this.currentScene]);
+            
+            gameContainer.style.display = 'block';
+            document.body.classList.add('wasteland-active');
+            this.isOpen = true;
+            
+            console.log('准备渲染初始场景');
+            if (this.currentScene === 'start' && this.visitedAreas.length === 0) {
+                console.log('重新开始游戏');
+                this.restart();
+            } else {
+                console.log('渲染当前场景:', this.currentScene);
+                this.renderCurrentScene();
+            }
+        } else {
+            console.error('找不到游戏容器元素!');
+        }
+    },
+    
+    // 隐藏游戏
     hide: function() {
-        const gameContainer = document.getElementById('mud-game');
+        const gameContainer = document.getElementById('wasteland-game');
         if (gameContainer) {
             gameContainer.style.display = 'none';
-            document.body.classList.remove('mud-active');
+            document.body.classList.remove('wasteland-active');
             this.isOpen = false;
             document.getElementById('games-selection').style.display = 'block';
         }
     },
     
-    // 修改重启函数
+    // 重置函数，初始化物品栏
     restart: function() {
-        // 如果正在场景转换中，直接返回
         if (this.isTransitioning) return;
         
         this.isTransitioning = true;
         this.currentScene = 'start';
-        this.inventory = [];
+        
+        // 重置物品栏为空映射对象
+        this.inventoryMap = {
+            '罐头食物': 100,
+            '净水罐': 100,
+            '镇静丸': 10,
+            '急救包': 10
+        };
+        
+        // 更新物品总数数组（兼容性）
+        this.updateInventoryArray();
+        
         this.visitedAreas = [];
         this.endingReached = null;
-        this.health = this.maxHealth;
-        this.radiation = 0;
-        this.trust = {};
+        this.round = 1;
+        this.humanityPoints = 0;
+        
+        // 重置生存属性
+        this.attributes = {
+            health: 5,
+            hunger: 5,
+            thirst: 5,
+            radiation: 1,
+            sanity: 100
+        };
+        
         this.renderCurrentScene();
         
-        // 重置场景转换状态(延时一点以确保渲染完成)
         setTimeout(() => {
             this.isTransitioning = false;
         }, 300);
     },
     
-    // 修改场景切换函数
+    // 新增：更新物品数组方法（用于兼容旧代码）
+    updateInventoryArray: function() {
+        this.inventory = [];
+        for (const itemName in this.inventoryMap) {
+            const count = this.inventoryMap[itemName];
+            if (count > 0) {
+                // 只添加一个引用到数组中，不再添加多个重复项
+                this.inventory.push(itemName);
+            }
+        }
+    },
+
+    // 修改场景切换函数，处理属性范围
     goToScene: function(sceneId) {
-        // 如果正在场景转换中，直接返回
         if (this.isTransitioning) return;
-        
-        // 设置转换状态为true，阻止后续点击
         this.isTransitioning = true;
         
         const scene = this.scenes[sceneId];
-        
-        // 如果场景不存在，输出错误并退出
         if (!scene) {
             console.error(`场景 "${sceneId}" 不存在!`);
             this.isTransitioning = false;
             return;
         }
         
-        // 保存血量和辐射旧值，用于之后比较变化
-        const oldHealth = this.health;
-        const oldRadiation = this.radiation;
-        let shouldGoToDeath = false; // 标记是否应该跳转到死亡场景
-        let shouldGoToRadiationDeath = false; // 标记是否应该跳转到辐射死亡场景
+        // 保存当前属性值
+        const oldAttributes = {...this.attributes};
         
-        // 记录访问过的区域
+        // 查找用于执行此场景转换的选项，以检查是否有物品
+        const optionWithItem = this.findOptionWithItem(this.currentScene, sceneId);
+        const itemToAdd = optionWithItem ? optionWithItem.item : scene.item;
+        
+        // 处理资源消耗（除非场景设置了skipResourceConsumption）
+        if (!scene.skipResourceConsumption) {
+            this.attributes.hunger = Math.max(0, this.attributes.hunger - 1);
+            this.attributes.thirst = Math.max(0, this.attributes.thirst - 1);
+            this.round += 1;
+        }
+        
+        // 检查饥饿和口渴状态
+        if (this.attributes.hunger === 0) {
+            this.attributes.health = Math.max(0, this.attributes.health - 1);
+        }
+        
+        if (this.attributes.thirst === 0) {
+            this.attributes.health = Math.max(0, this.attributes.health - 1);
+        }
+        
+        // 检查辐射状态
+        if (this.attributes.radiation >= 5) {
+            this.attributes.health = Math.max(0, this.attributes.health - 1);
+        }
+        
+        // 记录访问区域
         if (scene.isArea && !this.visitedAreas.includes(sceneId)) {
             this.visitedAreas.push(sceneId);
         }
         
         // 处理物品拾取
-        if (scene.item && !this.inventory.includes(scene.item)) {
-            this.inventory.push(scene.item);
+        if (itemToAdd) {
+            // 初始化物品计数
+            if (!this.inventoryMap[itemToAdd]) {
+                this.inventoryMap[itemToAdd] = 0;
+            }
+            
+            // 增加物品计数
+            this.inventoryMap[itemToAdd]++;
+            this.showMessage(`获得了物品: ${itemToAdd}`);
+            
+            // 更新物品数组
+            this.updateInventoryArray();
         }
         
         // 处理物品移除
-        if (scene.removeItem && this.inventory.includes(scene.removeItem)) {
-            this.inventory = this.inventory.filter(item => item !== scene.removeItem);
-        }
-        
-        // 处理血量变化 - 存储变化类型用于动画
-        if (scene.healthChange) {
-            // 记录是加血还是掉血
-            this.healthChangeType = scene.healthChange > 0 ? 'healing' : 'damaged';
+        if (scene.removeItem && this.inventoryMap[scene.removeItem] && this.inventoryMap[scene.removeItem] > 0) {
+            this.inventoryMap[scene.removeItem]--;
             
-            this.health = Math.max(0, this.health + scene.healthChange);
-            if (this.health <= 0) {
-                // 如果血量为0，标记需要前往死亡场景
-                shouldGoToDeath = true;
+            if (this.inventoryMap[scene.removeItem] <= 0) {
+                delete this.inventoryMap[scene.removeItem];
             }
-            // 确保不超过最大血量
-            this.health = Math.min(this.maxHealth, this.health);
-        } else {
-            this.healthChangeType = null;
-        }
-        
-        // 处理辐射值变化
-        if (scene.radiationChange) {
-            // 记录辐射是否变化
-            this.radiationChanged = true;
             
-            this.radiation = Math.max(0, this.radiation + scene.radiationChange);
-            if (this.radiation >= 100) {
-                // 辐射值过高，标记需要前往辐射死亡场景
-                shouldGoToRadiationDeath = true;
-            }
-        } else {
-            this.radiationChanged = false;
+            // 更新物品数组
+            this.updateInventoryArray();
         }
         
-        // 处理派系信任度
-        if (scene.trustChange) {
-            for (const faction in scene.trustChange) {
-                if (!this.trust[faction]) {
-                    this.trust[faction] = 0;
+        // 处理属性变化
+        if (scene.attributeChanges) {
+            for (const attr in scene.attributeChanges) {
+                if (this.attributes.hasOwnProperty(attr)) {
+                    this.attributes[attr] += scene.attributeChanges[attr];
+                    
+                    // 确保属性值在合法范围内
+                    if (attr === 'sanity') {
+                        this.attributes[attr] = Math.min(100, Math.max(0, this.attributes[attr])); // 修改为0-100
+                    } else {
+                        this.attributes[attr] = Math.min(5, Math.max(0, this.attributes[attr]));
+                    }
                 }
-                this.trust[faction] += scene.trustChange[faction];
             }
         }
         
-        // 检查结局
+        // 处理人性点数变化
+        if (scene.humanityChange) {
+            this.humanityPoints += scene.humanityChange;
+        }
+        
+        // 移除派系信任度处理
+        
+        // 检查是否达成结局
         if (scene.isEnding) {
             this.endingReached = sceneId;
+            
+            // 显示结局提交弹窗
+            setTimeout(() => {
+                this.showEndingModal(sceneId);
+            }, 1000);
         }
         
-        // 如果有血量或辐射变化，先显示动画再切换场景
-        if (this.healthChangeType || this.radiationChanged) {
-            this.animateHealthChanges(oldHealth, oldRadiation, () => {
-                // 动画结束后检查是否应该前往死亡场景
-                if (shouldGoToDeath) {
-                    this.currentScene = 'death';
-                } else if (shouldGoToRadiationDeath) {
-                    this.currentScene = 'radiationDeath';
-                } else {
-                    this.currentScene = sceneId;
-                }
-                this.renderCurrentScene();
-                // 重置场景转换状态
-                this.isTransitioning = false;
-            });
-        } else {
-            // 没有变化，直接切换场景
-            if (shouldGoToDeath) {
-                this.currentScene = 'death';
-            } else if (shouldGoToRadiationDeath) {
-                this.currentScene = 'radiationDeath';
+        // 检查游戏结束条件
+        let redirectScene = null;
+        
+        if (this.attributes.health <= 0) {
+            redirectScene = 'death';
+        } else if (this.attributes.sanity <= 0) { // 精神值为0时触发绝望结局
+            redirectScene = 'despair';
+        } else if (this.round >= this.maxRounds) {
+            // 根据人性点数决定结局
+            if (this.humanityPoints >= 3) {
+                redirectScene = 'spark';
+            } else {
+                redirectScene = 'scavenger';
+            }
+        }
+        
+         // 在场景切换完成后更新地图位置
+        setTimeout(() => {
+            if (redirectScene) {
+                this.currentScene = redirectScene;
             } else {
                 this.currentScene = sceneId;
             }
+            
+            // 更新地图位置
+            if (window.wastelandMap) {
+                window.wastelandMap.updatePosition(this.currentScene);
+            }
+            
             this.renderCurrentScene();
-            // 重置场景转换状态
             this.isTransitioning = false;
-        }
+        }, 500);
     },
 
-    // 添加新方法：血量变化动画
-    animateHealthChanges: function(oldHealth, oldRadiation, callback) {
-        // 获取当前显示的血量区域
-        const healthDisplay = document.querySelector('.mud-health');
-        if (!healthDisplay) {
-            // 如果找不到健康显示区域，直接执行回调
-            callback();
+
+    // 添加一个辅助函数，查找具有特定nextScene和item的选项
+    findOptionWithItem: function(currentSceneId, targetSceneId) {
+        const currentScene = this.scenes[currentSceneId];
+        if (!currentScene || !currentScene.options) return null;
+        
+        return currentScene.options.find(option => 
+            option.nextScene === targetSceneId && option.item
+        );
+    },
+    
+    // 修改属性渲染函数，适应新的属性范围
+    renderAttributes: function() {
+        let html = '<div class="wasteland-attributes">';
+        
+        // 生命值
+        html += '<div class="attribute-item health">';
+        for (let i = 0; i < 5; i++) {
+            if (i < this.attributes.health) {
+                html += '<span class="heart full">❤️</span>';
+            } else {
+                html += '<span class="heart empty">🖤</span>';
+            }
+        }
+        html += '</div>';
+        
+        // 饥饿值
+        html += '<div class="attribute-item hunger">';
+        for (let i = 0; i < 5; i++) {
+            if (i < this.attributes.hunger) {
+                html += '<span class="food full">🍗</span>';
+            } else {
+                html += '<span class="food empty">⚪</span>';
+            }
+        }
+        html += '</div>';
+        
+        // 口渴值
+        html += '<div class="attribute-item thirst">';
+        for (let i = 0; i < 5; i++) {
+            if (i < this.attributes.thirst) {
+                html += '<span class="water full">💧</span>';
+            } else {
+                html += '<span class="water empty">⚪</span>';
+            }
+        }
+        html += '</div>';
+        
+        // 辐射值
+        let radiationClass = '';
+        if (this.attributes.radiation < 2) radiationClass = 'low';
+        else if (this.attributes.radiation < 4) radiationClass = 'medium';
+        else radiationClass = 'high';
+        
+        html += `<div class="attribute-item radiation ${radiationClass}">`;
+        html += `☢️ ${this.attributes.radiation}/5`;
+        html += '</div>';
+        
+        // 精神状态 - 满值100为健康状态
+        let sanityClass = '';
+        if (this.attributes.sanity > 60) sanityClass = 'positive';
+        else if (this.attributes.sanity < 30) sanityClass = 'negative';
+
+        html += `<div class="attribute-item sanity ${sanityClass}">`;
+        html += `🧠 ${this.attributes.sanity}/100`;
+        html += '</div>';
+        
+        // 回合计数
+        html += `<div class="attribute-item round">`;
+        html += `⏱️ ${this.round}/${this.maxRounds}`;
+        html += '</div>';
+        
+        html += '</div>';
+        
+        return html;
+    },
+    
+    // 修改renderCurrentScene函数，将选项区域放在固定容器中
+    renderCurrentScene: function() {
+        const scene = this.scenes[this.currentScene];
+        if (!scene) {
+            console.error('找不到场景:', this.currentScene);
             return;
         }
         
-        // 渲染带动画的血量
-        let healthHTML = '';
-        for (let i = 1; i <= this.maxHealth; i++) {
-            if (i <= this.health) {
-                // 如果是变化的那个血量，添加动画类
-                if (this.healthChangeType === 'healing' && i > oldHealth && i <= this.health) {
-                    healthHTML += '<span class="heart full healing">❤️</span>';
-                } else if (this.healthChangeType === 'damaged' && i === this.health) {
-                    healthHTML += '<span class="heart full damaged">❤️</span>';
-                } else {
-                    healthHTML += '<span class="heart full">❤️</span>';
-                }
-            } else {
-                healthHTML += '<span class="heart empty">🖤</span>';
-            }
+        const container = document.querySelector('.wasteland-content');
+        if (!container) {
+            console.error('找不到内容容器元素!');
+            return;
         }
         
-        // 添加辐射值显示
-        let radiationClass = 'radiation';
-        
-        // 根据辐射级别添加颜色类
-        if (this.radiation < 25) {
-            radiationClass += ' low';
-        } else if (this.radiation < 50) {
-            radiationClass += ' medium';
-        } else if (this.radiation < 75) {
-            radiationClass += ' high';
-        } else {
-            radiationClass += ' critical';
-        }
-        
-        // 如果辐射值变化了，添加动画类
-        if (this.radiationChanged) {
-            radiationClass += ' changing';
-        }
-        
-        healthHTML += `<span class="${radiationClass}">☢️ ${this.radiation}%</span>`;
-        
-        // 更新血量显示
-        healthDisplay.innerHTML = healthHTML;
-        
-        // 等待动画播放结束后执行回调
-        setTimeout(callback, 1500);
-    },
+        console.log('渲染场景:', this.currentScene);
+        console.log('场景选项数量:', scene.options ? scene.options.length : 0);
 
-    // 渲染血量方法
-    renderHealth: function() {
-        let healthHTML = '<div class="mud-health">';
-        for (let i = 1; i <= this.maxHealth; i++) {
-            if (i <= this.health) {
-                healthHTML += '<span class="heart full">❤️</span>';
-            } else {
-                healthHTML += '<span class="heart empty">🖤</span>';
-            }
-        }
-        
-        // 添加辐射值显示，并根据辐射级别添加颜色
-        let radiationClass = 'radiation';
-        if (this.radiation < 25) {
-            radiationClass += ' low';
-        } else if (this.radiation < 50) {
-            radiationClass += ' medium';
-        } else if (this.radiation < 75) {
-            radiationClass += ' high';
-        } else {
-            radiationClass += ' critical';
-        }
-        
-        healthHTML += `<span class="${radiationClass}">☢️ ${this.radiation}%</span>`;
-        healthHTML += '</div>';
-        
-        return healthHTML;
-    },
-    
-    // 修改渲染当前场景的方法，添加血量显示
-    renderCurrentScene: function() {
-        const scene = this.scenes[this.currentScene];
-        const container = document.querySelector('.mud-content');
-        
-        if (!container) return;
-        
-        // 创建新场景元素
         const newScene = document.createElement('div');
-        newScene.className = 'mud-scene new-scene';
+        newScene.className = 'wasteland-scene new-scene';
         
-        // 创建场景文本
         let html = `
             <h3>${scene.title}</h3>
-            ${this.renderHealth()}
+            ${this.renderAttributes()}
             <p>${scene.description}</p>`;
         
-        // 如果有物品栏，显示物品
-        if (this.inventory.length > 0) {
-            html += `<div class="mud-inventory">
-                <h4>物品栏:</h4>
-                <ul>
-                    ${this.inventory.map(item => `<li class="mud-inventory-item">${item}</li>`).join('')}
-                </ul>
-            </div>`;
-        }
+        // 不在场景内容中添加物品栏和选项，只保留基本描述
+        newScene.innerHTML = html;
         
-        // 添加选项
+        const oldScene = container.querySelector('.wasteland-scene');
+        
+        // 创建一个单独的选项容器
+        const optionsContainer = document.createElement('div');
+        optionsContainer.className = 'wasteland-options-container';
+        
+        let optionsHtml = '';
+        
+        // 选项
         if (scene.options && scene.options.length > 0) {
-            html += `<div class="mud-options">`;
+            optionsHtml += `<div class="wasteland-options">`;
             
             scene.options.forEach(option => {
-                // 检查选项是否需要特定物品
                 let isDisabled = false;
                 let disabledReason = '';
                 
+                // 检查物品需求
                 if (option.requiredItem && !this.inventory.includes(option.requiredItem)) {
                     isDisabled = true;
                     disabledReason = `(需要: ${option.requiredItem})`;
                 }
                 
-                // 检查选项是否需要特定信任度
+                // 检查派系信任需求
                 if (option.requiredTrust) {
                     for (const faction in option.requiredTrust) {
-                        if (!this.trust[faction] || this.trust[faction] < option.requiredTrust[faction]) {
+                        if (this.factionTrust[faction] < option.requiredTrust[faction]) {
                             isDisabled = true;
-                            disabledReason = `(需要更多${faction}信任)`;
+                            let factionName = this.getFactionName(faction);
+                            disabledReason = `(需要更高的${factionName}信任)`;
                         }
                     }
                 }
                 
-                html += `<button class="mud-option ${isDisabled ? 'disabled' : ''}" 
-                         data-scene="${option.nextScene}" 
-                         ${isDisabled ? 'disabled' : ''}>
-                         ${option.text} ${disabledReason}
-                         </button>`;
+                // 检查属性需求
+                if (option.requiredAttributes) {
+                    for (const attr in option.requiredAttributes) {
+                        if (this.attributes[attr] < option.requiredAttributes[attr]) {
+                            isDisabled = true;
+                            disabledReason = `(需要更高的${this.getAttributeName(attr)})`;
+                        }
+                    }
+                }
+                
+                optionsHtml += `<button class="wasteland-option ${isDisabled ? 'disabled' : ''}" 
+                        data-scene="${option.nextScene}" 
+                        ${isDisabled ? 'disabled' : ''}>
+                        ${option.text} ${disabledReason}
+                        </button>`;
             });
             
-            html += `</div>`;
+            optionsHtml += `</div>`;
         }
         
-        // 如果是结局，显示重新开始按钮
+        // 结局重新开始按钮
         if (scene.isEnding) {
-            html += `<button id="mud-restart-btn" class="mud-restart">重新开始</button>`;
+            optionsHtml += `<button id="wasteland-restart-btn" class="wasteland-restart">重新开始</button>`;
         }
         
-        // 设置新场景内容
-        newScene.innerHTML = html;
+        optionsContainer.innerHTML = optionsHtml;
         
-        // 获取当前场景元素
-        const oldScene = container.querySelector('.mud-scene');
-        
+        // 更新DOM
         if (oldScene) {
-            // 如果存在当前场景，添加淡出效果
             oldScene.classList.add('fade-out');
             
-            // 等待淡出动画完成后替换场景
             setTimeout(() => {
                 container.innerHTML = '';
                 container.appendChild(newScene);
                 
-                // 给新场景添加淡入效果
+                // 更新选项容器
+                const oldOptionsContainer = document.querySelector('.wasteland-options-container');
+                if (oldOptionsContainer) {
+                    oldOptionsContainer.remove();
+                }
+                const gameElement = document.getElementById('wasteland-game');
+                gameElement.appendChild(optionsContainer);
+                
                 setTimeout(() => {
                     newScene.classList.add('fade-in');
                 }, 10);
                 
-                // 绑定重新开始按钮事件
-                const restartBtn = document.getElementById('mud-restart-btn');
-                if (restartBtn) {
-                    restartBtn.addEventListener('click', () => {
-                        if (!this.isTransitioning) this.restart();
-                    });
-                }
-            }, 200); // 200毫秒等待淡出完成
+                // 绑定选项点击事件
+                this.bindOptionEvents(optionsContainer);
+            }, 200);
         } else {
-            // 如果不存在当前场景（首次加载），直接添加新场景
             container.innerHTML = '';
             container.appendChild(newScene);
             
-            // 给新场景添加淡入效果
+            // 更新选项容器
+            const oldOptionsContainer = document.querySelector('.wasteland-options-container');
+            if (oldOptionsContainer) {
+                oldOptionsContainer.remove();
+            }
+            const gameElement = document.getElementById('wasteland-game');
+            gameElement.appendChild(optionsContainer);
+            
             setTimeout(() => {
                 newScene.classList.add('fade-in');
             }, 10);
             
-            // 绑定重新开始按钮事件
-            const restartBtn = document.getElementById('mud-restart-btn');
-            if (restartBtn) {
-                restartBtn.addEventListener('click', () => this.restart());
+            // 绑定选项点击事件
+            this.bindOptionEvents(optionsContainer);
+        }
+
+        // 更新物品栏按钮
+        this.updateInventoryButton();
+    },
+    
+    // 获取派系名称
+    getFactionName: function(faction) {
+        const factionNames = {
+            wheelchairGang: '轮椅帮',
+            vultureClients: '秃鹰客',
+            fireSkinners: '火皮众',
+            oldStreetBrotherhood: '老街兄弟会'
+        };
+        return factionNames[faction] || faction;
+    },
+    
+    // 获取属性名称
+    getAttributeName: function(attr) {
+        const attrNames = {
+            health: '生命',
+            hunger: '饱食度',
+            thirst: '水分',
+            radiation: '辐射抵抗',
+            sanity: '精神状态'
+        };
+        return attrNames[attr] || attr;
+    },
+// 绑定选项事件的辅助函数
+bindOptionEvents: function(container) {
+    const options = container.querySelectorAll('.wasteland-option');
+    options.forEach(option => {
+        option.addEventListener('click', (e) => {
+            if (this.isTransitioning) return;
+            
+            const nextScene = e.target.getAttribute('data-scene');
+            if (nextScene) this.goToScene(nextScene);
+        });
+    });
+    
+    const restartBtn = container.querySelector('#wasteland-restart-btn');
+    if (restartBtn) {
+        restartBtn.addEventListener('click', () => {
+            if (!this.isTransitioning) this.restart();
+        });
+    }
+},
+// 添加物品栏按钮
+addInventoryButton: function() {
+    // 检查按钮是否已存在
+    if (document.querySelector('.wasteland-inventory-toggle')) {
+        return;
+    }
+    
+    // 创建按钮
+    const btnEl = document.createElement('button');
+    btnEl.className = 'wasteland-inventory-toggle';
+    btnEl.innerHTML = `背包 <span class="badge">0</span>`;
+    
+    // 添加到游戏界面
+    const gameContainer = document.getElementById('wasteland-game');
+    if (gameContainer) {
+        gameContainer.appendChild(btnEl);
+    }
+    
+    // 创建物品栏弹窗容器
+    const popupEl = document.createElement('div');
+    popupEl.className = 'wasteland-inventory-popup';
+    gameContainer.appendChild(popupEl);
+    
+    // 绑定点击事件
+    btnEl.addEventListener('click', () => {
+        this.toggleInventoryPopup();
+    });
+    
+    // 更新物品数量
+    this.updateInventoryButton();
+},
+
+    // 更新物品栏按钮
+    updateInventoryButton: function() {
+        // 确保物品栏按钮存在
+        let btnEl = document.querySelector('.wasteland-inventory-toggle');
+        if (!btnEl) {
+            this.addInventoryButton();
+        } else {
+            // 更新物品数量
+            const badge = btnEl.querySelector('.badge');
+            if (badge) {
+                badge.textContent = this.inventory.length;
             }
         }
+    },
+
+    // 物品栏弹窗
+    toggleInventoryPopup: function() {
+        const popupEl = document.querySelector('.wasteland-inventory-popup');
+        
+        if (popupEl.classList.contains('active')) {
+            // 隐藏弹窗
+            popupEl.classList.remove('active');
+        } else {
+            // 计算物品总数
+            let totalItems = 0;
+            for (const item in this.inventoryMap) {
+                totalItems += this.inventoryMap[item];
+            }
+            
+            // 显示弹窗并更新内容
+            if (totalItems > 0) {
+                let itemsHtml = '';
+                for (const itemName in this.inventoryMap) {
+                    const count = this.inventoryMap[itemName];
+                    itemsHtml += `<li class="wasteland-inventory-item" data-item="${itemName}">${itemName} <span class="item-count">x${count}</span></li>`;
+                }
+                
+                popupEl.innerHTML = `
+                    <h4>物品栏 (${totalItems}/1000)</h4>
+                    <div class="inventory-scroll">
+                        <ul class="inventory-list">
+                            ${itemsHtml}
+                        </ul>
+                    </div>
+                    <button class="inventory-close-btn">关闭</button>
+                `;
+            } else {
+                popupEl.innerHTML = `
+                    <h4>物品栏 (0/1000)</h4>
+                    <p class="empty-inventory">空空如也</p>
+                    <button class="inventory-close-btn">关闭</button>
+                `;
+            }
+            
+            // 绑定关闭按钮事件
+            const closeBtn = popupEl.querySelector('.inventory-close-btn');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    popupEl.classList.remove('active');
+                });
+            }
+            
+            // 绑定物品点击事件
+            const items = popupEl.querySelectorAll('.wasteland-inventory-item');
+            items.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    const clickedElement = e.target.closest('.wasteland-inventory-item');
+                    const itemName = clickedElement.getAttribute('data-item');
+                    this.showItemDescription(itemName);
+                    popupEl.classList.remove('active');
+                });
+            });
+            
+            popupEl.classList.add('active');
+        }
     }
+
+
 };
 
-// 确保DOM加载完成后初始化游戏
+// DOM加载完成后初始化游戏
 document.addEventListener('DOMContentLoaded', () => {
-    mudGame.init();
+    wastelandGame.init();
     
-    // 添加游戏选择按钮事件
-    const mudButton = document.getElementById('mud-select-btn');
-    if (mudButton) {
-        mudButton.addEventListener('click', () => {
+    const wastelandButton = document.getElementById('wasteland-select-btn');
+    if (wastelandButton) {
+        wastelandButton.addEventListener('click', () => {
             document.getElementById('games-selection').style.display = 'none';
-            mudGame.show();
+            wastelandGame.show();
         });
     }
 });
