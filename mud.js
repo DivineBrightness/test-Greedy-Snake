@@ -1,8 +1,12 @@
 // 废土余生：60秒风格文字冒险游戏
 const wastelandGame = {
+    // 修改物品存储结构从数组改为对象
+    inventory: [],      // 保持原有属性名，但改变内部实现
+    inventoryMap: {},   // 新增物品计数映射
+    
+    // 其他属性保持不变
     isOpen: false,
     currentScene: 'start',
-    inventory: [],
     visitedAreas: [],
     endingReached: null,
     round: 1,
@@ -10,23 +14,16 @@ const wastelandGame = {
     
     // 生存属性
     attributes: {
-        health: 5,    // 生命值
-        hunger: 5,    // 饥饿度
-        thirst: 5,    // 口渴度
-        radiation: 1, // 辐射值
-        sanity: 0     // 精神状态 (-3 到 +3)
+        health: 5,
+        hunger: 5,
+        thirst: 5,
+        radiation: 1,
+        sanity: 100
     },
     
     // 人性点数
     humanityPoints: 0,
     
-    // 派系信任度
-    factionTrust: {
-        wheelchairGang: 0,
-        vultureClients: 0,
-        fireSkinners: 0,
-        oldStreetBrotherhood: 0
-    },
     
     isTransitioning: false,
     
@@ -82,15 +79,19 @@ init: function() {
     document.body.appendChild(container);
   },
     
-    // 设置物品点击监听
+    // 1. 修复物品点击监听器 - 替换整个函数
     setupItemClickListeners: function() {
         document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('wasteland-inventory-item')) {
-                const itemName = e.target.textContent;
+            // 使用事件代理处理物品点击
+            const itemElement = e.target.closest('.wasteland-inventory-item');
+            if (itemElement) {
+                // 使用 data-item 属性获取纯物品名称，而不是包含数量的文本内容
+                const itemName = itemElement.getAttribute('data-item');
                 this.showItemDescription(itemName);
             }
             
-            if (!e.target.classList.contains('wasteland-inventory-item') && 
+            // 点击非物品描述区域时隐藏描述
+            if (!e.target.closest('.wasteland-inventory-item') && 
                 !e.target.closest('.wasteland-item-description')) {
                 this.hideItemDescription();
             }
@@ -144,8 +145,14 @@ init: function() {
         }
     },
     
-    // 使用物品
+    // 物品使用函数
     useItem: function(itemName) {
+        // 检查物品是否存在
+        if (!this.inventoryMap[itemName] || this.inventoryMap[itemName] <= 0) {
+            this.showMessage('你没有这个物品');
+            return;
+        }
+        
         // 根据物品类型应用效果
         switch(itemName) {
             case '罐头食物':
@@ -161,7 +168,7 @@ init: function() {
                 this.showMessage('你使用了草药，体内辐射减少了。');
                 break;
             case '镇静丸':
-                this.attributes.sanity = Math.min(3, this.attributes.sanity + 1);
+                this.attributes.sanity = Math.min(100, this.attributes.sanity + 10);
                 this.showMessage('你服用了镇静丸，感到更加镇定。');
                 break;
             case '急救包':
@@ -173,8 +180,14 @@ init: function() {
                 return;
         }
         
-        // 从物品栏中移除物品
-        this.inventory = this.inventory.filter(item => item !== itemName);
+        // 减少物品数量
+        this.inventoryMap[itemName]--;
+        if (this.inventoryMap[itemName] <= 0) {
+            delete this.inventoryMap[itemName];
+        }
+        
+        // 更新物品数组
+        this.updateInventoryArray();
         
         // 隐藏物品描述
         this.hideItemDescription();
@@ -429,13 +442,24 @@ init: function() {
         }
     },
     
-    // 重启游戏
+    // 重置函数，初始化物品栏
     restart: function() {
         if (this.isTransitioning) return;
         
         this.isTransitioning = true;
         this.currentScene = 'start';
-        this.inventory = [];
+        
+        // 重置物品栏为空映射对象
+        this.inventoryMap = {
+            '罐头食物': 100,
+            '净水罐': 100,
+            '镇静丸': 10,
+            '急救包': 10
+        };
+        
+        // 更新物品总数数组（兼容性）
+        this.updateInventoryArray();
+        
         this.visitedAreas = [];
         this.endingReached = null;
         this.round = 1;
@@ -447,15 +471,7 @@ init: function() {
             hunger: 5,
             thirst: 5,
             radiation: 1,
-            sanity: 0
-        };
-        
-        // 重置派系信任
-        this.factionTrust = {
-            wheelchairGang: 0,
-            vultureClients: 0,
-            fireSkinners: 0,
-            oldStreetBrotherhood: 0
+            sanity: 100
         };
         
         this.renderCurrentScene();
@@ -465,6 +481,19 @@ init: function() {
         }, 300);
     },
     
+    // 新增：更新物品数组方法（用于兼容旧代码）
+    updateInventoryArray: function() {
+        this.inventory = [];
+        for (const itemName in this.inventoryMap) {
+            const count = this.inventoryMap[itemName];
+            if (count > 0) {
+                // 只添加一个引用到数组中，不再添加多个重复项
+                this.inventory.push(itemName);
+            }
+        }
+    },
+
+    // 修改场景切换函数，处理属性范围
     goToScene: function(sceneId) {
         if (this.isTransitioning) return;
         this.isTransitioning = true;
@@ -509,17 +538,31 @@ init: function() {
             this.visitedAreas.push(sceneId);
         }
         
-        // 处理物品拾取，同时考虑场景本身的item和选项中的item
-        if (itemToAdd && !this.inventory.includes(itemToAdd) && this.inventory.length < 3) {
-            this.inventory.push(itemToAdd);
+        // 处理物品拾取
+        if (itemToAdd) {
+            // 初始化物品计数
+            if (!this.inventoryMap[itemToAdd]) {
+                this.inventoryMap[itemToAdd] = 0;
+            }
+            
+            // 增加物品计数
+            this.inventoryMap[itemToAdd]++;
             this.showMessage(`获得了物品: ${itemToAdd}`);
-        } else if (itemToAdd && !this.inventory.includes(itemToAdd)) {
-            this.showMessage('你的物品栏已满，无法获得物品');
+            
+            // 更新物品数组
+            this.updateInventoryArray();
         }
         
         // 处理物品移除
-        if (scene.removeItem && this.inventory.includes(scene.removeItem)) {
-            this.inventory = this.inventory.filter(item => item !== scene.removeItem);
+        if (scene.removeItem && this.inventoryMap[scene.removeItem] && this.inventoryMap[scene.removeItem] > 0) {
+            this.inventoryMap[scene.removeItem]--;
+            
+            if (this.inventoryMap[scene.removeItem] <= 0) {
+                delete this.inventoryMap[scene.removeItem];
+            }
+            
+            // 更新物品数组
+            this.updateInventoryArray();
         }
         
         // 处理属性变化
@@ -530,7 +573,7 @@ init: function() {
                     
                     // 确保属性值在合法范围内
                     if (attr === 'sanity') {
-                        this.attributes[attr] = Math.min(3, Math.max(-3, this.attributes[attr]));
+                        this.attributes[attr] = Math.min(100, Math.max(0, this.attributes[attr])); // 修改为0-100
                     } else {
                         this.attributes[attr] = Math.min(5, Math.max(0, this.attributes[attr]));
                     }
@@ -543,14 +586,7 @@ init: function() {
             this.humanityPoints += scene.humanityChange;
         }
         
-        // 处理派系信任度
-        if (scene.trustChanges) {
-            for (const faction in scene.trustChanges) {
-                if (this.factionTrust.hasOwnProperty(faction)) {
-                    this.factionTrust[faction] += scene.trustChanges[faction];
-                }
-            }
-        }
+        // 移除派系信任度处理
         
         // 检查是否达成结局
         if (scene.isEnding) {
@@ -567,7 +603,7 @@ init: function() {
         
         if (this.attributes.health <= 0) {
             redirectScene = 'death';
-        } else if (this.attributes.sanity <= -3) {
+        } else if (this.attributes.sanity <= 0) { // 精神值为0时触发绝望结局
             redirectScene = 'despair';
         } else if (this.round >= this.maxRounds) {
             // 根据人性点数决定结局
@@ -591,6 +627,7 @@ init: function() {
         }, 500);
     },
 
+
     // 添加一个辅助函数，查找具有特定nextScene和item的选项
     findOptionWithItem: function(currentSceneId, targetSceneId) {
         const currentScene = this.scenes[currentSceneId];
@@ -601,7 +638,7 @@ init: function() {
         );
     },
     
-    // 渲染属性状态
+    // 修改属性渲染函数，适应新的属性范围
     renderAttributes: function() {
         let html = '<div class="wasteland-attributes">';
         
@@ -648,13 +685,13 @@ init: function() {
         html += `☢️ ${this.attributes.radiation}/5`;
         html += '</div>';
         
-        // 精神状态
+        // 精神状态 - 满值100为健康状态
         let sanityClass = '';
-        if (this.attributes.sanity > 0) sanityClass = 'positive';
-        else if (this.attributes.sanity < 0) sanityClass = 'negative';
-        
+        if (this.attributes.sanity > 60) sanityClass = 'positive';
+        else if (this.attributes.sanity < 30) sanityClass = 'negative';
+
         html += `<div class="attribute-item sanity ${sanityClass}">`;
-        html += `🧠 ${this.attributes.sanity > 0 ? '+' : ''}${this.attributes.sanity}`;
+        html += `🧠 ${this.attributes.sanity}/100`;
         html += '</div>';
         
         // 回合计数
@@ -843,99 +880,115 @@ bindOptionEvents: function(container) {
         });
     }
 },
-
 // 添加物品栏按钮
 addInventoryButton: function() {
-    // 移除已存在的按钮
-    const existingBtn = document.querySelector('.wasteland-inventory-toggle');
-    if (existingBtn) {
-        existingBtn.remove();
+    // 检查按钮是否已存在
+    if (document.querySelector('.wasteland-inventory-toggle')) {
+        return;
     }
     
-    // 创建物品栏切换按钮
-    const inventoryBtn = document.createElement('div');
-    inventoryBtn.className = 'wasteland-inventory-toggle';
-    inventoryBtn.innerHTML = `
-        <span>🎒</span>
-        <span class="badge">${this.inventory.length}</span>
-    `;
-    document.getElementById('wasteland-game').appendChild(inventoryBtn);
+    // 创建按钮
+    const btnEl = document.createElement('button');
+    btnEl.className = 'wasteland-inventory-toggle';
+    btnEl.innerHTML = `背包 <span class="badge">0</span>`;
     
-    // 创建物品栏弹窗
-    let popupEl = document.querySelector('.wasteland-inventory-popup');
-    if (!popupEl) {
-        popupEl = document.createElement('div');
-        popupEl.className = 'wasteland-inventory-popup';
-        document.getElementById('wasteland-game').appendChild(popupEl);
+    // 添加到游戏界面
+    const gameContainer = document.getElementById('wasteland-game');
+    if (gameContainer) {
+        gameContainer.appendChild(btnEl);
     }
     
-    // 点击物品栏按钮显示弹窗
-    inventoryBtn.addEventListener('click', () => {
+    // 创建物品栏弹窗容器
+    const popupEl = document.createElement('div');
+    popupEl.className = 'wasteland-inventory-popup';
+    gameContainer.appendChild(popupEl);
+    
+    // 绑定点击事件
+    btnEl.addEventListener('click', () => {
         this.toggleInventoryPopup();
     });
-},
-
-// 更新物品栏按钮
-updateInventoryButton: function() {
-    // 确保物品栏按钮存在
-    let btnEl = document.querySelector('.wasteland-inventory-toggle');
-    if (!btnEl) {
-        this.addInventoryButton();
-    } else {
-        // 更新物品数量
-        const badge = btnEl.querySelector('.badge');
-        if (badge) {
-            badge.textContent = this.inventory.length;
-        }
-    }
-},
-
-// 切换物品栏弹窗
-toggleInventoryPopup: function() {
-    const popupEl = document.querySelector('.wasteland-inventory-popup');
     
-    if (popupEl.classList.contains('active')) {
-        // 隐藏弹窗
-        popupEl.classList.remove('active');
-    } else {
-        // 显示弹窗并更新内容
-        if (this.inventory.length > 0) {
-            popupEl.innerHTML = `
-                <h4>物品栏 (${this.inventory.length}/3)</h4>
-                <ul class="inventory-list">
-                    ${this.inventory.map(item => `<li class="wasteland-inventory-item">${item}</li>`).join('')}
-                </ul>
-                <button class="inventory-close-btn">关闭</button>
-            `;
-        } else {
-            popupEl.innerHTML = `
-                <h4>物品栏 (0/3)</h4>
-                <p class="empty-inventory">空空如也</p>
-                <button class="inventory-close-btn">关闭</button>
-            `;
-        }
-        
-        // 绑定关闭按钮事件
-        const closeBtn = popupEl.querySelector('.inventory-close-btn');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => {
-                popupEl.classList.remove('active');
-            });
-        }
-        
-        // 绑定物品点击事件
-        const items = popupEl.querySelectorAll('.wasteland-inventory-item');
-        items.forEach(item => {
-            item.addEventListener('click', (e) => {
-                const itemName = e.target.textContent;
-                this.showItemDescription(itemName);
-                popupEl.classList.remove('active');
-            });
-        });
-        
-        popupEl.classList.add('active');
-    }
+    // 更新物品数量
+    this.updateInventoryButton();
 },
+
+    // 更新物品栏按钮
+    updateInventoryButton: function() {
+        // 确保物品栏按钮存在
+        let btnEl = document.querySelector('.wasteland-inventory-toggle');
+        if (!btnEl) {
+            this.addInventoryButton();
+        } else {
+            // 更新物品数量
+            const badge = btnEl.querySelector('.badge');
+            if (badge) {
+                badge.textContent = this.inventory.length;
+            }
+        }
+    },
+
+    // 物品栏弹窗
+    toggleInventoryPopup: function() {
+        const popupEl = document.querySelector('.wasteland-inventory-popup');
+        
+        if (popupEl.classList.contains('active')) {
+            // 隐藏弹窗
+            popupEl.classList.remove('active');
+        } else {
+            // 计算物品总数
+            let totalItems = 0;
+            for (const item in this.inventoryMap) {
+                totalItems += this.inventoryMap[item];
+            }
+            
+            // 显示弹窗并更新内容
+            if (totalItems > 0) {
+                let itemsHtml = '';
+                for (const itemName in this.inventoryMap) {
+                    const count = this.inventoryMap[itemName];
+                    itemsHtml += `<li class="wasteland-inventory-item" data-item="${itemName}">${itemName} <span class="item-count">x${count}</span></li>`;
+                }
+                
+                popupEl.innerHTML = `
+                    <h4>物品栏 (${totalItems}/1000)</h4>
+                    <div class="inventory-scroll">
+                        <ul class="inventory-list">
+                            ${itemsHtml}
+                        </ul>
+                    </div>
+                    <button class="inventory-close-btn">关闭</button>
+                `;
+            } else {
+                popupEl.innerHTML = `
+                    <h4>物品栏 (0/1000)</h4>
+                    <p class="empty-inventory">空空如也</p>
+                    <button class="inventory-close-btn">关闭</button>
+                `;
+            }
+            
+            // 绑定关闭按钮事件
+            const closeBtn = popupEl.querySelector('.inventory-close-btn');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    popupEl.classList.remove('active');
+                });
+            }
+            
+            // 绑定物品点击事件
+            const items = popupEl.querySelectorAll('.wasteland-inventory-item');
+            items.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    const clickedElement = e.target.closest('.wasteland-inventory-item');
+                    const itemName = clickedElement.getAttribute('data-item');
+                    this.showItemDescription(itemName);
+                    popupEl.classList.remove('active');
+                });
+            });
+            
+            popupEl.classList.add('active');
+        }
+    }
+
 
 };
 

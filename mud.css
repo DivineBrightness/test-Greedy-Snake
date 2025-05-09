@@ -786,3 +786,40 @@ body.wasteland-active {
     height: 40px;
   }
 }
+/* 添加到 mud.css 文件 */
+.inventory-scroll {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+  padding-right: 5px;
+}
+
+.inventory-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wasteland-inventory-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  margin-bottom: 5px;
+  background-color: #4a5a4a;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.wasteland-inventory-item:hover {
+  background-color: #5a6a5a;
+  transform: translateY(-2px);
+}
+
+.item-count {
+  background-color: rgba(0,0,0,0.3);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.8em;
+  margin-left: 8px;
+}
