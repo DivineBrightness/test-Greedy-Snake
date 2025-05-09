@@ -111,6 +111,91 @@ options: [
 ]
 },
 
+// 死亡结局测试
+'death': {
+  title: '死亡结局',
+  description: '你的身体最终无法承受废土的残酷考验。伤口感染、饥饿和辐射的综合影响让你的生命之火渐渐熄灭。在生命的最后时刻，你望着灰蒙蒙的天空，想起了那些曾帮助过你的人...\n\n你的旅程在此结束，但你的故事将被废土中的旅人传颂。',
+  isEnding: true,
+  skipResourceConsumption: true,
+  options: [
+      { text: '重新开始旅程', nextScene: 'start' }
+  ]
+},
+
+// 辐射死亡结局测试
+'radiationDeath': {
+  title: '辐射中毒',
+  description: '高剂量的辐射已经渗透到你的骨髓。你的皮肤开始出现大片的红斑和水泡，每一次呼吸都变得痛苦。尽管你尽力抵抗，但辐射的侵蚀最终无法逆转。\n\n你蜷缩在一处避难所的角落，离开这个已经被核辐射毁灭的世界，带着对更美好时代的记忆...',
+  isEnding: true,
+  skipResourceConsumption: true,
+  options: [
+      { text: '重新开始旅程', nextScene: 'start' }
+  ]
+},
+
+// 绝望结局测试
+'despair': {
+  title: '绝望终局',
+  description: '废土的残酷现实和无尽的苦难最终摧毁了你的意志。你发现自己开始质疑继续生存的意义，在这个被遗弃的世界中，希望似乎是最奢侈的奢侈品。\n\n某天清晨，你选择不再起身寻找食物和水。你静静地坐在山顶，看着太阳升起，释然地闭上了眼睛...',
+  isEnding: true,
+  skipResourceConsumption: true,
+  options: [
+      { text: '重新开始旅程', nextScene: 'start' }
+  ]
+},
+
+// 拾荒者结局测试
+'scavenger': {
+  title: '拾荒者的传承',
+  description: '经历了无数艰险后，你已经成为了废土上闻名的生存专家。你的名字在交易站和定居点之间流传，人们尊称你为"行者"。\n\n你选择了在铁丘定居，与刘爷和其他幸存者一起建立了一个小型社区。虽然生活艰苦，但你找到了属于自己的位置。每当新来者进入营地，你总会分享自己的知识和资源，正如他人曾经帮助过你一样。\n\n关于你的过去和身份，仍是个谜，但这已经不再重要。你是废土的一部分，这里就是你的家。',
+  isEnding: true,
+  skipResourceConsumption: true,
+  options: [
+      { text: '重新开始旅程', nextScene: 'start' }
+  ]
+},
+
+// 殉道者结局测试
+'martyr': {
+  title: '殉道者之歌',
+  description: '面对火皮众对铁丘营地的进攻，你做出了最终的选择。利用从五号粮站找到的旧世界装置，你引爆了守卫的弹药库，将大部分攻击者与自己一同埋葬。\n\n你的牺牲让铁丘的居民有时间撤离，包括那些无法自行逃离的老人和孩子。当幸存者最终在新的避难所重聚时，他们创作了一首歌谣，讲述一个穿着特殊服装的陌生人如何拯救了他们所有人。\n\n你的名字也许会被遗忘，但你的行为将在废土的故事中永存。',
+  isEnding: true,
+  skipResourceConsumption: true,
+  options: [
+      { text: '重新开始旅程', nextScene: 'start' }
+  ]
+},
+
+// 火种结局测试
+'spark': {
+  title: '希望的火种',
+  description: '在无数次的选择中，你始终保持着人性和善良。你帮助了阿粒找到妹妹、为老街兄弟会提供了净水技术、说服了轮椅帮与火皮众达成和平协议。\n\n当你最终找到净场并解开了自己身份之谜时，你做出了一个决定：唤醒其他沉睡者，并利用他们带来的知识重建这个破碎的世界。\n\n五年后，铁丘已经发展成为一个繁荣的定居点，干净的水源、稳定的食物供应和基础医疗设施让人们重新找到了希望。站在山顶，望着远处正在建设的"灯塔"通讯站，你知道人类终将重返辉煌，而这一切都始于一个坚守人性的选择。',
+  isEnding: true,
+  skipResourceConsumption: true,
+  options: [
+      { text: '重新开始旅程', nextScene: 'start' }
+  ]
+},
+
+// 测试快速结局触发按钮 - 添加到铁丘营地选项中
+'ironHill': {
+  title: '铁丘营地',
+  description: '铁丘营地建在一座废弃矿山上，由各种金属板材和废旧集装箱搭建而成，形成一个小型聚居地。营地中央是一个简陋的市集，几个幸存者在那里交换物资。你注意到一群孩子围绕着一位老人，他似乎正在讲述着什么故事。另一边，几个人正在修补营地的防御设施。这里看起来比外面要安全一些，至少暂时如此。',
+  isArea: true,
+  options: [
+      { text: '接近讲故事的老人', nextScene: 'meetLiuYe' },
+      { text: '在市集寻找交易机会', nextScene: 'ironHillMarket' },
+      { text: '帮助修补防御设施', nextScene: 'repairDefense' },
+      { text: '离开铁丘', nextScene: 'abandonedHighway' },
+      // 添加测试结局快速按钮
+      { text: '测试死亡结局', nextScene: 'death' },
+      { text: '测试辐射死亡结局', nextScene: 'radiationDeath' },
+      { text: '测试绝望结局', nextScene: 'despair' },
+      { text: '测试拾荒者结局', nextScene: 'scavenger' },
+      { text: '测试殉道者结局', nextScene: 'martyr' },
+      { text: '测试火种结局', nextScene: 'spark' }
+  ]
+},
   
 };
 
