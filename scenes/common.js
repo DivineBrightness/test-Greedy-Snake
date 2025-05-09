@@ -8,7 +8,7 @@ const commonScenes = {
     options: [
         { text: '离开矿洞，探索周围', nextScene: 'rustRiver' },
         { text: '检查你的净化服', nextScene: 'checkSuit' },
-        { text: '【测试】直接前往殉道者结局', nextScene: 'martyrSacrifice' } // 添加此选项用于测试
+        { text: '【测试】直接前往殉道者结局', nextScene: 'martyrPath1' } // 添加此选项用于测试
       ]
   },
   
