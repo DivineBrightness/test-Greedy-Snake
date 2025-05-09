@@ -6,9 +6,10 @@ const commonScenes = {
     description: '你在一场剧烈的头痛中醒来，发现自己身处一个废弃的矿洞中。你穿着一件老旧的"净化服"，胸口编号"R-250"，除此之外你不记得关于自己的任何事情。矿洞外，是一片荒芜的废土世界，辐射与危险无处不在，而你必须在这里求生。',
     skipResourceConsumption: true, // 不消耗资源，因为这是开始场景
     options: [
-      { text: '离开矿洞，探索周围', nextScene: 'rustRiver' },
-      { text: '检查你的净化服', nextScene: 'checkSuit' }
-    ]
+        { text: '离开矿洞，探索周围', nextScene: 'rustRiver' },
+        { text: '检查你的净化服', nextScene: 'checkSuit' },
+        { text: '【测试】直接前往殉道者结局', nextScene: 'martyrSacrifice' } // 添加此选项用于测试
+      ]
   },
   
   'checkSuit': {
