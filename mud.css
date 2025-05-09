@@ -823,3 +823,168 @@ body.wasteland-active {
   font-size: 0.8em;
   margin-left: 8px;
 }
+/* 废土地图样式 */
+.wasteland-map {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 300px;
+  height: 300px;
+  background-color: rgba(20, 20, 20, 0.95);
+  border: 2px solid #555;
+  border-radius: 8px;
+  z-index: 100;
+  display: none;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+  color: #aaa;
+  font-family: monospace;
+}
+
+.wasteland-map.active {
+  display: block;
+}
+
+.map-header {
+  padding: 8px;
+  text-align: center;
+  border-bottom: 1px solid #555;
+  font-weight: bold;
+  font-size: 16px;
+  color: #ccc;
+}
+
+.map-canvas {
+  position: relative;
+  width: 100%;
+  height: 230px;
+  background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAAEH5aAAAAAACXBIWXMAAAsSAAALEgHS3X78AAAA') center center;
+  background-color: #1a1a1a;
+  background-size: 100% 100%;
+  opacity: 0.9;
+}
+
+.map-marker {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background-color: #555;
+  border: 1px solid #777;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.3s;
+}
+
+.map-marker.current {
+  background-color: #4abb7c;
+  box-shadow: 0 0 8px rgba(74, 187, 124, 0.8);
+  width: 10px;
+  height: 10px;
+}
+
+.player-marker {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background-color: #ff9900;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 10px rgba(255, 153, 0, 0.8);
+  transition: all 0.5s;
+  z-index: 5;
+}
+
+.map-info {
+  padding: 8px;
+  font-size: 12px;
+  text-align: center;
+  color: #bbb;
+  height: 30px;
+  overflow: hidden;
+}
+
+.map-close {
+  position: absolute;
+  top: 5px;
+  right: 10px;
+  cursor: pointer;
+  font-size: 18px;
+  color: #999;
+}
+
+.map-close:hover {
+  color: #fff;
+}
+
+.wasteland-map-toggle {
+  position: fixed;
+  top: 10px;
+  right: 70px;
+  background-color: #333;
+  color: #eee;
+  border: 1px solid #555;
+  border-radius: 5px;
+  padding: 5px 10px;
+  font-size: 14px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.wasteland-map-toggle:hover {
+  background-color: #444;
+}
+/* 增强废土地图样式 */
+.map-canvas {
+  background-color: #1a2a1a !important; /* 确保背景颜色显示 */
+  border: 1px solid #4a5a4a;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.map-marker {
+  width: 12px !important;
+  height: 12px !important;
+  background-color: #8fbc8f !important; /* 使用更明显的绿色 */
+  border: 1px solid #fff !important;
+  position: relative;
+}
+
+.region-label {
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  color: #aaa;
+  font-size: 8px;
+  text-shadow: 0 0 2px #000;
+  pointer-events: none;
+}
+
+.player-marker {
+  width: 16px !important;
+  height: 16px !important;
+  background-color: #ff9900 !important;
+  border: 2px solid #fff !important;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 153, 0, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(255, 153, 0, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 153, 0, 0); }
+}
+
+.wasteland-map-toggle {
+  position: fixed;
+  top: 70px !important; /* 将地图按钮放在物品栏按钮旁边 */
+  right: 70px !important;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #3a4a3a;
+  border: 2px solid #8fbc8f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

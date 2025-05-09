@@ -31,9 +31,9 @@ const wastelandGame = {
         return window.wastelandScenes;
     },
     
-// 在mud.js中修改init函数
+// 在init函数中添加地图按钮初始化
 init: function() {
-    // 检查必需的DOM元素
+    // 保留原有代码
     if (!document.getElementById('wasteland-game')) {
       console.log('创建废土游戏基本结构');
       this.createBasicStructure();
@@ -52,8 +52,54 @@ init: function() {
     this.setupEventListeners();
     this.setupItemClickListeners();
     this.addInventoryButton(); // 添加物品栏按钮
+    this.addMapButton(); // 添加地图按钮
   },
-  
+
+  addMapButton: function() {
+    // 检查按钮是否已存在
+    if (document.querySelector('.wasteland-map-toggle')) {
+        console.log("地图按钮已存在");
+        return;
+    }
+    
+    console.log("创建地图按钮");
+    
+    // 创建按钮
+    const btnEl = document.createElement('button');
+    btnEl.className = 'wasteland-map-toggle';
+    btnEl.innerHTML = '🗺️'; // 使用地图表情符号
+    
+    // 添加到游戏界面
+    const gameContainer = document.getElementById('wasteland-game');
+    if (gameContainer) {
+        gameContainer.appendChild(btnEl);
+        console.log("地图按钮已添加到游戏容器");
+    } else {
+        console.error("找不到游戏容器");
+    }
+    
+    // 初始化地图
+    if (window.wastelandMap) {
+        try {
+            window.wastelandMap.init();
+            // 根据当前场景立即更新位置
+            window.wastelandMap.updatePosition(this.currentScene);
+            console.log("地图初始化成功");
+        } catch (e) {
+            console.error("地图初始化失败", e);
+        }
+    } else {
+        console.error("找不到wastelandMap对象");
+    }
+    
+    // 绑定点击事件
+    btnEl.addEventListener('click', () => {
+        console.log("点击地图按钮");
+        if (window.wastelandMap) {
+            window.wastelandMap.toggleMap();
+        }
+    });
+},
   // 创建基本结构
   createBasicStructure: function() {
     const container = document.createElement('div');
@@ -614,12 +660,17 @@ init: function() {
             }
         }
         
-        // 执行场景切换
+         // 在场景切换完成后更新地图位置
         setTimeout(() => {
             if (redirectScene) {
                 this.currentScene = redirectScene;
             } else {
                 this.currentScene = sceneId;
+            }
+            
+            // 更新地图位置
+            if (window.wastelandMap) {
+                window.wastelandMap.updatePosition(this.currentScene);
             }
             
             this.renderCurrentScene();
