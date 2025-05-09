@@ -196,7 +196,34 @@ options: [
       { text: '测试火种结局', nextScene: 'spark' }
   ]
 },
-  
+  // 添加测试物品使用的场景
+// 添加测试物品获取的场景
+'testItemPickup': {
+  title: '物品获取测试场景',
+  description: '这是一个测试场景，用于检查物品是否能够正确拾取并存入物品栏。你可以选择拾取不同的物品。',
+  isArea: true,
+  options: [
+      { text: '拾取罐头食物', nextScene: 'testItemPickup', item: '罐头食物' },
+      { text: '拾取净水罐', nextScene: 'testItemPickup', item: '净水罐' },
+      { text: '拾取草药团', nextScene: 'testItemPickup', item: '草药团' },
+      { text: '拾取镇静丸', nextScene: 'testItemPickup', item: '镇静丸' },
+      { text: '拾取急救包', nextScene: 'testItemPickup', item: '急救包' },
+      { text: '返回铁丘营地', nextScene: 'ironHill' }
+  ]
+},
+'ironHill': {
+    title: '铁丘营地',
+    description: '铁丘营地建在一座废弃矿山上，由各种金属板材和废旧集装箱搭建而成，形成一个小型聚居地。营地中央是一个简陋的市集，几个幸存者在那里交换物资。你注意到一群孩子围绕着一位老人，他似乎正在讲述着什么故事。另一边，几个人正在修补营地的防御设施。这里看起来比外面要安全一些，至少暂时如此。',
+    isArea: true,
+    options: [
+        { text: '接近讲故事的老人', nextScene: 'meetLiuYe' },
+        { text: '在市集寻找交易机会', nextScene: 'ironHillMarket' },
+        { text: '帮助修补防御设施', nextScene: 'repairDefense' },
+        { text: '离开铁丘', nextScene: 'abandonedHighway' },
+        { text: '测试物品使用', nextScene: 'testItemUsage' },
+        { text: '测试物品获取', nextScene: 'testItemPickup' } // 添加测试选项
+    ]
+},
 };
 
  // 将场景数据暴露为全局变量
@@ -212,8 +239,7 @@ const itemDescriptions = {
   '镇静丸': '一小瓶旧世界生产的镇静药物，可帮助控制情绪波动和改善睡眠。药片已经变色，但似乎仍然有效。',
   '急救包': '包含简易绷带、消毒剂和几片止痛药的小型医疗包，可以处理轻微外伤。',
   '生锈灭火器': '一个老旧的灭火器，虽然外壳生锈，但内部压力似乎还在。在紧急情况下可以作为武器使用。',
-  '记忆碎片': '一个小型数据存储设备，闪烁着微弱的蓝光。似乎包含某种加密信息，可能与你的身份有关。'
- };
+  };
  
  // 将物品描述数据库暴露为全局变量
  window.itemDescriptions = itemDescriptions;

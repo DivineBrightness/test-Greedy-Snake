@@ -465,7 +465,6 @@ init: function() {
         }, 300);
     },
     
-    // 切换场景
     goToScene: function(sceneId) {
         if (this.isTransitioning) return;
         this.isTransitioning = true;
@@ -479,6 +478,10 @@ init: function() {
         
         // 保存当前属性值
         const oldAttributes = {...this.attributes};
+        
+        // 查找用于执行此场景转换的选项，以检查是否有物品
+        const optionWithItem = this.findOptionWithItem(this.currentScene, sceneId);
+        const itemToAdd = optionWithItem ? optionWithItem.item : scene.item;
         
         // 处理资源消耗（除非场景设置了skipResourceConsumption）
         if (!scene.skipResourceConsumption) {
@@ -506,10 +509,11 @@ init: function() {
             this.visitedAreas.push(sceneId);
         }
         
-        // 处理物品拾取
-        if (scene.item && !this.inventory.includes(scene.item) && this.inventory.length < 3) {
-            this.inventory.push(scene.item);
-        } else if (scene.item && !this.inventory.includes(scene.item)) {
+        // 处理物品拾取，同时考虑场景本身的item和选项中的item
+        if (itemToAdd && !this.inventory.includes(itemToAdd) && this.inventory.length < 3) {
+            this.inventory.push(itemToAdd);
+            this.showMessage(`获得了物品: ${itemToAdd}`);
+        } else if (itemToAdd && !this.inventory.includes(itemToAdd)) {
             this.showMessage('你的物品栏已满，无法获得物品');
         }
         
@@ -585,6 +589,16 @@ init: function() {
             this.renderCurrentScene();
             this.isTransitioning = false;
         }, 500);
+    },
+
+    // 添加一个辅助函数，查找具有特定nextScene和item的选项
+    findOptionWithItem: function(currentSceneId, targetSceneId) {
+        const currentScene = this.scenes[currentSceneId];
+        if (!currentScene || !currentScene.options) return null;
+        
+        return currentScene.options.find(option => 
+            option.nextScene === targetSceneId && option.item
+        );
     },
     
     // 渲染属性状态
