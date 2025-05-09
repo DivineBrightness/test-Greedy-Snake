@@ -27,9 +27,17 @@ const wastelandGame = {
     
     isTransitioning: false,
     
-    get scenes() {
-        return window.wastelandScenes;
-    },
+  // 修改场景获取方法
+  get scenes() {
+    // 如果场景尚未加载，则尝试加载
+    if (!window.wastelandScenes) {
+      console.warn('场景数据尚未加载，尝试加载...');
+      if (typeof loadAllScenes === 'function') {
+        loadAllScenes();
+      }
+    }
+    return window.wastelandScenes || {};
+  },
     
 // 在init函数中添加地图按钮初始化
 init: function() {
