@@ -266,3 +266,8 @@
   margin: 0 auto;
   transition: transform 0.2s ease;
 }
+/* 修改为 */
+html body #snake-game:not([style*="display: none"]) ~ .fruit-basket,
+body:has(#snake-game:not([style*="display: none"])) .fruit-basket {
+  display: none!important; /* 可能更好的方案是隐藏它 */
+}

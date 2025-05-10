@@ -28,23 +28,24 @@
   padding-bottom: 15px;
 }
 
-/* 修改内容区域，增加底部内边距以防止内容被选项容器遮挡 */
+/* 修改内容容器，使其可滚动 */
 .wasteland-content {
-  position: relative;
-  height: 60vh; /* 固定高度 */
+  height: calc(100vh - 240px); /* 减去头部和选项容器的高度 */
   max-height: 500px;
-  overflow-y: auto; /* 允许滚动 */
-  padding-bottom: 150px; /* 增加底部内边距，确保选项不会遮挡内容 */
+  overflow-y: auto;
+  padding-bottom: 20px;
   margin-bottom: 10px;
+  scrollbar-width: thin; /* 对Firefox有效 */
+  scrollbar-color: #8fbc8f #2a3b2a; /* 对Firefox有效 */
 }
-/* 修改选项容器样式，确保不会完全遮挡内容 */
+/* 修改选项容器样式，确保其正确跟随游戏容器 */
 .wasteland-options-container {
-  position: fixed; /* 改为固定定位，而非sticky */
+  position: absolute; /* 改为absolute而非fixed */
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: calc(100% - 40px); /* 考虑到左右边距 */
-  max-width: 760px; /* 与游戏容器宽度匹配 */
+  left: 0;
+  right: 0;
+  width: 100%; /* 使用100%宽度 */
+  max-width: 100%; /* 调整最大宽度以匹配游戏容器 */
   background-color: rgba(42, 59, 42, 0.95);
   padding: 15px;
   box-shadow: 0 -5px 10px rgba(0, 0, 0, 0.3);
@@ -53,6 +54,7 @@
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
 }
+
 
 /* 确保场景内容也有足够的底部空间 */
 .wasteland-scene {
@@ -340,49 +342,89 @@
   overflow-y: auto;
 }
 
-.leaderboard-row {
+
+
+/* 添加废土游戏特定前缀，避免影响其他游戏 */
+.wasteland-leaderboard-row {
   display: flex;
   padding: 10px;
   border-bottom: 1px solid #3a5a3a;
 }
 
-.leaderboard-row:last-child {
+.wasteland-leaderboard-row:last-child {
   border-bottom: none;
 }
 
-.leaderboard-row.top-rank {
+.wasteland-leaderboard-row.top-rank {
   background-color: rgba(255, 215, 0, 0.1);
 }
 
-.leaderboard-row .rank {
-  width: 10%;
+/* 调整排行榜行中各元素的宽度比例 */
+.wasteland-leaderboard-row .rank {
+  width: 15%;
   text-align: center;
   font-weight: bold;
+  position: relative; /* 添加相对定位以便放置奖牌 */
 }
 
-.leaderboard-row .player {
-  width: 35%;
+.wasteland-leaderboard-row .player {
+  width: 40%; /* 增加宽度 */
 }
 
-.leaderboard-row .ending {
-  width: 35%;
+.wasteland-leaderboard-row .ending {
+  width: 45%; /* 增加宽度 */
   color: #8fbc8f;
 }
 
-.leaderboard-row .date {
-  width: 20%;
-  text-align: right;
-  color: #999;
-  font-size: 0.9em;
+/* 第一名 - 金牌 */
+.wasteland-leaderboard-row:nth-child(1) .rank::before {
+  content: "🥇";
+  position: absolute;
+  left: 5px;
+  font-size: 18px;
 }
 
-.loading, .error, .no-data {
+/* 第二名 - 银牌 */
+.wasteland-leaderboard-row:nth-child(2) .rank::before {
+  content: "🥈";
+  position: absolute;
+  left: 5px;
+  font-size: 18px;
+}
+
+/* 第三名 - 铜牌 */
+.wasteland-leaderboard-row:nth-child(3) .rank::before {
+  content: "🥉";
+  position: absolute;
+  left: 5px;
+  font-size: 18px;
+}
+
+/* 前三名背景颜色差异化 */
+.wasteland-leaderboard-row:nth-child(1) {
+  background-color: rgba(255, 215, 0, 0.15); /* 金色背景 */
+}
+
+.wasteland-leaderboard-row:nth-child(2) {
+  background-color: rgba(192, 192, 192, 0.15); /* 银色背景 */
+}
+
+.wasteland-leaderboard-row:nth-child(3) {
+  background-color: rgba(205, 127, 50, 0.15); /* 铜色背景 */
+}
+
+/* 修改排行榜数字与奖牌的布局 */
+.wasteland-leaderboard-row:nth-child(-n+3) .rank {
+  padding-left: 25px; /* 为奖牌留出空间 */
+}
+/* 添加废土游戏特定前缀的状态类 */
+.wasteland-loading, .wasteland-error, .wasteland-no-data {
   text-align: center;
   padding: 20px;
   color: #999;
 }
 
-.error {
+.wasteland-error {
   color: #ff6347;
 }
 
@@ -653,10 +695,11 @@
       top: 0;
       left: 0;
   }
-  html body #wasteland-game:not([style*="display: none"]) ~ .fruit-basket,
-  body:has(#wasteland-game:not([style*="display: none"])) .fruit-basket {
-    z-index: -1 !important; /* 确保在游戏上方 */
-  }
+/* 修改为 */
+html body #wasteland-game:not([style*="display: none"]) ~ .fruit-basket,
+body:has(#wasteland-game:not([style*="display: none"])) .fruit-basket {
+  display: none!important; /* 可能更好的方案是隐藏它 */
+}
   .container {
       padding: 0;
   }
@@ -823,9 +866,9 @@ body.wasteland-active {
   font-size: 0.8em;
   margin-left: 8px;
 }
-/* 废土地图样式 */
+/* 修复地图定位问题 */
 .wasteland-map {
-  position: fixed;
+  position: fixed; /* 改为fixed确保在视口中居中 */
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -834,7 +877,7 @@ body.wasteland-active {
   background-color: rgba(20, 20, 20, 0.95);
   border: 2px solid #555;
   border-radius: 8px;
-  z-index: 100;
+  z-index: 1000; /* 确保比选项容器的z-index高 */
   display: none;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
   color: #aaa;
@@ -917,18 +960,20 @@ body.wasteland-active {
   color: #fff;
 }
 
+/* 确保地图按钮在游戏容器中正确定位 */
 .wasteland-map-toggle {
-  position: fixed;
-  top: 10px;
-  right: 70px;
-  background-color: #333;
-  color: #eee;
-  border: 1px solid #555;
-  border-radius: 5px;
-  padding: 5px 10px;
-  font-size: 14px;
-  cursor: pointer;
-  z-index: 10;
+  position: absolute; /* 相对于游戏容器定位 */
+  top: 70px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #3a4a3a;
+  border: 2px solid #8fbc8f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 101;
 }
 
 .wasteland-map-toggle:hover {
