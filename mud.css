@@ -28,9 +28,15 @@
   padding-bottom: 15px;
 }
 
-/* 确保场景内容不被选项容器覆盖 */
+/* 修改内容容器，使其可滚动 */
 .wasteland-content {
-  padding-bottom: 180px; /* 增加底部填充以容纳选项容器 */
+  height: calc(100vh - 240px); /* 减去头部和选项容器的高度 */
+  max-height: 500px;
+  overflow-y: auto;
+  padding-bottom: 20px;
+  margin-bottom: 10px;
+  scrollbar-width: thin; /* 对Firefox有效 */
+  scrollbar-color: #8fbc8f #2a3b2a; /* 对Firefox有效 */
 }
 /* 修改选项容器样式，确保其正确跟随游戏容器 */
 .wasteland-options-container {
