@@ -359,28 +359,64 @@
   background-color: rgba(255, 215, 0, 0.1);
 }
 
+/* 调整排行榜行中各元素的宽度比例 */
 .wasteland-leaderboard-row .rank {
-  width: 10%;
+  width: 15%;
   text-align: center;
   font-weight: bold;
+  position: relative; /* 添加相对定位以便放置奖牌 */
 }
 
 .wasteland-leaderboard-row .player {
-  width: 35%;
+  width: 40%; /* 增加宽度 */
 }
 
 .wasteland-leaderboard-row .ending {
-  width: 35%;
+  width: 45%; /* 增加宽度 */
   color: #8fbc8f;
 }
 
-.wasteland-leaderboard-row .date {
-  width: 20%;
-  text-align: right;
-  color: #999;
-  font-size: 0.9em;
+/* 第一名 - 金牌 */
+.wasteland-leaderboard-row:nth-child(1) .rank::before {
+  content: "🥇";
+  position: absolute;
+  left: 5px;
+  font-size: 18px;
 }
 
+/* 第二名 - 银牌 */
+.wasteland-leaderboard-row:nth-child(2) .rank::before {
+  content: "🥈";
+  position: absolute;
+  left: 5px;
+  font-size: 18px;
+}
+
+/* 第三名 - 铜牌 */
+.wasteland-leaderboard-row:nth-child(3) .rank::before {
+  content: "🥉";
+  position: absolute;
+  left: 5px;
+  font-size: 18px;
+}
+
+/* 前三名背景颜色差异化 */
+.wasteland-leaderboard-row:nth-child(1) {
+  background-color: rgba(255, 215, 0, 0.15); /* 金色背景 */
+}
+
+.wasteland-leaderboard-row:nth-child(2) {
+  background-color: rgba(192, 192, 192, 0.15); /* 银色背景 */
+}
+
+.wasteland-leaderboard-row:nth-child(3) {
+  background-color: rgba(205, 127, 50, 0.15); /* 铜色背景 */
+}
+
+/* 修改排行榜数字与奖牌的布局 */
+.wasteland-leaderboard-row:nth-child(-n+3) .rank {
+  padding-left: 25px; /* 为奖牌留出空间 */
+}
 /* 添加废土游戏特定前缀的状态类 */
 .wasteland-loading, .wasteland-error, .wasteland-no-data {
   text-align: center;
