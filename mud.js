@@ -489,6 +489,11 @@ init: function() {
     hide: function() {
         const gameContainer = document.getElementById('wasteland-game');
         if (gameContainer) {
+            // 先隐藏地图
+            if (window.wastelandMap) {
+                window.wastelandMap.hideMap();
+            }
+            
             gameContainer.style.display = 'none';
             document.body.classList.remove('wasteland-active');
             this.isOpen = false;

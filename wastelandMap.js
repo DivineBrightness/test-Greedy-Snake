@@ -16,13 +16,20 @@ const wastelandMap = {
     // 当前位置
     currentRegion: null,
     
-// 初始化地图
+// 修改初始化地图函数
 init: function() {
     console.log("初始化废土地图...");
     
     // 检查地图是否已经初始化
     if (document.querySelector('.wasteland-map')) {
         console.log("地图已存在，不重复初始化");
+        return;
+    }
+    
+    // 获取游戏容器
+    const gameContainer = document.getElementById('wasteland-game');
+    if (!gameContainer) {
+        console.error("找不到游戏容器，无法初始化地图");
         return;
     }
     
@@ -39,7 +46,7 @@ init: function() {
     
     // 渲染地图标记
     const mapCanvas = mapContainer.querySelector('.map-canvas');
-    mapCanvas.style.backgroundColor = "#1a2a1a"; // 添加明显的背景色
+    mapCanvas.style.backgroundColor = "#1a2a1a";
     mapCanvas.style.backgroundImage = "url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"100\" viewBox=\"0 0 100 100\"><rect fill=\"none\" stroke=\"%23333\" stroke-width=\"0.5\" x=\"0\" y=\"0\" width=\"100\" height=\"100\"/></svg>')";
     
     this.regions.forEach(region => {
@@ -71,7 +78,8 @@ init: function() {
         this.hideMap();
     });
     
-    document.body.appendChild(mapContainer);
+    // 将地图添加到游戏容器而不是document.body
+    gameContainer.appendChild(mapContainer);
     console.log("地图初始化完成");
 },
     
@@ -127,22 +135,22 @@ init: function() {
         });
     },
     
-    // 显示地图
-    showMap: function() {
-        console.log("显示地图");
-        const map = document.querySelector('.wasteland-map');
-        if (map) {
-            map.classList.add('active');
-        } else {
-            console.error("找不到地图元素");
-            // 如果地图元素不存在，重新初始化
-            this.init();
-            setTimeout(() => {
-                const newMap = document.querySelector('.wasteland-map');
-                if (newMap) newMap.classList.add('active');
-            }, 100);
-        }
-    },
+// 修改显示地图函数
+showMap: function() {
+    console.log("显示地图");
+    const map = document.querySelector('.wasteland-map');
+    if (map) {
+        map.classList.add('active');
+    } else {
+        console.error("找不到地图元素");
+        // 如果地图元素不存在，重新初始化
+        this.init();
+        setTimeout(() => {
+            const newMap = document.querySelector('.wasteland-map');
+            if (newMap) newMap.classList.add('active');
+        }, 100);
+    }
+},
     
     // 隐藏地图
     hideMap: function() {
