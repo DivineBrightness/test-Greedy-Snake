@@ -335,7 +335,7 @@ init: function() {
     // 加载排行榜数据
     loadLeaderboard: function() {
         const leaderboardContent = document.getElementById('wasteland-leaderboard-content');
-        leaderboardContent.innerHTML = '<div class="loading">加载中...</div>';
+        leaderboardContent.innerHTML = '<div class="wasteland-loading">加载中...</div>';
         
         fetch('https://331600.xyz/leaderboard?game=wasteland')
             .then(response => response.json())
@@ -344,7 +344,7 @@ init: function() {
                 if (data && data.length > 0) {
                     data.forEach((item, index) => {
                         html += `
-                            <div class="leaderboard-row ${index < 3 ? 'top-rank' : ''}">
+                            <div class="wasteland-leaderboard-row ${index < 3 ? 'top-rank' : ''}">
                                 <div class="rank">${index + 1}</div>
                                 <div class="player">${item.player_name}</div>
                                 <div class="ending">${item.ending || '未知结局'}</div>
@@ -353,12 +353,12 @@ init: function() {
                         `;
                     });
                 } else {
-                    html = '<div class="no-data">暂无排行数据</div>';
+                    html = '<div class="wasteland-no-data">暂无排行数据</div>';
                 }
                 leaderboardContent.innerHTML = html;
             })
             .catch(error => {
-                leaderboardContent.innerHTML = '<div class="error">加载失败，请稍后再试</div>';
+                leaderboardContent.innerHTML = '<div class="wasteland-error">加载失败，请稍后再试</div>';
                 console.error('获取排行榜数据失败:', error);
             });
     },

@@ -342,49 +342,53 @@
   overflow-y: auto;
 }
 
-.leaderboard-row {
+
+
+/* 添加废土游戏特定前缀，避免影响其他游戏 */
+.wasteland-leaderboard-row {
   display: flex;
   padding: 10px;
   border-bottom: 1px solid #3a5a3a;
 }
 
-.leaderboard-row:last-child {
+.wasteland-leaderboard-row:last-child {
   border-bottom: none;
 }
 
-.leaderboard-row.top-rank {
+.wasteland-leaderboard-row.top-rank {
   background-color: rgba(255, 215, 0, 0.1);
 }
 
-.leaderboard-row .rank {
+.wasteland-leaderboard-row .rank {
   width: 10%;
   text-align: center;
   font-weight: bold;
 }
 
-.leaderboard-row .player {
+.wasteland-leaderboard-row .player {
   width: 35%;
 }
 
-.leaderboard-row .ending {
+.wasteland-leaderboard-row .ending {
   width: 35%;
   color: #8fbc8f;
 }
 
-.leaderboard-row .date {
+.wasteland-leaderboard-row .date {
   width: 20%;
   text-align: right;
   color: #999;
   font-size: 0.9em;
 }
 
-.loading, .error, .no-data {
+/* 添加废土游戏特定前缀的状态类 */
+.wasteland-loading, .wasteland-error, .wasteland-no-data {
   text-align: center;
   padding: 20px;
   color: #999;
 }
 
-.error {
+.wasteland-error {
   color: #ff6347;
 }
 
@@ -655,10 +659,11 @@
       top: 0;
       left: 0;
   }
-  html body #wasteland-game:not([style*="display: none"]) ~ .fruit-basket,
-  body:has(#wasteland-game:not([style*="display: none"])) .fruit-basket {
-    z-index: -1 !important; /* 确保在游戏上方 */
-  }
+/* 修改为 */
+html body #wasteland-game:not([style*="display: none"]) ~ .fruit-basket,
+body:has(#wasteland-game:not([style*="display: none"])) .fruit-basket {
+  display: none!important; /* 可能更好的方案是隐藏它 */
+}
   .container {
       padding: 0;
   }
