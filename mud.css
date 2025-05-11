@@ -1033,3 +1033,38 @@ body.wasteland-active {
   align-items: center;
   justify-content: center;
 }
+/* 添加章节显示样式 */
+.attribute-item.chapter {
+  background-color: #4c6358;
+  border-radius: 4px;
+  padding: 2px 8px;
+  margin-left: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #eee;
+  font-weight: bold;
+}
+
+/* 结局评分显示样式（调试用） */
+.wasteland-ending-scores {
+  background-color: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 4px;
+}
+
+.wasteland-ending-scores h4 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+}
+
+.wasteland-ending-scores .score-item {
+  display: inline-block;
+  margin-right: 10px;
+  background-color: #333;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+}

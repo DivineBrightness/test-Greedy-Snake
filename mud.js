@@ -1,10 +1,8 @@
 // 废土余生：60秒风格文字冒险游戏
 const wastelandGame = {
-    // 修改物品存储结构从数组改为对象
-    inventory: [],      // 保持原有属性名，但改变内部实现
-    inventoryMap: {},   // 新增物品计数映射
-    
-    // 其他属性保持不变
+    // 保留原有属性
+    inventory: [],
+    inventoryMap: {},
     isOpen: false,
     currentScene: 'start',
     visitedAreas: [],
@@ -12,19 +10,33 @@ const wastelandGame = {
     round: 1,
     maxRounds: 60,
     
-    // 生存属性
+    // 修改生存属性，移除饥饿和口渴
     attributes: {
         health: 5,
-        hunger: 5,
-        thirst: 5,
         radiation: 1,
         sanity: 100
     },
     
-    // 人性点数
+    // 添加结局评分系统
+    endingScores: {
+        humanity: 0,  // 人道指标
+        tech: 0,      // 技术指标
+        survival: 0,  // 生存指标
+        skycity: 0    // 天庭指标
+    },
+    
+    // 添加章节系统
+    currentChapter: 1,
+    maxChapter: 4,
+    chapterKeyItems: {
+        1: "老式收音机",    // 第一章关键道具
+        2: "C区通行证",     // 第二章关键道具
+        3: "圣杯病毒",  // 第三章关键道具
+        4: null            // 第四章无需额外钥匙
+    },
+    
+    // 原有属性
     humanityPoints: 0,
-    
-    
     isTransitioning: false,
     
   // 修改场景获取方法
@@ -152,20 +164,35 @@ init: function() {
         });
     },
     
-    // 显示物品描述
-    showItemDescription: function(itemName) {
-        this.hideItemDescription();
-        
-        const description = window.itemDescriptions[itemName] || '一个神秘的物品，没人知道它的来历和用途。';
-        
-        const descriptionEl = document.createElement('div');
-        descriptionEl.className = 'wasteland-item-description';
-        descriptionEl.innerHTML = `
-            <h4>${itemName}</h4>
-            <p>${description}</p>
-            <button class="use-item-btn">使用物品</button>
-            <div class="close-btn">×</div>
-        `;
+// 显示物品描述
+showItemDescription: function(itemName) {
+    this.hideItemDescription();
+    
+    console.log('请求显示物品:', itemName);
+    console.log('物品描述数据库是否存在:', typeof window.itemDescriptions !== 'undefined');
+    console.log('该物品是否有描述:', window.itemDescriptions && itemName in window.itemDescriptions);
+    
+    // 如果物品描述数据库不存在，创建一个应急的基本描述
+    if (!window.itemDescriptions) {
+        console.warn('物品描述数据库未加载!');
+        window.itemDescriptions = {
+            '镇静丸': '一种能恢复精神的小药丸。',
+            '急救包': '用于恢复生命值的医疗包。',
+            '滤毒面罩': '可以过滤有害气体的面罩。',
+            '绳索': '结实的绳子，可用于攀爬或固定物体。'
+        };
+    }
+    
+    const description = window.itemDescriptions[itemName] || '一个神秘的物品，没人知道它的来历和用途。';
+    
+    const descriptionEl = document.createElement('div');
+    descriptionEl.className = 'wasteland-item-description';
+    descriptionEl.innerHTML = `
+        <h4>${itemName}</h4>
+        <p>${description}</p>
+        <button class="use-item-btn">使用物品</button>
+        <div class="close-btn">×</div>
+    `;
         
         const gameContainer = document.getElementById('wasteland-game');
         gameContainer.appendChild(descriptionEl);
@@ -321,33 +348,54 @@ init: function() {
         });
     },
     
-    // 切换排行榜显示
-    toggleLeaderboard: function() {
-        const leaderboard = document.getElementById('wasteland-leaderboard');
-        if (leaderboard.style.display === 'none') {
-            leaderboard.style.display = 'block';
-            this.loadLeaderboard();
-        } else {
-            leaderboard.style.display = 'none';
-        }
-    },
+// 修改排行榜显示切换函数
+toggleLeaderboard: function() {
+    const leaderboard = document.getElementById('wasteland-leaderboard');
+    const currentDisplay = leaderboard.style.display;
     
-// 加载排行榜数据
+    if (currentDisplay === 'none') {
+        // 显示排行榜前先清空内容
+        const content = document.getElementById('wasteland-leaderboard-content');
+        if (content) {
+            content.innerHTML = '<div class="wasteland-loading">刷新中...</div>';
+        }
+        
+        leaderboard.style.display = 'block';
+        console.log('打开排行榜并刷新数据');
+        // 始终刷新数据
+        this.loadLeaderboard();
+    } else {
+        leaderboard.style.display = 'none';
+        console.log('关闭排行榜');
+    }
+},
+    
+// 修改排行榜加载函数
 loadLeaderboard: function() {
     const leaderboardContent = document.getElementById('wasteland-leaderboard-content');
     leaderboardContent.innerHTML = '<div class="wasteland-loading">加载中...</div>';
     
-    fetch('https://331600.xyz/leaderboard?game=wasteland')
-        .then(response => response.json())
+    // 添加时间戳防止缓存
+    const timestamp = new Date().getTime();
+    fetch(`https://331600.xyz/leaderboard?game=wasteland&t=${timestamp}`)
+        .then(response => {
+            console.log('排行榜响应状态:', response.status);
+            return response.json();
+        })
         .then(data => {
+            console.log('获取到排行榜数据:', data);
             let html = '';
             if (data && data.length > 0) {
                 data.forEach((item, index) => {
+                    // 确保结局名称不为空
+                    const endingName = item.ending || '未知结局';
+                    console.log(`排行榜项 #${index}: ${item.player_name}, 结局: ${endingName}`);
+                    
                     html += `
                         <div class="wasteland-leaderboard-row ${index < 3 ? 'top-rank' : ''}">
                             <div class="rank">${index < 3 ? '' : index + 1}</div>
                             <div class="player">${item.player_name}</div>
-                            <div class="ending">${item.ending || '未知结局'}</div>
+                            <div class="ending">${endingName}</div>
                         </div>
                     `;
                 });
@@ -357,14 +405,55 @@ loadLeaderboard: function() {
             leaderboardContent.innerHTML = html;
         })
         .catch(error => {
-            leaderboardContent.innerHTML = '<div class="wasteland-error">加载失败，请稍后再试</div>';
             console.error('获取排行榜数据失败:', error);
+            leaderboardContent.innerHTML = '<div class="wasteland-error">加载失败，请稍后再试</div>';
         });
 },
     
-    // 显示游戏结束与排行榜提交弹窗
     showEndingModal: function(ending) {
-        const endingName = this.getEndingName(ending);
+        console.log('showEndingModal接收到结局ID:', ending);
+    
+        // 直接硬编码映射主要结局ID到标准名称
+        let endingTitle;
+        switch(ending) {
+            case 'martyr': 
+                endingTitle = '殉道者结局';
+                break;
+            case 'spark': 
+                endingTitle = '火种结局';
+                break;
+            case 'scavenger': 
+                endingTitle = '拾荒者结局';
+                break;
+            case 'skycity': 
+                endingTitle = '天庭结局';
+                break;
+            case 'death': 
+                endingTitle = '死亡结局';
+                break;
+            case 'despair': 
+                endingTitle = '绝望结局';
+                break;
+            default:
+                endingTitle = '神秘结局';
+        }
+        
+        console.log('确定的结局名称:', endingTitle);
+
+        // 标准化结局ID
+        let standardEnding = ending;
+        if (ending.includes('_')) {
+            standardEnding = ending.split('_')[0];
+        }
+        
+        // 如果是支线结局最终场景，转换为标准结局ID
+        if (standardEnding === 'martyr_final') standardEnding = 'martyr';
+        if (standardEnding === 'spark_final') standardEnding = 'spark';
+        if (standardEnding === 'scavenger_final') standardEnding = 'scavenger';
+        if (standardEnding === 'skycity_final') standardEnding = 'skycity';
+        
+        const endingName = this.getEndingName(standardEnding);
+
         
         const modalEl = document.createElement('div');
         modalEl.className = 'wasteland-ending-modal';
@@ -421,43 +510,84 @@ loadLeaderboard: function() {
         }
     },
     
-    // 提交结局到排行榜
-    submitEnding: function(playerName, ending) {
-        fetch('https://331600.xyz/submit-score', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                game: 'wasteland',
-                player_name: playerName,
-                score: 0,
-                ending: this.getEndingName(ending)
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            this.showMessage('你的结局已被记录在废土编年史中');
-        })
-        .catch(error => {
-            this.showMessage('结局记录失败，可能是辐射干扰了信号');
-            console.error('提交结局失败:', error);
-        });
-    },
+// 优化结局提交函数
+submitEnding: function(playerName, ending) {
+    // 直接硬编码映射结局名称
+    let endingName;
+    switch(ending) {
+        case 'martyr': 
+            endingName = '殉道者结局';
+            break;
+        case 'spark': 
+            endingName = '火种结局';
+            break;
+        case 'scavenger': 
+            endingName = '拾荒者结局';
+            break;
+        case 'skycity': 
+            endingName = '天庭结局';
+            break;
+        case 'death': 
+            endingName = '死亡结局';
+            break;
+        case 'despair': 
+            endingName = '绝望结局';
+            break;
+        default:
+            endingName = '神秘之旅';
+    }
     
-    // 获取结局名称
-    getEndingName: function(endingId) {
-        const endings = {
-            'death': '死亡结局',
-            'radiationDeath': '辐射死亡',
-            'despair': '绝望结局',
-            'scavenger': '拾荒者结局',
-            'martyr': '殉道者结局',
-            'spark': '火种结局'
-        };
-        return endings[endingId] || '神秘结局';
-    },
+    console.log('提交结局:', ending, '结局名称:', endingName);
     
+    // 构造特定格式的请求数据
+    const requestData = {
+        game: 'wasteland',
+        player_name: playerName,
+        score: 0,
+        ending: endingName  // 使用硬编码的名称
+    };
+    
+    console.log('发送结局数据:', JSON.stringify(requestData));
+    
+    fetch('https://331600.xyz/submit-score', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => {
+        console.log('提交响应状态:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('结局提交成功:', data);
+        this.showMessage('你的结局已被记录在废土编年史中');
+        
+        // 延迟后自动显示排行榜，确保服务器数据已更新
+        setTimeout(() => {
+            this.toggleLeaderboard();
+        }, 1000);
+    })
+    .catch(error => {
+        console.error('结局提交失败:', error);
+        this.showMessage('结局记录失败，可能是辐射干扰了信号');
+    });
+},
+    
+// 修复结局名称映射函数
+getEndingName: function(endingId) {
+    const endings = {
+        'death': '死亡结局',
+        'radiationDeath': '辐射死亡',
+        'despair': '绝望结局',
+        'scavenger': '拾荒者结局',
+        'martyr': '殉道者结局',
+        'spark': '火种结局',
+        'skycity': '天庭结局'  // 添加这一行
+    };
+    return endings[endingId] || '神秘结局';
+},
 
     // 在show方法开头添加调试输出
     show: function() {
@@ -500,45 +630,74 @@ loadLeaderboard: function() {
         }
     },
     
-    // 重置函数，初始化物品栏
-    restart: function() {
-        if (this.isTransitioning) return;
-        
-        this.isTransitioning = true;
-        this.currentScene = 'start';
-        
-        // 重置物品栏为空映射对象
-        this.inventoryMap = {
-            '罐头食物': 100,
-            '净水罐': 100,
-            '镇静丸': 10,
-            '急救包': 10
-        };
-        
-        // 更新物品总数数组（兼容性）
-        this.updateInventoryArray();
-        
-        this.visitedAreas = [];
-        this.endingReached = null;
-        this.round = 1;
-        this.humanityPoints = 0;
-        
-        // 重置生存属性
-        this.attributes = {
-            health: 5,
-            hunger: 5,
-            thirst: 5,
-            radiation: 1,
-            sanity: 100
-        };
-        
-        this.renderCurrentScene();
-        
-        setTimeout(() => {
-            this.isTransitioning = false;
-        }, 300);
-    },
+// 在restart函数中更新初始物品和设置
+restart: function() {
+    if (this.isTransitioning) return;
     
+    this.isTransitioning = true;
+    // 修改这行，使用chapter1中的awakening场景作为起点
+    this.currentScene = 'awakening';
+ 
+    // 重置物品栏为初始状态
+    this.inventoryMap = {
+        '镇静丸': 10,
+        '急救包': 10,
+        '滤毒面罩': 1,
+        '绳索': 10
+    };
+    
+    // 重置相关属性
+    this.updateInventoryArray();
+    this.visitedAreas = [];
+    this.endingReached = null;
+    this.round = 1;
+    this.humanityPoints = 0;
+    
+    // 重置生存属性，移除饥饿和口渴
+    this.attributes = {
+        health: 5,
+        radiation: 1,
+        sanity: 100
+    };
+    
+    // 重置章节和结局评分
+    this.currentChapter = 1;
+    this.endingScores = {
+        humanity: 0,
+        tech: 0, 
+        survival: 0,
+        skycity: 0
+    };
+    
+    this.renderCurrentScene();
+    
+    setTimeout(() => {
+        this.isTransitioning = false;
+    }, 300);
+},
+// 添加检查章节解锁的函数
+checkChapterProgress: function() {
+    // 检查是否有章节解锁的关键道具
+    const nextChapter = this.currentChapter + 1;
+    if (nextChapter <= this.maxChapter) {
+        const requiredItem = this.chapterKeyItems[this.currentChapter];
+        
+        // 如果有必要的关键道具，解锁下一章节
+        if (requiredItem && this.inventoryMap[requiredItem]) {
+            this.currentChapter = nextChapter;
+            this.showMessage(`已解锁第${nextChapter}章！`);
+            return true;
+        }
+    }
+    return false;
+},
+    // 添加更新结局评分的函数
+updateEndingScore: function(type, value) {
+    if (this.endingScores.hasOwnProperty(type)) {
+        this.endingScores[type] += value;
+        console.log(`结局评分变更: ${type} +${value}`);
+    }
+},
     // 新增：更新物品数组方法（用于兼容旧代码）
     updateInventoryArray: function() {
         this.inventory = [];
@@ -551,145 +710,177 @@ loadLeaderboard: function() {
         }
     },
 
-    // 修改场景切换函数，处理属性范围
-    goToScene: function(sceneId) {
-        if (this.isTransitioning) return;
-        this.isTransitioning = true;
-        
-        const scene = this.scenes[sceneId];
-        if (!scene) {
-            console.error(`场景 "${sceneId}" 不存在!`);
-            this.isTransitioning = false;
-            return;
+// 修改场景切换函数，添加结局评分处理
+goToScene: function(sceneId) {
+    if (this.isTransitioning) return;
+    this.isTransitioning = true;
+    
+    const scene = this.scenes[sceneId];
+    if (!scene) {
+        console.error(`场景 "${sceneId}" 不存在!`);
+        this.isTransitioning = false;
+        return;
+    }
+    
+    // 查找用于执行此场景转换的选项
+    const optionWithItem = this.findOptionWithItem(this.currentScene, sceneId);
+    const itemToAdd = optionWithItem ? optionWithItem.item : scene.item;
+    
+    // 处理资源消耗（除非场景设置了skipResourceConsumption）
+    if (!scene.skipResourceConsumption) {
+        // 移除饥饿和口渴相关代码，只增加回合计数
+        this.round += 1;
+    }
+    
+    // 检查辐射状态
+    if (this.attributes.radiation >= 5) {
+        this.attributes.health = Math.max(0, this.attributes.health - 1);
+    }
+    
+    // 记录访问区域
+    if (scene.isArea && !this.visitedAreas.includes(sceneId)) {
+        this.visitedAreas.push(sceneId);
+    }
+    
+    // 处理物品拾取
+    if (itemToAdd) {
+        if (!this.inventoryMap[itemToAdd]) {
+            this.inventoryMap[itemToAdd] = 0;
         }
+        this.inventoryMap[itemToAdd]++;
+        this.showMessage(`获得了物品: ${itemToAdd}`);
+        this.updateInventoryArray();
         
-        // 保存当前属性值
-        const oldAttributes = {...this.attributes};
-        
-        // 查找用于执行此场景转换的选项，以检查是否有物品
-        const optionWithItem = this.findOptionWithItem(this.currentScene, sceneId);
-        const itemToAdd = optionWithItem ? optionWithItem.item : scene.item;
-        
-        // 处理资源消耗（除非场景设置了skipResourceConsumption）
-        if (!scene.skipResourceConsumption) {
-            this.attributes.hunger = Math.max(0, this.attributes.hunger - 1);
-            this.attributes.thirst = Math.max(0, this.attributes.thirst - 1);
-            this.round += 1;
+        // 检查是否解锁新章节
+        this.checkChapterProgress();
+    }
+    
+    // 处理物品移除
+    if (scene.removeItem && this.inventoryMap[scene.removeItem] && this.inventoryMap[scene.removeItem] > 0) {
+        this.inventoryMap[scene.removeItem]--;
+        if (this.inventoryMap[scene.removeItem] <= 0) {
+            delete this.inventoryMap[scene.removeItem];
         }
-        
-        // 检查饥饿和口渴状态
-        if (this.attributes.hunger === 0) {
-            this.attributes.health = Math.max(0, this.attributes.health - 1);
-        }
-        
-        if (this.attributes.thirst === 0) {
-            this.attributes.health = Math.max(0, this.attributes.health - 1);
-        }
-        
-        // 检查辐射状态
-        if (this.attributes.radiation >= 5) {
-            this.attributes.health = Math.max(0, this.attributes.health - 1);
-        }
-        
-        // 记录访问区域
-        if (scene.isArea && !this.visitedAreas.includes(sceneId)) {
-            this.visitedAreas.push(sceneId);
-        }
-        
-        // 处理物品拾取
-        if (itemToAdd) {
-            // 初始化物品计数
-            if (!this.inventoryMap[itemToAdd]) {
-                this.inventoryMap[itemToAdd] = 0;
-            }
-            
-            // 增加物品计数
-            this.inventoryMap[itemToAdd]++;
-            this.showMessage(`获得了物品: ${itemToAdd}`);
-            
-            // 更新物品数组
-            this.updateInventoryArray();
-        }
-        
-        // 处理物品移除
-        if (scene.removeItem && this.inventoryMap[scene.removeItem] && this.inventoryMap[scene.removeItem] > 0) {
-            this.inventoryMap[scene.removeItem]--;
-            
-            if (this.inventoryMap[scene.removeItem] <= 0) {
-                delete this.inventoryMap[scene.removeItem];
-            }
-            
-            // 更新物品数组
-            this.updateInventoryArray();
-        }
-        
-        // 处理属性变化
-        if (scene.attributeChanges) {
-            for (const attr in scene.attributeChanges) {
-                if (this.attributes.hasOwnProperty(attr)) {
-                    this.attributes[attr] += scene.attributeChanges[attr];
-                    
-                    // 确保属性值在合法范围内
-                    if (attr === 'sanity') {
-                        this.attributes[attr] = Math.min(100, Math.max(0, this.attributes[attr])); // 修改为0-100
-                    } else {
-                        this.attributes[attr] = Math.min(5, Math.max(0, this.attributes[attr]));
-                    }
+        this.updateInventoryArray();
+    }
+    
+    // 处理属性变化
+    if (scene.attributeChanges) {
+        for (const attr in scene.attributeChanges) {
+            if (this.attributes.hasOwnProperty(attr)) {
+                this.attributes[attr] += scene.attributeChanges[attr];
+                
+                // 确保属性值在合法范围内
+                if (attr === 'sanity') {
+                    this.attributes[attr] = Math.min(100, Math.max(0, this.attributes[attr]));
+                } else {
+                    this.attributes[attr] = Math.min(5, Math.max(0, this.attributes[attr]));
                 }
             }
         }
-        
-        // 处理人性点数变化
-        if (scene.humanityChange) {
-            this.humanityPoints += scene.humanityChange;
+    }
+    
+    // 处理结局评分变化
+    if (scene.endingScores) {
+        for (const scoreType in scene.endingScores) {
+            this.updateEndingScore(scoreType, scene.endingScores[scoreType]);
         }
+    }
+    
+    // 处理人性点数变化（可以考虑移除或整合到结局评分系统）
+    if (scene.humanityChange) {
+        this.humanityPoints += scene.humanityChange;
+    }
+    
+    // 修复结局处理逻辑
+    // 检查是否达成结局，添加更多调试信息
+    if (scene.isEnding) {
+        console.log('检测到结局场景:', sceneId);
+        console.log('场景数据:', scene);
         
-        // 移除派系信任度处理
+        // 记录当前结局ID
+        this.endingReached = sceneId;
         
-        // 检查是否达成结局
-        if (scene.isEnding) {
-            this.endingReached = sceneId;
-            
-            // 显示结局提交弹窗
-            setTimeout(() => {
-                this.showEndingModal(sceneId);
-            }, 1000);
+        // 将具体场景ID映射为标准结局ID
+        let standardEndingId = sceneId;
+        if (sceneId.includes('_')) {
+            standardEndingId = sceneId.split('_')[0];
         }
+        console.log('标准化后的结局ID:', standardEndingId);
         
-        // 检查游戏结束条件
-        let redirectScene = null;
-        
-        if (this.attributes.health <= 0) {
-            redirectScene = 'death';
-        } else if (this.attributes.sanity <= 0) { // 精神值为0时触发绝望结局
-            redirectScene = 'despair';
-        } else if (this.round >= this.maxRounds) {
-            // 根据人性点数决定结局
-            if (this.humanityPoints >= 3) {
-                redirectScene = 'spark';
-            } else {
-                redirectScene = 'scavenger';
-            }
-        }
-        
-         // 在场景切换完成后更新地图位置
+        // 显示结局提交弹窗，使用标准结局ID
         setTimeout(() => {
-            if (redirectScene) {
-                this.currentScene = redirectScene;
-            } else {
-                this.currentScene = sceneId;
-            }
-            
-            // 更新地图位置
-            if (window.wastelandMap) {
-                window.wastelandMap.updatePosition(this.currentScene);
-            }
-            
-            this.renderCurrentScene();
-            this.isTransitioning = false;
-        }, 500);
-    },
-
+            this.showEndingModal(standardEndingId);
+        }, 1000);
+    }
+    
+    // 检查游戏结束条件
+    let redirectScene = null;
+    
+    if (this.attributes.health <= 0) {
+        redirectScene = 'death';
+    } else if (this.attributes.sanity <= 0) {
+        redirectScene = 'despair';
+    } else if (this.round >= this.maxRounds) {
+        // 根据结局评分决定最终结局
+        redirectScene = this.determineEnding();
+    }
+    
+    // 在场景切换完成后更新地图位置
+    setTimeout(() => {
+        if (redirectScene) {
+            this.currentScene = redirectScene;
+        } else {
+            this.currentScene = sceneId;
+        }
+        
+        // 更新地图位置
+        if (window.wastelandMap) {
+            window.wastelandMap.updatePosition(this.currentScene);
+        }
+        
+        this.renderCurrentScene();
+        this.isTransitioning = false;
+    }, 500);
+},
+// 添加根据评分确定结局的函数
+determineEnding: function() {
+    const scores = this.endingScores;
+    
+    // 找出最高分值
+    let maxScore = -1;
+    let maxType = null;
+    let isBalanced = true;
+    
+    for (const type in scores) {
+        if (scores[type] > maxScore) {
+            maxScore = scores[type];
+            maxType = type;
+        }
+    }
+    
+    // 检查是否均衡（最高分不超过其他分数的50%）
+    for (const type in scores) {
+        if (type !== maxType && maxScore > scores[type] * 1.5) {
+            isBalanced = false;
+            break;
+        }
+    }
+    
+    // 决定结局类型
+    if (isBalanced || maxType === 'skycity') {
+        return 'skycity'; // 天庭结局（均衡或天庭分数最高）
+    } else if (maxType === 'humanity') {
+        return 'martyr';  // 殉道者结局（人道分数最高）
+    } else if (maxType === 'tech') {
+        return 'spark';   // 火种结局（技术分数最高）
+    } else if (maxType === 'survival') {
+        return 'scavenger'; // 拾荒者结局（生存分数最高）
+    }
+    
+    // 默认结局
+    return 'scavenger';
+},
 
     // 添加一个辅助函数，查找具有特定nextScene和item的选项
     findOptionWithItem: function(currentSceneId, targetSceneId) {
@@ -701,71 +892,75 @@ loadLeaderboard: function() {
         );
     },
     
-    // 修改属性渲染函数，适应新的属性范围
-    renderAttributes: function() {
-        let html = '<div class="wasteland-attributes">';
-        
-        // 生命值
-        html += '<div class="attribute-item health">';
-        for (let i = 0; i < 5; i++) {
-            if (i < this.attributes.health) {
-                html += '<span class="heart full">❤️</span>';
-            } else {
-                html += '<span class="heart empty">🖤</span>';
-            }
+// 修改属性渲染函数，移除饥饿和口渴
+renderAttributes: function() {
+    let html = '<div class="wasteland-attributes">';
+    
+    // 生命值
+    html += '<div class="attribute-item health">';
+    for (let i = 0; i < 5; i++) {
+        if (i < this.attributes.health) {
+            html += '<span class="heart full">❤️</span>';
+        } else {
+            html += '<span class="heart empty">🖤</span>';
         }
-        html += '</div>';
-        
-        // 饥饿值
-        html += '<div class="attribute-item hunger">';
-        for (let i = 0; i < 5; i++) {
-            if (i < this.attributes.hunger) {
-                html += '<span class="food full">🍗</span>';
-            } else {
-                html += '<span class="food empty">⚪</span>';
-            }
-        }
-        html += '</div>';
-        
-        // 口渴值
-        html += '<div class="attribute-item thirst">';
-        for (let i = 0; i < 5; i++) {
-            if (i < this.attributes.thirst) {
-                html += '<span class="water full">💧</span>';
-            } else {
-                html += '<span class="water empty">⚪</span>';
-            }
-        }
-        html += '</div>';
-        
-        // 辐射值
-        let radiationClass = '';
-        if (this.attributes.radiation < 2) radiationClass = 'low';
-        else if (this.attributes.radiation < 4) radiationClass = 'medium';
-        else radiationClass = 'high';
-        
-        html += `<div class="attribute-item radiation ${radiationClass}">`;
-        html += `☢️ ${this.attributes.radiation}/5`;
-        html += '</div>';
-        
-        // 精神状态 - 满值100为健康状态
-        let sanityClass = '';
-        if (this.attributes.sanity > 60) sanityClass = 'positive';
-        else if (this.attributes.sanity < 30) sanityClass = 'negative';
+    }
+    html += '</div>';
+    
+    // 辐射值
+    let radiationClass = '';
+    if (this.attributes.radiation < 2) radiationClass = 'low';
+    else if (this.attributes.radiation < 4) radiationClass = 'medium';
+    else radiationClass = 'high';
+    
+    html += `<div class="attribute-item radiation ${radiationClass}">`;
+    html += `☢️ ${this.attributes.radiation}/5`;
+    html += '</div>';
+    
+    // 精神状态
+    let sanityClass = '';
+    if (this.attributes.sanity > 60) sanityClass = 'positive';
+    else if (this.attributes.sanity < 30) sanityClass = 'negative';
 
-        html += `<div class="attribute-item sanity ${sanityClass}">`;
-        html += `🧠 ${this.attributes.sanity}/100`;
-        html += '</div>';
+    html += `<div class="attribute-item sanity ${sanityClass}">`;
+    html += `🧠 ${this.attributes.sanity}/100`;
+    html += '</div>';
+    
+    // 回合计数
+    html += `<div class="attribute-item round">`;
+    html += `⏱️ ${this.round}/${this.maxRounds}`;
+    html += '</div>';
+    
+    // 添加当前章节显示
+    html += `<div class="attribute-item chapter">`;
+    html += `📖 第${this.currentChapter}章`;
+    html += '</div>';
+    
+    html += '</div>';
+    
+    return html;
+},
+
+// 添加一个调试函数，显示当前评分状态（可根据需要使用）
+renderEndingScores: function() {
+    let html = '<div class="wasteland-ending-scores">';
+    html += '<h4>结局评分（调试用）</h4>';
+    
+    for (const type in this.endingScores) {
+        let label = '';
+        switch(type) {
+            case 'humanity': label = '人道'; break;
+            case 'tech': label = '技术'; break;
+            case 'survival': label = '生存'; break;
+            case 'skycity': label = '天庭'; break;
+        }
         
-        // 回合计数
-        html += `<div class="attribute-item round">`;
-        html += `⏱️ ${this.round}/${this.maxRounds}`;
-        html += '</div>';
-        
-        html += '</div>';
-        
-        return html;
-    },
+        html += `<div class="score-item">${label}: ${this.endingScores[type]}</div>`;
+    }
+    
+    html += '</div>';
+    return html;
+},
     
     // 修改renderCurrentScene函数，将选项区域放在固定容器中
     renderCurrentScene: function() {

@@ -1,24 +1,58 @@
-// 废土求生：场景加载器
+// 废土游戏场景加载器
 
-// 合并所有场景
+// 全局场景对象
+window.wastelandScenes = {};
+
+// 加载所有场景
 function loadAllScenes() {
-  // 创建合并对象
-  const wastelandScenes = {};
-  
-  // 合并基础场景
-  Object.assign(wastelandScenes, window.commonScenes || {});
-  
-  // 合并结局场景
-  Object.assign(wastelandScenes, window.scavengerScenes || {});
-  Object.assign(wastelandScenes, window.martyrScenes || {});
-  Object.assign(wastelandScenes, window.sparkScenes || {});
-  Object.assign(wastelandScenes, window.skycityScenes || {});
-  
-  // 导出到全局
-  window.wastelandScenes = wastelandScenes;
-  console.log(`已加载 ${Object.keys(wastelandScenes).length} 个场景`);
-  
-  return wastelandScenes;
+  try {
+    // 清空现有场景
+    window.wastelandScenes = {};
+
+    // 加载共享基础场景
+    if (window.commonScenes) {
+      Object.assign(window.wastelandScenes, window.commonScenes);
+    }
+
+    // 加载各章节场景
+    if (window.chapter1Scenes) {
+      Object.assign(window.wastelandScenes, window.chapter1Scenes);
+    }
+    if (window.chapter2Scenes) {
+      Object.assign(window.wastelandScenes, window.chapter2Scenes);
+    }
+    if (window.chapter3Scenes) {
+      Object.assign(window.wastelandScenes, window.chapter3Scenes);
+    }
+    if (window.chapter4Scenes) {
+      Object.assign(window.wastelandScenes, window.chapter4Scenes);
+    }
+
+    // 加载结局场景
+    if (window.endingScenes) {
+      Object.assign(window.wastelandScenes, window.endingScenes);
+    }
+
+    // 加载分支剧情场景
+    if (window.martyrScenes) {
+      Object.assign(window.wastelandScenes, window.martyrScenes);
+    }
+    if (window.scavengerScenes) {
+      Object.assign(window.wastelandScenes, window.scavengerScenes);
+    }
+    if (window.skycityScenes) {
+      Object.assign(window.wastelandScenes, window.skycityScenes);
+    }
+    if (window.sparkScenes) {
+      Object.assign(window.wastelandScenes, window.sparkScenes);
+    }
+
+    console.log('所有场景加载完成:', Object.keys(window.wastelandScenes).length);
+    return window.wastelandScenes;
+  } catch (error) {
+    console.error('加载场景时出错:', error);
+    return {};
+  }
 }
 
 // 加载物品描述数据
@@ -36,7 +70,9 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log('废土场景数据加载完成');
 });
 
-// 导出模块（如果在Node.js环境中）
+// 导出加载函数
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { loadAllScenes, loadItemDescriptions };
+  module.exports = { loadAllScenes };
+} else {
+  window.loadAllScenes = loadAllScenes;
 }
