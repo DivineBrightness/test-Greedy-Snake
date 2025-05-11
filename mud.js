@@ -348,33 +348,54 @@ showItemDescription: function(itemName) {
         });
     },
     
-    // 切换排行榜显示
-    toggleLeaderboard: function() {
-        const leaderboard = document.getElementById('wasteland-leaderboard');
-        if (leaderboard.style.display === 'none') {
-            leaderboard.style.display = 'block';
-            this.loadLeaderboard();
-        } else {
-            leaderboard.style.display = 'none';
-        }
-    },
+// 修改排行榜显示切换函数
+toggleLeaderboard: function() {
+    const leaderboard = document.getElementById('wasteland-leaderboard');
+    const currentDisplay = leaderboard.style.display;
     
-// 加载排行榜数据
+    if (currentDisplay === 'none') {
+        // 显示排行榜前先清空内容
+        const content = document.getElementById('wasteland-leaderboard-content');
+        if (content) {
+            content.innerHTML = '<div class="wasteland-loading">刷新中...</div>';
+        }
+        
+        leaderboard.style.display = 'block';
+        console.log('打开排行榜并刷新数据');
+        // 始终刷新数据
+        this.loadLeaderboard();
+    } else {
+        leaderboard.style.display = 'none';
+        console.log('关闭排行榜');
+    }
+},
+    
+// 修改排行榜加载函数
 loadLeaderboard: function() {
     const leaderboardContent = document.getElementById('wasteland-leaderboard-content');
     leaderboardContent.innerHTML = '<div class="wasteland-loading">加载中...</div>';
     
-    fetch('https://331600.xyz/leaderboard?game=wasteland')
-        .then(response => response.json())
+    // 添加时间戳防止缓存
+    const timestamp = new Date().getTime();
+    fetch(`https://331600.xyz/leaderboard?game=wasteland&t=${timestamp}`)
+        .then(response => {
+            console.log('排行榜响应状态:', response.status);
+            return response.json();
+        })
         .then(data => {
+            console.log('获取到排行榜数据:', data);
             let html = '';
             if (data && data.length > 0) {
                 data.forEach((item, index) => {
+                    // 确保结局名称不为空
+                    const endingName = item.ending || '未知结局';
+                    console.log(`排行榜项 #${index}: ${item.player_name}, 结局: ${endingName}`);
+                    
                     html += `
                         <div class="wasteland-leaderboard-row ${index < 3 ? 'top-rank' : ''}">
                             <div class="rank">${index < 3 ? '' : index + 1}</div>
                             <div class="player">${item.player_name}</div>
-                            <div class="ending">${item.ending || '未知结局'}</div>
+                            <div class="ending">${endingName}</div>
                         </div>
                     `;
                 });
@@ -384,14 +405,55 @@ loadLeaderboard: function() {
             leaderboardContent.innerHTML = html;
         })
         .catch(error => {
-            leaderboardContent.innerHTML = '<div class="wasteland-error">加载失败，请稍后再试</div>';
             console.error('获取排行榜数据失败:', error);
+            leaderboardContent.innerHTML = '<div class="wasteland-error">加载失败，请稍后再试</div>';
         });
 },
     
-    // 显示游戏结束与排行榜提交弹窗
     showEndingModal: function(ending) {
-        const endingName = this.getEndingName(ending);
+        console.log('showEndingModal接收到结局ID:', ending);
+    
+        // 直接硬编码映射主要结局ID到标准名称
+        let endingTitle;
+        switch(ending) {
+            case 'martyr': 
+                endingTitle = '殉道者结局';
+                break;
+            case 'spark': 
+                endingTitle = '火种结局';
+                break;
+            case 'scavenger': 
+                endingTitle = '拾荒者结局';
+                break;
+            case 'skycity': 
+                endingTitle = '天庭结局';
+                break;
+            case 'death': 
+                endingTitle = '死亡结局';
+                break;
+            case 'despair': 
+                endingTitle = '绝望结局';
+                break;
+            default:
+                endingTitle = '神秘结局';
+        }
+        
+        console.log('确定的结局名称:', endingTitle);
+
+        // 标准化结局ID
+        let standardEnding = ending;
+        if (ending.includes('_')) {
+            standardEnding = ending.split('_')[0];
+        }
+        
+        // 如果是支线结局最终场景，转换为标准结局ID
+        if (standardEnding === 'martyr_final') standardEnding = 'martyr';
+        if (standardEnding === 'spark_final') standardEnding = 'spark';
+        if (standardEnding === 'scavenger_final') standardEnding = 'scavenger';
+        if (standardEnding === 'skycity_final') standardEnding = 'skycity';
+        
+        const endingName = this.getEndingName(standardEnding);
+
         
         const modalEl = document.createElement('div');
         modalEl.className = 'wasteland-ending-modal';
@@ -448,43 +510,84 @@ loadLeaderboard: function() {
         }
     },
     
-    // 提交结局到排行榜
-    submitEnding: function(playerName, ending) {
-        fetch('https://331600.xyz/submit-score', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                game: 'wasteland',
-                player_name: playerName,
-                score: 0,
-                ending: this.getEndingName(ending)
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            this.showMessage('你的结局已被记录在废土编年史中');
-        })
-        .catch(error => {
-            this.showMessage('结局记录失败，可能是辐射干扰了信号');
-            console.error('提交结局失败:', error);
-        });
-    },
+// 优化结局提交函数
+submitEnding: function(playerName, ending) {
+    // 直接硬编码映射结局名称
+    let endingName;
+    switch(ending) {
+        case 'martyr': 
+            endingName = '殉道者结局';
+            break;
+        case 'spark': 
+            endingName = '火种结局';
+            break;
+        case 'scavenger': 
+            endingName = '拾荒者结局';
+            break;
+        case 'skycity': 
+            endingName = '天庭结局';
+            break;
+        case 'death': 
+            endingName = '死亡结局';
+            break;
+        case 'despair': 
+            endingName = '绝望结局';
+            break;
+        default:
+            endingName = '神秘之旅';
+    }
     
-    // 获取结局名称
-    getEndingName: function(endingId) {
-        const endings = {
-            'death': '死亡结局',
-            'radiationDeath': '辐射死亡',
-            'despair': '绝望结局',
-            'scavenger': '拾荒者结局',
-            'martyr': '殉道者结局',
-            'spark': '火种结局'
-        };
-        return endings[endingId] || '神秘结局';
-    },
+    console.log('提交结局:', ending, '结局名称:', endingName);
     
+    // 构造特定格式的请求数据
+    const requestData = {
+        game: 'wasteland',
+        player_name: playerName,
+        score: 0,
+        ending: endingName  // 使用硬编码的名称
+    };
+    
+    console.log('发送结局数据:', JSON.stringify(requestData));
+    
+    fetch('https://331600.xyz/submit-score', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => {
+        console.log('提交响应状态:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('结局提交成功:', data);
+        this.showMessage('你的结局已被记录在废土编年史中');
+        
+        // 延迟后自动显示排行榜，确保服务器数据已更新
+        setTimeout(() => {
+            this.toggleLeaderboard();
+        }, 1000);
+    })
+    .catch(error => {
+        console.error('结局提交失败:', error);
+        this.showMessage('结局记录失败，可能是辐射干扰了信号');
+    });
+},
+    
+// 修复结局名称映射函数
+getEndingName: function(endingId) {
+    const endings = {
+        'death': '死亡结局',
+        'radiationDeath': '辐射死亡',
+        'despair': '绝望结局',
+        'scavenger': '拾荒者结局',
+        'martyr': '殉道者结局',
+        'spark': '火种结局',
+        'skycity': '天庭结局'  // 添加这一行
+    };
+    return endings[endingId] || '神秘结局';
+},
 
     // 在show方法开头添加调试输出
     show: function() {
@@ -689,13 +792,25 @@ goToScene: function(sceneId) {
         this.humanityPoints += scene.humanityChange;
     }
     
-    // 检查是否达成结局
+    // 修复结局处理逻辑
+    // 检查是否达成结局，添加更多调试信息
     if (scene.isEnding) {
+        console.log('检测到结局场景:', sceneId);
+        console.log('场景数据:', scene);
+        
+        // 记录当前结局ID
         this.endingReached = sceneId;
         
-        // 显示结局提交弹窗
+        // 将具体场景ID映射为标准结局ID
+        let standardEndingId = sceneId;
+        if (sceneId.includes('_')) {
+            standardEndingId = sceneId.split('_')[0];
+        }
+        console.log('标准化后的结局ID:', standardEndingId);
+        
+        // 显示结局提交弹窗，使用标准结局ID
         setTimeout(() => {
-            this.showEndingModal(sceneId);
+            this.showEndingModal(standardEndingId);
         }, 1000);
     }
     
