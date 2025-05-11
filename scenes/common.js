@@ -53,7 +53,7 @@ const commonScenes = {
     title: '第三章：真相揭示',
     description: '你终于获得了进入C区的权限。这个被高墙围绕的神秘区域可能隐藏着关于天庭与废土的关系的秘密。',
     skipResourceConsumption: true,
-    item: '"圣杯"病毒', // 直接给予下一章关键道具（仅用于测试）
+    item: '圣杯病毒', // 直接给予下一章关键道具（仅用于测试）
     options: [
       { text: '继续探索', nextScene: 'chapter3_scene1' }
     ]

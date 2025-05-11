@@ -31,7 +31,7 @@ const wastelandGame = {
     chapterKeyItems: {
         1: "老式收音机",    // 第一章关键道具
         2: "C区通行证",     // 第二章关键道具
-        3: "\"圣杯\"病毒",  // 第三章关键道具
+        3: "圣杯病毒",  // 第三章关键道具
         4: null            // 第四章无需额外钥匙
     },
     
@@ -532,8 +532,9 @@ restart: function() {
     if (this.isTransitioning) return;
     
     this.isTransitioning = true;
-    this.currentScene = 'start';
-    
+    // 修改这行，使用chapter1中的awakening场景作为起点
+    this.currentScene = 'awakening';
+ 
     // 重置物品栏为初始状态
     this.inventoryMap = {
         '镇静丸': 10,
