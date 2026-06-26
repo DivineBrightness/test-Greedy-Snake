@@ -99,6 +99,17 @@
         </div>
       </div>
       
+      <div class="snake-camera-control">
+        <button class="control-btn" id="snake-camera-toggle" type="button">开启摄像头控制</button>
+        <button class="control-btn" id="snake-camera-calibrate" type="button">重新校准</button>
+        <span id="snake-camera-status">摄像头控制未开启</span>
+      </div>
+
+      <div id="snake-camera-preview" class="snake-camera-preview">
+        <video id="snake-camera-video" autoplay muted playsinline></video>
+        <div id="snake-camera-direction">居中</div>
+      </div>
+
       <!-- 修改贪吃蛇游戏的方向按钮 -->
       <div class="mobile-controls">
         <div class="control-row">
@@ -340,6 +351,7 @@
   <script src="./treasureBox.js?v=1.5.0"></script>
   <script src="./heartMoments.js?v=1.5.0"></script>
   <script defer src="./snakeGame.js?v=1.5.2"></script>
+  <script src="./cameraSnakeControl.js?v=1.0.0"></script>
   <script defer src="./tetrisGame.js?v=1.4.2"></script>
   <script src="./floatingFruits.js?v=1.4.1"></script>
   <script src="./script.js?v=1.5.5"></script>

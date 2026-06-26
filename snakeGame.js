@@ -165,21 +165,20 @@ class SnakeGame {
       const rightBtn = document.getElementById('right-btn');
       const downBtn = document.getElementById('down-btn');
       
-      this.upBtnHandler = () => { 
-        if (!this.paused && !this.gameOver && this.direction !== 'down') 
-          this.nextDirection = 'up'; 
+      this.upBtnHandler = () => {
+        this.setDirection('up', 'button');
       };
-      this.leftBtnHandler = () => { 
-        if (!this.paused && !this.gameOver && this.direction !== 'right') 
-          this.nextDirection = 'left'; 
+
+      this.leftBtnHandler = () => {
+        this.setDirection('left', 'button');
       };
-      this.rightBtnHandler = () => { 
-        if (!this.paused && !this.gameOver && this.direction !== 'left') 
-          this.nextDirection = 'right'; 
+
+      this.rightBtnHandler = () => {
+        this.setDirection('right', 'button');
       };
-      this.downBtnHandler = () => { 
-        if (!this.paused && !this.gameOver && this.direction !== 'up') 
-          this.nextDirection = 'down'; 
+
+      this.downBtnHandler = () => {
+        this.setDirection('down', 'button');
       };
       
       if (upBtn) upBtn.addEventListener('click', this.upBtnHandler);
@@ -188,6 +187,26 @@ class SnakeGame {
       if (downBtn) downBtn.addEventListener('click', this.downBtnHandler);
     }
 
+    setDirection(newDirection, source = 'manual') {
+      const validDirections = ['up', 'down', 'left', 'right'];
+      if (!validDirections.includes(newDirection)) return false;
+
+      if (this.paused || this.gameOver || this.isStunned) return false;
+
+      const opposite = {
+        up: 'down',
+        down: 'up',
+        left: 'right',
+        right: 'left'
+      };
+
+      // 保持原来的规则：不能直接反向
+      if (this.direction === opposite[newDirection]) return false;
+
+      this.nextDirection = newDirection;
+      this.lastInputSource = source;
+      return true;
+    }    
     // 更新 handleKeyDown 方法，确保空格键只触发一次暂停/继续
     handleKeyDown(e) {
       // 阻止所有游戏控制键的默认行为
@@ -221,10 +240,29 @@ class SnakeGame {
       if (this.gameOver || this.paused) return;
       
       switch(e.key) {
-        case 'ArrowUp': case 'w': case 'W': if (this.direction !== 'down') this.nextDirection = 'up'; break;
-        case 'ArrowDown': case 's': case 'S': if (this.direction !== 'up') this.nextDirection = 'down'; break;
-        case 'ArrowLeft': case 'a': case 'A': if (this.direction !== 'right') this.nextDirection = 'left'; break;
-        case 'ArrowRight': case 'd': case 'D': if (this.direction !== 'left') this.nextDirection = 'right'; break;
+        case 'ArrowUp':
+        case 'w':
+        case 'W':
+          this.setDirection('up', 'keyboard');
+          break;
+
+        case 'ArrowDown':
+        case 's':
+        case 'S':
+          this.setDirection('down', 'keyboard');
+          break;
+
+        case 'ArrowLeft':
+        case 'a':
+        case 'A':
+          this.setDirection('left', 'keyboard');
+          break;
+
+        case 'ArrowRight':
+        case 'd':
+        case 'D':
+          this.setDirection('right', 'keyboard');
+          break;
       }
     }
   
@@ -1252,6 +1290,7 @@ reset() {
 
   // 修改 destroy 方法，确保清理暂停层
 destroy() {
+  window.snakeCameraControl?.stop?.();
   if (this.intervalId) {
     clearInterval(this.intervalId);
     this.intervalId = null;

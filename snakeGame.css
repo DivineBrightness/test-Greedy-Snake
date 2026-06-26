@@ -271,3 +271,59 @@ html body #snake-game:not([style*="display: none"]) ~ .fruit-basket,
 body:has(#snake-game:not([style*="display: none"])) .fruit-basket {
   display: none!important; /* 可能更好的方案是隐藏它 */
 }
+.snake-camera-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 10px 0;
+  font-size: 13px;
+}
+
+#snake-camera-toggle,
+#snake-camera-calibrate {
+  width: auto !important;
+  min-width: 110px;
+  height: 36px;
+  padding: 6px 12px !important;
+  border-radius: 18px !important;
+  border: none;
+  cursor: pointer;
+}
+
+#snake-camera-status {
+  color: #555;
+}
+
+.snake-camera-preview {
+  display: none;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 12px;
+}
+
+.snake-camera-preview.active {
+  display: flex;
+}
+
+#snake-camera-video {
+  width: 120px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 10px;
+  transform: scaleX(-1);
+  opacity: 0.85;
+  background: #111;
+}
+
+#snake-camera-direction {
+  min-width: 52px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.75);
+  color: #333;
+  font-weight: bold;
+  text-align: center;
+}

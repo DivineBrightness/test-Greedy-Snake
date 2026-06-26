@@ -286,6 +286,7 @@ function dragEnd(e) {
   
     // 保存游戏实例的全局引用
     let currentSnakeGame = null;
+    window.currentSnakeGame = null;
     let currentTetrisGame = null;
   
 // 修改切换视图函数，调整季节装饰在游戏界面中的透明度
@@ -295,6 +296,7 @@ const toggleGameView = (showGameId, hideElements) => {
         if (currentSnakeGame) {
             currentSnakeGame.destroy();
             currentSnakeGame = null;
+            window.currentSnakeGame = null;
         }
     }
     
@@ -384,10 +386,12 @@ const toggleGameView = (showGameId, hideElements) => {
         if (currentSnakeGame) {
             currentSnakeGame.destroy();
             currentSnakeGame = null;
+            window.currentSnakeGame = null;
         }
         
         // 创建新的游戏实例并保存引用 - 只创建一个实例
         currentSnakeGame = new SnakeGame();
+        window.currentSnakeGame = currentSnakeGame;
 
         // 恢复保存的游戏状态
         const savedSnakeGame = JSON.parse(localStorage.getItem('snakeGameState') || 'null');
@@ -467,6 +471,7 @@ const toggleGameView = (showGameId, hideElements) => {
               // 销毁游戏实例
               currentSnakeGame.destroy();
               currentSnakeGame = null;
+              window.currentSnakeGame = null;
             }
             
             console.log('返回游戏选择页面');
