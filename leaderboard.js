@@ -1,5 +1,6 @@
 // leaderboard.js
-const API_URL = "https://331600.xyz";
+// const API_URL = "https://331600.xyz";
+const API_URL = "https://api.362422.xyz";
 
 // 更新 submitScore 函数，保持HTML结构不变
 async function submitScore(game, playerName, score) {
