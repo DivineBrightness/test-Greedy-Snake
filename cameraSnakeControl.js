@@ -21,6 +21,9 @@
 
     // pitch 仍然沿用鼻尖/额头/下巴的相对位置。
     pitchThreshold: 0.06,
+    mobilePitchThreshold: 0.22,
+    desktopVerticalDominance: 1.15,
+    mobileVerticalDominance: 1.8,
 
     swapLeftRight: true,
 
@@ -58,6 +61,8 @@ let lastDebugSignalTime = 0;
 const DEBUG_STORAGE_KEY = 'snakeCameraDebug';
 const debugLines = [];
 let debugForceOff = false;
+let debugPaused = false;
+let debugAutoScroll = true;
 
   function getGame() {
     return window.currentSnakeGame || null;
@@ -171,6 +176,8 @@ let debugForceOff = false;
       <div class="snake-camera-debug-header">
         <strong>摄像头调试</strong>
         <div>
+          <button type="button" id="snake-camera-debug-copy">复制</button>
+          <button type="button" id="snake-camera-debug-pause">暂停</button>
           <button type="button" id="snake-camera-debug-clear">清空</button>
           <button type="button" id="snake-camera-debug-close">关闭</button>
         </div>
@@ -180,9 +187,35 @@ let debugForceOff = false;
 
     document.body.appendChild(panel);
 
+    panel.querySelector('#snake-camera-debug-copy')?.addEventListener('click', async () => {
+      const text = debugLines.join('\n') || '没有调试日志';
+
+      try {
+        await navigator.clipboard.writeText(text);
+        setDebugCopyState('已复制');
+      } catch (err) {
+        const log = panel.querySelector('#snake-camera-debug-log');
+        if (log) {
+          const range = document.createRange();
+          range.selectNodeContents(log);
+          const selection = window.getSelection();
+          selection?.removeAllRanges();
+          selection?.addRange(range);
+        }
+        setDebugCopyState('请长按复制');
+      }
+    });
+
+    panel.querySelector('#snake-camera-debug-pause')?.addEventListener('click', () => {
+      debugPaused = !debugPaused;
+      const btn = panel.querySelector('#snake-camera-debug-pause');
+      if (btn) btn.textContent = debugPaused ? '继续' : '暂停';
+      renderDebugPanel(true);
+    });
+
     panel.querySelector('#snake-camera-debug-clear')?.addEventListener('click', () => {
       debugLines.length = 0;
-      renderDebugPanel();
+      renderDebugPanel(true);
     });
 
     panel.querySelector('#snake-camera-debug-close')?.addEventListener('click', () => {
@@ -194,12 +227,30 @@ let debugForceOff = false;
     return panel;
   }
 
-  function renderDebugPanel() {
+  function setDebugCopyState(text) {
+    const btn = document.getElementById('snake-camera-debug-copy');
+    if (!btn) return;
+
+    const originalText = btn.dataset.originalText || btn.textContent || '复制';
+    btn.dataset.originalText = originalText;
+    btn.textContent = text;
+
+    window.setTimeout(() => {
+      btn.textContent = btn.dataset.originalText || '复制';
+    }, 1600);
+  }
+
+  function renderDebugPanel(force = false) {
+    if (debugPaused && !force) return;
+
     const panel = ensureDebugPanel();
     const log = panel.querySelector('#snake-camera-debug-log');
     if (log) {
+      const nearBottom = log.scrollTop + log.clientHeight >= log.scrollHeight - 12;
       log.textContent = debugLines.join('\n');
-      log.scrollTop = log.scrollHeight;
+      if (debugAutoScroll && nearBottom) {
+        log.scrollTop = log.scrollHeight;
+      }
     }
   }
 
@@ -227,12 +278,12 @@ let debugForceOff = false;
     }
 
     debugLines.push(line);
-    while (debugLines.length > 80) debugLines.shift();
+    while (debugLines.length > 60) debugLines.shift();
     showDebugPanel();
   }
 
   function logSignal(signal, now, label = 'signal') {
-    if (!isDebugEnabled() || now - lastDebugSignalTime < 800) return;
+    if (!isDebugEnabled() || now - lastDebugSignalTime < 2500) return;
 
     lastDebugSignalTime = now;
     logDebug(label, {
@@ -309,6 +360,14 @@ let debugForceOff = false;
 
   function getPredictIntervalMs() {
     return isMobileLike() ? CONFIG.mobilePredictIntervalMs : CONFIG.predictIntervalMs;
+  }
+
+  function getPitchThreshold() {
+    return isMobileLike() ? CONFIG.mobilePitchThreshold : CONFIG.pitchThreshold;
+  }
+
+  function getVerticalDominance() {
+    return isMobileLike() ? CONFIG.mobileVerticalDominance : CONFIG.desktopVerticalDominance;
   }
 
   function getCameraConstraints() {
@@ -665,17 +724,22 @@ function chooseDirection(signal, base) {
   const pitchDelta = signal.pitch - base.pitch;
 
   const yawScore = Math.abs(yawDelta) / CONFIG.yawThreshold;
-  const pitchScore = Math.abs(pitchDelta) / CONFIG.pitchThreshold;
+  const pitchScore = Math.abs(pitchDelta) / getPitchThreshold();
+  const verticalDominance = getVerticalDominance();
 
   if (yawScore < 1 && pitchScore < 1) {
     return null;
   }
 
-  if (yawScore > pitchScore * 1.15) {
+  if (yawScore >= 1 && yawScore * verticalDominance >= pitchScore) {
     if (yawDelta > 0) {
       return CONFIG.swapLeftRight ? 'left' : 'right';
     }
     return CONFIG.swapLeftRight ? 'right' : 'left';
+  }
+
+  if (pitchScore < 1 || pitchScore < yawScore * verticalDominance) {
+    return null;
   }
 
   return pitchDelta > 0 ? 'down' : 'up';
