@@ -13,6 +13,7 @@
         'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task',
 
     predictIntervalMs: 120,
+    mobilePredictIntervalMs: 180,
     repeatIntervalMs: 220,
 
     // yaw 现在用人脸矩阵，单位近似是弧度。0.18 约等于 10 度。
@@ -27,9 +28,9 @@
     calibrationDurationMs: 800,
     calibrationMinSamples: 5,
 
-    // 校准阶段允许的“偏头范围”。太小会难校准，太大又会把偏头当正脸。
-    calibrationMaxYaw: 0.35,
-    calibrationMaxPitch: 0.16
+    // 校准阶段只要求头部稳定，不再用绝对角度卡死手机前摄的自然俯仰偏差。
+    calibrationMaxYawDrift: 0.14,
+    calibrationMaxPitchDrift: 0.08
     };
 
   let faceLandmarker = null;
@@ -39,6 +40,7 @@
   let stream = null;
   let rafId = null;
   let video = null;
+  let starting = false;
 
 let lastPredictTime = 0;
 let lastSendTime = 0;
@@ -157,11 +159,45 @@ let calibrationSamples = [];
         })
         .catch((err) => {
           loadingPromise = null;
-          throw err;
+          console.error('人脸识别模型加载失败：', err);
         });
     }
 
     return loadingPromise;
+  }
+
+  function isMobileLike() {
+    return window.matchMedia?.('(pointer: coarse)')?.matches ||
+      /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  }
+
+  function getPredictIntervalMs() {
+    return isMobileLike() ? CONFIG.mobilePredictIntervalMs : CONFIG.predictIntervalMs;
+  }
+
+  function getCameraConstraints() {
+    const mobile = isMobileLike();
+
+    return {
+      video: {
+        width: { ideal: mobile ? 320 : 640 },
+        height: { ideal: mobile ? 240 : 480 },
+        facingMode: 'user'
+      },
+      audio: false
+    };
+  }
+
+  async function openCameraStream() {
+    try {
+      return await navigator.mediaDevices.getUserMedia(getCameraConstraints());
+    } catch (err) {
+      if (err.name === 'OverconstrainedError' || err.name === 'NotFoundError') {
+        return navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      }
+
+      throw err;
+    }
   }
 
   async function start() {
@@ -172,42 +208,47 @@ let calibrationSamples = [];
       return;
     }
 
+    if (enabled || starting) {
+      return;
+    }
+
     if (!navigator.mediaDevices?.getUserMedia) {
       setStatus('当前浏览器不支持摄像头 API');
       return;
     }
 
+    starting = true;
+
     try {
-      setButtonText('加载中...');
-      setStatus('正在加载人脸识别模型...');
-
-      faceLandmarker = await loadModel();
-
+      setButtonText('启动中...');
       setStatus('正在请求摄像头权限...');
 
       video = document.getElementById('snake-camera-video');
+      if (!video) {
+        throw new Error('找不到摄像头视频元素');
+      }
 
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-        width: { ideal: 640 },
-        height: { ideal: 480 },
-        facingMode: 'user'
-        },
-        audio: false
-      });
+      // 移动端浏览器更依赖用户手势，先打开摄像头和播放视频，再加载模型。
+      stream = await openCameraStream();
 
       video.srcObject = stream;
       video.muted = true;
       video.playsInline = true;
       await video.play();
 
-        enabled = true;
-        lastPredictTime = 0;
-        lastSendTime = 0;
-
-        beginCalibration('请正对摄像头，保持 1 秒完成校准');
-
       document.getElementById('snake-camera-preview')?.classList.add('active');
+
+      setButtonText('加载中...');
+      setStatus('正在加载人脸识别模型...');
+
+      faceLandmarker = await loadModel();
+
+      enabled = true;
+      starting = false;
+      lastPredictTime = 0;
+      lastSendTime = 0;
+
+      beginCalibration('请正对摄像头，保持 1 秒完成校准');
 
       setButtonText('关闭摄像头控制');
 
@@ -227,10 +268,13 @@ let calibrationSamples = [];
       }
 
       setButtonText('开启摄像头控制');
+    } finally {
+      starting = false;
     }
   }
 
   function stop() {
+    starting = false;
     enabled = false;
 
     if (rafId) {
@@ -259,8 +303,14 @@ let calibrationSamples = [];
   }
 
 function recalibrate() {
+  if (starting) {
+    setStatus('正在启动摄像头，请稍候');
+    return;
+  }
+
   if (!enabled) {
     setStatus('先开启摄像头控制');
+    setDirectionText('居中');
     return;
   }
 
@@ -278,37 +328,6 @@ function beginCalibration(statusText = '请正对摄像头，保持 1 秒完成�
   setDirectionText('校准中');
 }
 
-function getCalibrationHint(signal) {
-  const yawAbs = Math.abs(signal.yaw);
-  const pitchAbs = Math.abs(signal.pitch);
-
-  if (yawAbs <= CONFIG.calibrationMaxYaw && pitchAbs <= CONFIG.calibrationMaxPitch) {
-    return {
-      centered: true,
-      label: '正脸'
-    };
-  }
-
-  if (yawAbs > pitchAbs * 1.15) {
-    if (signal.yaw > 0) {
-      return {
-        centered: false,
-        label: CONFIG.swapLeftRight ? '左' : '右'
-      };
-    }
-
-    return {
-      centered: false,
-      label: CONFIG.swapLeftRight ? '右' : '左'
-    };
-  }
-
-  return {
-    centered: false,
-    label: signal.pitch > 0 ? '下' : '上'
-  };
-}
-
 function averageSignals(samples) {
   const total = samples.reduce((acc, item) => {
     acc.yaw += item.yaw;
@@ -323,20 +342,24 @@ function averageSignals(samples) {
 }
 
 function handleCalibration(signal, now) {
-  const hint = getCalibrationHint(signal);
-
-  if (!hint.centered) {
-    calibrationStartTime = 0;
-    calibrationSamples = [];
-
-    setStatus(`请回正后保持，当前偏${hint.label}`);
-    setDirectionText(`偏${hint.label}`);
+  if (!calibrationStartTime) {
+    calibrationStartTime = now;
+    calibrationSamples = [signal];
+    setStatus('校准中：请保持当前正脸姿势 0%');
+    setDirectionText('校准中');
     return;
   }
 
-  if (!calibrationStartTime) {
+  const firstSample = calibrationSamples[0];
+  const yawDrift = Math.abs(signal.yaw - firstSample.yaw);
+  const pitchDrift = Math.abs(signal.pitch - firstSample.pitch);
+
+  if (yawDrift > CONFIG.calibrationMaxYawDrift || pitchDrift > CONFIG.calibrationMaxPitchDrift) {
     calibrationStartTime = now;
-    calibrationSamples = [];
+    calibrationSamples = [signal];
+    setStatus('检测到头部移动，请保持 1 秒完成校准');
+    setDirectionText('校准中');
+    return;
   }
 
   calibrationSamples.push(signal);
@@ -344,8 +367,8 @@ function handleCalibration(signal, now) {
   const elapsed = now - calibrationStartTime;
   const progress = Math.min(100, Math.round((elapsed / CONFIG.calibrationDurationMs) * 100));
 
-  setStatus(`校准中：请保持正脸 ${progress}%`);
-  setDirectionText('正脸');
+  setStatus(`校准中：请保持当前正脸姿势 ${progress}%`);
+  setDirectionText('校准中');
 
   if (elapsed >= CONFIG.calibrationDurationMs && calibrationSamples.length >= CONFIG.calibrationMinSamples) {
     baseline = averageSignals(calibrationSamples);
@@ -366,7 +389,7 @@ function handleCalibration(signal, now) {
       return;
     }
 
-    if (now - lastPredictTime < CONFIG.predictIntervalMs) {
+    if (now - lastPredictTime < getPredictIntervalMs()) {
       return;
     }
 
@@ -483,6 +506,15 @@ function chooseDirection(signal, base) {
 
   function sendDirection(direction, now) {
     const game = getGame();
+    const label = {
+      up: '上',
+      down: '下',
+      left: '左',
+      right: '右'
+    }[direction];
+
+    // 火柴人显示的是识别结果，不应该受蛇是否接受这次移动影响。
+    setDirectionText(label);
 
     if (!game?.setDirection) {
       setStatus('当前贪吃蛇实例不可用');
@@ -494,18 +526,10 @@ function chooseDirection(signal, base) {
     }
 
     const changed = game.setDirection(direction, 'camera');
+    lastDirection = direction;
+    lastSendTime = now;
 
     if (changed) {
-      lastDirection = direction;
-      lastSendTime = now;
-
-      const label = {
-        up: '上',
-        down: '下',
-        left: '左',
-        right: '右'
-      }[direction];
-
       setDirectionText(label);
     }
   }
