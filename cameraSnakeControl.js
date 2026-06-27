@@ -18,12 +18,14 @@
 
     // yaw 现在用人脸矩阵，单位近似是弧度。0.18 约等于 10 度。
     yawThreshold: 0.18,
+    mobileYawThreshold: 0.18,
 
     // pitch 仍然沿用鼻尖/额头/下巴的相对位置。
     pitchThreshold: 0.06,
     mobilePitchThreshold: 0.22,
     desktopVerticalDominance: 1.15,
     mobileVerticalDominance: 1.8,
+    mobileHorizontalOnly: true,
 
     swapLeftRight: true,
 
@@ -60,6 +62,7 @@ let calibrationStartTime = 0;
 let calibrationAttemptStartTime = 0;
 let calibrationSamples = [];
 let lastDebugSignalTime = 0;
+let lastNoFaceDebugTime = 0;
 
 const DEBUG_STORAGE_KEY = 'snakeCameraDebug';
 const debugLines = [];
@@ -370,6 +373,10 @@ let debugAutoScroll = true;
     return isMobileLike() ? CONFIG.mobilePredictIntervalMs : CONFIG.predictIntervalMs;
   }
 
+  function getYawThreshold() {
+    return isMobileLike() ? CONFIG.mobileYawThreshold : CONFIG.yawThreshold;
+  }
+
   function getPitchThreshold() {
     return isMobileLike() ? CONFIG.mobilePitchThreshold : CONFIG.pitchThreshold;
   }
@@ -608,6 +615,23 @@ function averageSignals(samples) {
 }
 
 function handleCalibration(signal, now) {
+  if (isMobileLike()) {
+    baseline = signal;
+    calibrationStartTime = 0;
+    calibrationAttemptStartTime = 0;
+    calibrationSamples = [];
+    lastDirection = null;
+
+    setStatus('校准完成：手机端左右转头模式');
+    setDirectionText('居中');
+    logDebug('手机端快速校准完成', {
+      yaw: Number(baseline.yaw.toFixed(3)),
+      pitch: Number(baseline.pitch.toFixed(3)),
+      horizontalOnly: CONFIG.mobileHorizontalOnly
+    });
+    return;
+  }
+
   if (!calibrationAttemptStartTime) {
     calibrationAttemptStartTime = now;
   }
@@ -727,12 +751,22 @@ function handleCalibration(signal, now) {
         setStatus('未检测到人脸，请稍微转回一点');
       }
 
+      if (isDebugEnabled() && now - lastNoFaceDebugTime > 2500) {
+        lastNoFaceDebugTime = now;
+        logDebug('未检测到人脸', {
+          hasBaseline: Boolean(baseline),
+          missingMs: Math.round(missingMs),
+          video: video ? `${video.videoWidth}x${video.videoHeight}` : 'none'
+        });
+      }
+
       setDirectionText(baseline ? '转回一点' : '无人脸');
       return;
     }
 
     lastFaceSeenTime = now;
     missingFaceSince = 0;
+    lastNoFaceDebugTime = 0;
 
     const signal = readHeadSignal(face, matrix);
 
@@ -798,9 +832,21 @@ function chooseDirection(signal, base) {
   const yawDelta = signal.yaw - base.yaw;
   const pitchDelta = signal.pitch - base.pitch;
 
-  const yawScore = Math.abs(yawDelta) / CONFIG.yawThreshold;
+  const yawScore = Math.abs(yawDelta) / getYawThreshold();
   const pitchScore = Math.abs(pitchDelta) / getPitchThreshold();
   const verticalDominance = getVerticalDominance();
+
+  if (isMobileLike() && CONFIG.mobileHorizontalOnly) {
+    if (yawScore < 1) {
+      return null;
+    }
+
+    if (yawDelta > 0) {
+      return CONFIG.swapLeftRight ? 'left' : 'right';
+    }
+
+    return CONFIG.swapLeftRight ? 'right' : 'left';
+  }
 
   if (yawScore < 1 && pitchScore < 1) {
     return null;
