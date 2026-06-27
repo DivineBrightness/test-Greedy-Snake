@@ -1,43 +1,53 @@
 // cameraSnakeControl.js
 // 摄像头头部方向控制贪吃蛇。
-// 第一版使用 MediaPipe Face Landmarker，在浏览器本地推理，不上传视频帧。
+// 使用 MediaPipe Face Landmarker，在浏览器本地推理，不上传视频帧。
 
 (() => {
   const MEDIAPIPE_VERSION = '0.10.20';
 
-    const CONFIG = {
+  const CONFIG = {
     wasmUrl: `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MEDIAPIPE_VERSION}/wasm`,
     bundleUrl: `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MEDIAPIPE_VERSION}/vision_bundle.mjs`,
 
     modelAssetPath:
-        'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task',
+      'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task',
 
+    // 电脑端保持原来的推理节奏。
     predictIntervalMs: 120,
+
+    // 手机端稍慢一点，降低主线程压力。
     mobilePredictIntervalMs: 180,
+
     repeatIntervalMs: 220,
 
-    // yaw 现在用人脸矩阵，单位近似是弧度。0.18 约等于 10 度。
+    // 电脑端保持原来的阈值。
     yawThreshold: 0.18,
-    mobileYawThreshold: 0.18,
-
-    // pitch 仍然沿用鼻尖/额头/下巴的相对位置。
     pitchThreshold: 0.06,
-    mobilePitchThreshold: 0.22,
     desktopVerticalDominance: 1.15,
+
+    // 手机端单独参数，不影响电脑端。
+    mobileYawThreshold: 0.18,
+    mobilePitchThreshold: 0.22,
     mobileVerticalDominance: 1.8,
+
+    // 手机端建议只做左右转头，避免上下误触。
     mobileHorizontalOnly: true,
 
     swapLeftRight: true,
 
-    // 校准需要稳定正脸，不再第一帧就完成。
+    // 校准：电脑端仍然是稳定采样，不改电脑端逻辑。
     calibrationDurationMs: 800,
     calibrationMaxDurationMs: 3000,
     calibrationMinSamples: 5,
 
-    // 校准阶段只要求头部稳定，不再用绝对角度卡死手机前摄的自然俯仰偏差。
+    // 电脑端校准漂移阈值，保持你当前逻辑。
     calibrationMaxYawDrift: 0.22,
-    calibrationMaxPitchDrift: 0.14
-    };
+    calibrationMaxPitchDrift: 0.14,
+
+    // 手机端校准容错更宽。手机前摄、手持抖动、广角畸变都更明显。
+    mobileCalibrationMaxYawDrift: 0.38,
+    mobileCalibrationMaxPitchDrift: 0.24
+  };
 
   let faceLandmarker = null;
   let loadingPromise = null;
@@ -51,24 +61,24 @@
   let video = null;
   let starting = false;
 
-let lastPredictTime = 0;
-let lastSendTime = 0;
-let lastDirection = null;
-let baseline = null;
-let lastFaceSeenTime = 0;
-let missingFaceSince = 0;
+  let lastPredictTime = 0;
+  let lastSendTime = 0;
+  let lastDirection = null;
+  let baseline = null;
+  let lastFaceSeenTime = 0;
+  let missingFaceSince = 0;
 
-let calibrationStartTime = 0;
-let calibrationAttemptStartTime = 0;
-let calibrationSamples = [];
-let lastDebugSignalTime = 0;
-let lastNoFaceDebugTime = 0;
+  let calibrationStartTime = 0;
+  let calibrationAttemptStartTime = 0;
+  let calibrationSamples = [];
+  let lastDebugSignalTime = 0;
+  let lastNoFaceDebugTime = 0;
 
-const DEBUG_STORAGE_KEY = 'snakeCameraDebug';
-const debugLines = [];
-let debugForceOff = false;
-let debugPaused = false;
-let debugAutoScroll = true;
+  const DEBUG_STORAGE_KEY = 'snakeCameraDebug';
+  const debugLines = [];
+  let debugForceOff = false;
+  let debugPaused = false;
+  let debugAutoScroll = true;
 
   function getGame() {
     return window.currentSnakeGame || null;
@@ -142,7 +152,7 @@ let debugAutoScroll = true;
     try {
       localStorage.setItem(key, value);
     } catch (err) {
-      // Some mobile privacy modes can block localStorage.
+      // 某些手机浏览器隐私模式会禁用 localStorage。
     }
   }
 
@@ -150,7 +160,7 @@ let debugAutoScroll = true;
     try {
       localStorage.removeItem(key);
     } catch (err) {
-      // Ignore storage failures; debugging still works for this session.
+      // 忽略。
     }
   }
 
@@ -251,9 +261,11 @@ let debugAutoScroll = true;
 
     const panel = ensureDebugPanel();
     const log = panel.querySelector('#snake-camera-debug-log');
+
     if (log) {
       const nearBottom = log.scrollTop + log.clientHeight >= log.scrollHeight - 12;
       log.textContent = debugLines.join('\n');
+
       if (debugAutoScroll && nearBottom) {
         log.scrollTop = log.scrollHeight;
       }
@@ -292,6 +304,7 @@ let debugAutoScroll = true;
     if (!isDebugEnabled() || now - lastDebugSignalTime < 2500) return;
 
     lastDebugSignalTime = now;
+
     logDebug(label, {
       yaw: Number(signal.yaw.toFixed(3)),
       pitch: Number(signal.pitch.toFixed(3)),
@@ -300,12 +313,22 @@ let debugAutoScroll = true;
         pitch: Number(baseline.pitch.toFixed(3))
       } : null,
       samples: calibrationSamples.length,
-      video: video ? `${video.videoWidth}x${video.videoHeight}` : 'none'
+      video: video ? `${video.videoWidth}x${video.videoHeight}` : 'none',
+      matrix: faceLandmarkerUsesMatrix,
+      forcedLandmarkOnly: forceLandmarkOnly
     });
   }
 
+  function isMobileLike() {
+    return window.matchMedia?.('(pointer: coarse)')?.matches ||
+      /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  }
+
   function shouldUseFaceMatrix() {
-    return !forceLandmarkOnly && !isMobileLike();
+    // 关键修复：
+    // 电脑端行为不变；手机端也先尝试使用矩阵。
+    // 如果某些手机上矩阵推理报错，detectForVideo catch 会自动切回关键点兼容模式。
+    return !forceLandmarkOnly;
   }
 
   function createFaceLandmarkerOptions(useMatrix, delegate) {
@@ -364,11 +387,6 @@ let debugAutoScroll = true;
     return loadingPromise;
   }
 
-  function isMobileLike() {
-    return window.matchMedia?.('(pointer: coarse)')?.matches ||
-      /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-  }
-
   function getPredictIntervalMs() {
     return isMobileLike() ? CONFIG.mobilePredictIntervalMs : CONFIG.predictIntervalMs;
   }
@@ -385,13 +403,34 @@ let debugAutoScroll = true;
     return isMobileLike() ? CONFIG.mobileVerticalDominance : CONFIG.desktopVerticalDominance;
   }
 
+  function getCalibrationYawDriftThreshold() {
+    return isMobileLike() ? CONFIG.mobileCalibrationMaxYawDrift : CONFIG.calibrationMaxYawDrift;
+  }
+
+  function getCalibrationPitchDriftThreshold() {
+    return isMobileLike() ? CONFIG.mobileCalibrationMaxPitchDrift : CONFIG.calibrationMaxPitchDrift;
+  }
+
   function getCameraConstraints() {
     const mobile = isMobileLike();
 
+    if (mobile) {
+      return {
+        video: {
+          width: { ideal: 480 },
+          height: { ideal: 360 },
+          frameRate: { ideal: 15, max: 20 },
+          facingMode: { ideal: 'user' }
+        },
+        audio: false
+      };
+    }
+
+    // 电脑端保持你当前的 640x480，不额外加 frameRate 约束。
     return {
       video: {
-        width: { ideal: mobile ? 320 : 640 },
-        height: { ideal: mobile ? 240 : 480 },
+        width: { ideal: 640 },
+        height: { ideal: 480 },
         facingMode: 'user'
       },
       audio: false
@@ -410,6 +449,31 @@ let debugAutoScroll = true;
 
       throw err;
     }
+  }
+
+  function waitForVideoReady(videoElement, timeoutMs = 2500) {
+    return new Promise((resolve) => {
+      const started = performance.now();
+
+      const check = () => {
+        const hasSize = videoElement.videoWidth > 0 && videoElement.videoHeight > 0;
+        const hasFrame = videoElement.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
+
+        if (hasSize && hasFrame) {
+          resolve(true);
+          return;
+        }
+
+        if (performance.now() - started > timeoutMs) {
+          resolve(false);
+          return;
+        }
+
+        requestAnimationFrame(check);
+      };
+
+      check();
+    });
   }
 
   async function start() {
@@ -453,6 +517,9 @@ let debugAutoScroll = true;
       video.muted = true;
       video.playsInline = true;
       await video.play();
+
+      await waitForVideoReady(video);
+
       logDebug('摄像头视频已播放', {
         width: video.videoWidth,
         height: video.videoHeight,
@@ -465,6 +532,7 @@ let debugAutoScroll = true;
       setStatus('正在加载人脸识别模型...');
 
       faceLandmarker = await loadModel();
+
       logDebug('模型加载完成', {
         matrix: faceLandmarkerUsesMatrix,
         forcedLandmarkOnly: forceLandmarkOnly
@@ -530,177 +598,183 @@ let debugAutoScroll = true;
     setDirectionText('居中');
   }
 
-async function recoverWithLandmarkOnlyMode(err) {
-  if (recoveringFromDetectError) return;
+  async function recoverWithLandmarkOnlyMode(err) {
+    if (recoveringFromDetectError) return;
 
-  recoveringFromDetectError = true;
-  forceLandmarkOnly = true;
-  setStatus('检测异常，正在切换手机兼容模式');
-  setDirectionText('校准中');
-  logDebug('检测异常，切换关键点模式', formatError(err));
+    recoveringFromDetectError = true;
+    forceLandmarkOnly = true;
+    setStatus('检测异常，正在切换手机兼容模式');
+    setDirectionText('校准中');
+    logDebug('检测异常，切换关键点模式', formatError(err));
 
-  try {
-    if (faceLandmarker?.close) {
-      faceLandmarker.close();
+    try {
+      if (faceLandmarker?.close) {
+        faceLandmarker.close();
+      }
+    } catch (closeError) {
+      logDebug('关闭旧模型失败', formatError(closeError));
     }
-  } catch (closeError) {
-    logDebug('关闭旧模型失败', formatError(closeError));
-  }
 
-  faceLandmarker = null;
-  loadingPromise = null;
-  faceLandmarkerUsesMatrix = false;
-  baseline = null;
-  lastDirection = null;
-  calibrationStartTime = 0;
-  calibrationAttemptStartTime = 0;
-  calibrationSamples = [];
-
-  try {
-    faceLandmarker = await loadModel();
-    logDebug('兼容模式模型加载完成', {
-      matrix: faceLandmarkerUsesMatrix
-    });
-
-    beginCalibration('已切换兼容模式，请正对摄像头重新校准');
-  } catch (loadError) {
-    console.error('切换兼容模式失败：', loadError);
-    logDebug('切换兼容模式失败', formatError(loadError));
-    setStatus('摄像头模型恢复失败，请关闭后重试');
-    stop();
-  } finally {
-    recoveringFromDetectError = false;
-  }
-}
-
-function recalibrate() {
-  if (starting) {
-    setStatus('正在启动摄像头，请稍候');
-    return;
-  }
-
-  if (!enabled) {
-    setStatus('先开启摄像头控制');
-    setDirectionText('居中');
-    return;
-  }
-
-  beginCalibration('请正对摄像头，正在重新校准');
-}
-function beginCalibration(statusText = '请正对摄像头，保持 1 秒完成校准') {
-  baseline = null;
-  lastDirection = null;
-  lastFaceSeenTime = 0;
-  missingFaceSince = 0;
-  calibrationStartTime = 0;
-  calibrationAttemptStartTime = 0;
-  calibrationSamples = [];
-
-  setStatus(statusText);
-  setDirectionText('校准中');
-  logDebug('开始校准');
-}
-
-function averageSignals(samples) {
-  const total = samples.reduce((acc, item) => {
-    acc.yaw += item.yaw;
-    acc.pitch += item.pitch;
-    return acc;
-  }, { yaw: 0, pitch: 0 });
-
-  return {
-    yaw: total.yaw / samples.length,
-    pitch: total.pitch / samples.length
-  };
-}
-
-function handleCalibration(signal, now) {
-  if (isMobileLike()) {
-    baseline = signal;
-    calibrationStartTime = 0;
-    calibrationAttemptStartTime = 0;
-    calibrationSamples = [];
+    faceLandmarker = null;
+    loadingPromise = null;
+    faceLandmarkerUsesMatrix = false;
+    baseline = null;
     lastDirection = null;
-
-    setStatus('校准完成：手机端左右转头模式');
-    setDirectionText('居中');
-    logDebug('手机端快速校准完成', {
-      yaw: Number(baseline.yaw.toFixed(3)),
-      pitch: Number(baseline.pitch.toFixed(3)),
-      horizontalOnly: CONFIG.mobileHorizontalOnly
-    });
-    return;
-  }
-
-  if (!calibrationAttemptStartTime) {
-    calibrationAttemptStartTime = now;
-  }
-
-  if (!calibrationStartTime) {
-    calibrationStartTime = now;
-    calibrationSamples = [signal];
-    setStatus('校准中：请保持当前正脸姿势 0%');
-    setDirectionText('校准中');
-    logSignal(signal, now, 'calibration-start');
-    return;
-  }
-
-  const firstSample = calibrationSamples[0];
-  const yawDrift = Math.abs(signal.yaw - firstSample.yaw);
-  const pitchDrift = Math.abs(signal.pitch - firstSample.pitch);
-  const drifted = yawDrift > CONFIG.calibrationMaxYawDrift ||
-    pitchDrift > CONFIG.calibrationMaxPitchDrift;
-
-  const attemptElapsed = now - calibrationAttemptStartTime;
-
-  if (drifted && attemptElapsed < CONFIG.calibrationMaxDurationMs) {
-    calibrationStartTime = now;
-    calibrationSamples = [signal];
-    setStatus('校准中：画面变化较大，请保持 1 秒');
-    setDirectionText('校准中');
-    logSignal(signal, now, 'calibration-reset');
-    return;
-  }
-
-  calibrationSamples.push(signal);
-  if (calibrationSamples.length > 20) {
-    calibrationSamples.shift();
-  }
-
-  const elapsed = now - calibrationStartTime;
-  const progress = Math.min(100, Math.round((elapsed / CONFIG.calibrationDurationMs) * 100));
-
-  if (drifted && attemptElapsed < CONFIG.calibrationMaxDurationMs) {
-    setStatus(`校准中：检测到画面抖动，请尽量保持 ${progress}%`);
-  } else {
-    setStatus(`校准中：请保持当前正脸姿势 ${progress}%`);
-  }
-
-  setDirectionText('校准中');
-  logSignal(signal, now, drifted ? 'calibration-drift' : 'calibration');
-
-  const canFinish = elapsed >= CONFIG.calibrationDurationMs &&
-    calibrationSamples.length >= CONFIG.calibrationMinSamples;
-  const mustFinish = attemptElapsed >= CONFIG.calibrationMaxDurationMs &&
-    calibrationSamples.length > 0;
-
-  if (canFinish || mustFinish) {
-    const fallback = mustFinish && !canFinish;
-    const baselineSamples = calibrationSamples.slice(-10);
-    baseline = averageSignals(baselineSamples);
     calibrationStartTime = 0;
     calibrationAttemptStartTime = 0;
     calibrationSamples = [];
 
-    setStatus(fallback ? '校准完成：已用手机端容错基线' : '校准完成：转头控制方向');
-    setDirectionText('居中');
-    logDebug('校准完成', {
-      fallback,
-      yaw: Number(baseline.yaw.toFixed(3)),
-      pitch: Number(baseline.pitch.toFixed(3))
-    });
+    try {
+      faceLandmarker = await loadModel();
+
+      logDebug('兼容模式模型加载完成', {
+        matrix: faceLandmarkerUsesMatrix
+      });
+
+      beginCalibration('已切换兼容模式，请正对摄像头重新校准');
+    } catch (loadError) {
+      console.error('切换兼容模式失败：', loadError);
+      logDebug('切换兼容模式失败', formatError(loadError));
+      setStatus('摄像头模型恢复失败，请关闭后重试');
+      stop();
+    } finally {
+      recoveringFromDetectError = false;
+    }
   }
-}
+
+  function recalibrate() {
+    if (starting) {
+      setStatus('正在启动摄像头，请稍候');
+      return;
+    }
+
+    if (!enabled) {
+      setStatus('先开启摄像头控制');
+      setDirectionText('居中');
+      return;
+    }
+
+    beginCalibration('请正对摄像头，正在重新校准');
+  }
+
+  function beginCalibration(statusText = '请正对摄像头，保持 1 秒完成校准') {
+    baseline = null;
+    lastDirection = null;
+    lastFaceSeenTime = 0;
+    missingFaceSince = 0;
+    calibrationStartTime = 0;
+    calibrationAttemptStartTime = 0;
+    calibrationSamples = [];
+
+    setStatus(statusText);
+    setDirectionText('校准中');
+    logDebug('开始校准');
+  }
+
+  function averageSignals(samples) {
+    const total = samples.reduce((acc, item) => {
+      acc.yaw += item.yaw;
+      acc.pitch += item.pitch;
+      return acc;
+    }, { yaw: 0, pitch: 0 });
+
+    return {
+      yaw: total.yaw / samples.length,
+      pitch: total.pitch / samples.length
+    };
+  }
+
+  function handleCalibration(signal, now) {
+    // 关键修复：
+    // 不再让手机端第一帧直接完成校准。
+    // 手机端也走稳定采样，只是 drift 阈值更宽，避免手持前摄轻微抖动导致反复失败。
+
+    if (!calibrationAttemptStartTime) {
+      calibrationAttemptStartTime = now;
+    }
+
+    if (!calibrationStartTime) {
+      calibrationStartTime = now;
+      calibrationSamples = [signal];
+      setStatus('校准中：请保持当前正脸姿势 0%');
+      setDirectionText('校准中');
+      logSignal(signal, now, 'calibration-start');
+      return;
+    }
+
+    const firstSample = calibrationSamples[0];
+    const yawDrift = Math.abs(signal.yaw - firstSample.yaw);
+    const pitchDrift = Math.abs(signal.pitch - firstSample.pitch);
+    const drifted = yawDrift > getCalibrationYawDriftThreshold() ||
+      pitchDrift > getCalibrationPitchDriftThreshold();
+
+    const attemptElapsed = now - calibrationAttemptStartTime;
+
+    if (drifted && attemptElapsed < CONFIG.calibrationMaxDurationMs) {
+      calibrationStartTime = now;
+      calibrationSamples = [signal];
+
+      if (isMobileLike()) {
+        setStatus('校准中：手机画面有抖动，请保持脸在画面中央');
+      } else {
+        setStatus('校准中：画面变化较大，请保持 1 秒');
+      }
+
+      setDirectionText('校准中');
+      logSignal(signal, now, 'calibration-reset');
+      return;
+    }
+
+    calibrationSamples.push(signal);
+
+    if (calibrationSamples.length > 24) {
+      calibrationSamples.shift();
+    }
+
+    const elapsed = now - calibrationStartTime;
+    const progress = Math.min(100, Math.round((elapsed / CONFIG.calibrationDurationMs) * 100));
+
+    if (drifted && attemptElapsed < CONFIG.calibrationMaxDurationMs) {
+      setStatus(`校准中：检测到画面抖动，请尽量保持 ${progress}%`);
+    } else {
+      setStatus(`校准中：请保持当前正脸姿势 ${progress}%`);
+    }
+
+    setDirectionText('校准中');
+    logSignal(signal, now, drifted ? 'calibration-drift' : 'calibration');
+
+    const canFinish = elapsed >= CONFIG.calibrationDurationMs &&
+      calibrationSamples.length >= CONFIG.calibrationMinSamples;
+    const mustFinish = attemptElapsed >= CONFIG.calibrationMaxDurationMs &&
+      calibrationSamples.length > 0;
+
+    if (canFinish || mustFinish) {
+      const fallback = mustFinish && !canFinish;
+      const baselineSamples = calibrationSamples.slice(-12);
+
+      baseline = averageSignals(baselineSamples);
+      calibrationStartTime = 0;
+      calibrationAttemptStartTime = 0;
+      calibrationSamples = [];
+
+      if (isMobileLike()) {
+        setStatus(fallback ? '校准完成：手机端容错基线' : '校准完成：手机端左右转头模式');
+      } else {
+        setStatus(fallback ? '校准完成：已用容错基线' : '校准完成：转头控制方向');
+      }
+
+      setDirectionText('居中');
+
+      logDebug('校准完成', {
+        fallback,
+        mobile: isMobileLike(),
+        yaw: Number(baseline.yaw.toFixed(3)),
+        pitch: Number(baseline.pitch.toFixed(3)),
+        samples: baselineSamples.length,
+        matrix: faceLandmarkerUsesMatrix
+      });
+    }
+  }
 
   function loop(now) {
     if (!enabled) return;
@@ -722,6 +796,7 @@ function handleCalibration(signal, now) {
     lastPredictTime = now;
 
     let result;
+
     try {
       result = faceLandmarker.detectForVideo(video, now);
     } catch (err) {
@@ -734,7 +809,7 @@ function handleCalibration(signal, now) {
 
     if (!face) {
       // 不要清空 baseline。
-      // 否则左转时一旦短暂丢脸，下一帧会把左转姿势重新校准成“居中”。
+      // 否则转头时一旦短暂丢脸，下一帧会把转头姿势重新校准成“居中”。
       lastDirection = null;
 
       if (!missingFaceSince) {
@@ -753,6 +828,7 @@ function handleCalibration(signal, now) {
 
       if (isDebugEnabled() && now - lastNoFaceDebugTime > 2500) {
         lastNoFaceDebugTime = now;
+
         logDebug('未检测到人脸', {
           hasBaseline: Boolean(baseline),
           missingMs: Math.round(missingMs),
@@ -771,8 +847,8 @@ function handleCalibration(signal, now) {
     const signal = readHeadSignal(face, matrix);
 
     if (!baseline) {
-    handleCalibration(signal, now);
-    return;
+      handleCalibration(signal, now);
+      return;
     }
 
     logSignal(signal, now, 'tracking');
@@ -788,83 +864,80 @@ function handleCalibration(signal, now) {
     sendDirection(direction, now);
   }
 
-function getMatrixData(matrix) {
-  if (!matrix) return null;
+  function getMatrixData(matrix) {
+    if (!matrix) return null;
 
-  // 不同版本里 matrix 可能是对象，也可能直接接近数组结构。
-  if (Array.isArray(matrix)) return matrix;
-  if (matrix.data) return Array.from(matrix.data);
+    if (Array.isArray(matrix)) return matrix;
+    if (matrix.data) return Array.from(matrix.data);
 
-  return null;
-}
-
-function readHeadSignal(face, matrix) {
-  // pitch 继续用原来的方式，因为你说上下问题不大。
-  const nose = face[4];
-  const leftCheek = face[234];
-  const rightCheek = face[454];
-  const forehead = face[10];
-  const chin = face[152];
-
-  const faceWidth = Math.max(0.001, Math.abs(rightCheek.x - leftCheek.x));
-  const faceHeight = Math.max(0.001, Math.abs(chin.y - forehead.y));
-
-  const centerX = (leftCheek.x + rightCheek.x) / 2;
-  const centerY = (forehead.y + chin.y) / 2;
-
-  // fallback：如果矩阵不可用，仍然用旧的鼻尖偏移。
-  let yaw = (nose.x - centerX) / faceWidth;
-
-  const matrixData = getMatrixData(matrix);
-  if (matrixData && matrixData.length >= 16) {
-    // MediaPipe 的 4x4 matrix 在底层通常按 column-major 表示。
-    // 这里取 Y 轴旋转的近似 yaw。
-    yaw = Math.atan2(matrixData[8], matrixData[10]);
+    return null;
   }
 
-  return {
-    yaw,
-    pitch: (nose.y - centerY) / faceHeight
-  };
-}
+  function readHeadSignal(face, matrix) {
+    const nose = face[4];
+    const leftCheek = face[234];
+    const rightCheek = face[454];
+    const forehead = face[10];
+    const chin = face[152];
 
-function chooseDirection(signal, base) {
-  const yawDelta = signal.yaw - base.yaw;
-  const pitchDelta = signal.pitch - base.pitch;
+    const faceWidth = Math.max(0.001, Math.abs(rightCheek.x - leftCheek.x));
+    const faceHeight = Math.max(0.001, Math.abs(chin.y - forehead.y));
 
-  const yawScore = Math.abs(yawDelta) / getYawThreshold();
-  const pitchScore = Math.abs(pitchDelta) / getPitchThreshold();
-  const verticalDominance = getVerticalDominance();
+    const centerX = (leftCheek.x + rightCheek.x) / 2;
+    const centerY = (forehead.y + chin.y) / 2;
 
-  if (isMobileLike() && CONFIG.mobileHorizontalOnly) {
-    if (yawScore < 1) {
+    // fallback：如果矩阵不可用，仍然使用旧的鼻尖偏移。
+    let yaw = (nose.x - centerX) / faceWidth;
+
+    const matrixData = getMatrixData(matrix);
+    if (matrixData && matrixData.length >= 16) {
+      yaw = Math.atan2(matrixData[8], matrixData[10]);
+    }
+
+    return {
+      yaw,
+      pitch: (nose.y - centerY) / faceHeight
+    };
+  }
+
+  function chooseDirection(signal, base) {
+    const yawDelta = signal.yaw - base.yaw;
+    const pitchDelta = signal.pitch - base.pitch;
+
+    const yawScore = Math.abs(yawDelta) / getYawThreshold();
+    const pitchScore = Math.abs(pitchDelta) / getPitchThreshold();
+    const verticalDominance = getVerticalDominance();
+
+    if (isMobileLike() && CONFIG.mobileHorizontalOnly) {
+      if (yawScore < 1) {
+        return null;
+      }
+
+      if (yawDelta > 0) {
+        return CONFIG.swapLeftRight ? 'left' : 'right';
+      }
+
+      return CONFIG.swapLeftRight ? 'right' : 'left';
+    }
+
+    if (yawScore < 1 && pitchScore < 1) {
       return null;
     }
 
-    if (yawDelta > 0) {
-      return CONFIG.swapLeftRight ? 'left' : 'right';
+    if (yawScore >= 1 && yawScore * verticalDominance >= pitchScore) {
+      if (yawDelta > 0) {
+        return CONFIG.swapLeftRight ? 'left' : 'right';
+      }
+
+      return CONFIG.swapLeftRight ? 'right' : 'left';
     }
 
-    return CONFIG.swapLeftRight ? 'right' : 'left';
-  }
-
-  if (yawScore < 1 && pitchScore < 1) {
-    return null;
-  }
-
-  if (yawScore >= 1 && yawScore * verticalDominance >= pitchScore) {
-    if (yawDelta > 0) {
-      return CONFIG.swapLeftRight ? 'left' : 'right';
+    if (pitchScore < 1 || pitchScore < yawScore * verticalDominance) {
+      return null;
     }
-    return CONFIG.swapLeftRight ? 'right' : 'left';
-  }
 
-  if (pitchScore < 1 || pitchScore < yawScore * verticalDominance) {
-    return null;
+    return pitchDelta > 0 ? 'down' : 'up';
   }
-
-  return pitchDelta > 0 ? 'down' : 'up';
-}
 
   function sendDirection(direction, now) {
     const game = getGame();
@@ -875,7 +948,7 @@ function chooseDirection(signal, base) {
       right: '右'
     }[direction];
 
-    // 火柴人显示的是识别结果，不应该受蛇是否接受这次移动影响。
+    // 火柴人显示识别结果，不受蛇是否接受这次移动影响。
     setDirectionText(label);
 
     if (!game?.setDirection) {
@@ -916,11 +989,13 @@ function chooseDirection(signal, base) {
 
         if (shouldOpen) {
           safeStorageSet(DEBUG_STORAGE_KEY, '1');
+
           logDebug('手动打开调试面板', {
             secure: window.isSecureContext,
             mobile: isMobileLike(),
             href: window.location.href
           });
+
           showDebugPanel();
         } else {
           safeStorageRemove(DEBUG_STORAGE_KEY);
@@ -946,6 +1021,7 @@ function chooseDirection(signal, base) {
         mobile: isMobileLike(),
         userAgent: navigator.userAgent
       });
+
       showDebugPanel();
     }
 
