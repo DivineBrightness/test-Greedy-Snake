@@ -6,7 +6,7 @@
   <title>热</title>
   <link rel="icon" href="./favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="./styles.css?v=1.6.0">
-  <link rel="stylesheet" href="./snakeGame.css?v=1.6.0">
+  <link rel="stylesheet" href="./snakeGame.css?v=1.6.2">
   <link rel="stylesheet" href="./cardGame.css?v=1.6.2">
   <link rel="stylesheet" href="./heartMoments.css?v=1.5.0">
   <link rel="stylesheet" href="./dinoGame.css?v=1.5.3">
@@ -105,10 +105,54 @@
         <span id="snake-camera-status">摄像头控制未开启</span>
       </div>
 
-      <div id="snake-camera-preview" class="snake-camera-preview">
-        <video id="snake-camera-video" autoplay muted playsinline></video>
-        <div id="snake-camera-direction">居中</div>
-      </div>
+<div id="snake-camera-preview" class="snake-camera-preview">
+  <!-- 视频仍然保留给 MediaPipe 识别用，但 CSS 会把它隐藏，不再显示真人画面 -->
+  <video id="snake-camera-video" autoplay muted playsinline></video>
+
+  <div id="snake-stickman" class="snake-stickman stickman-center" aria-label="火柴人方向：居中">
+    <svg class="stickman-svg" viewBox="0 0 120 120" aria-hidden="true">
+      <!-- 小阴影 -->
+      <ellipse class="stickman-shadow" cx="60" cy="104" rx="24" ry="6"></ellipse>
+
+      <!-- 身体 -->
+      <g class="stickman-body-group">
+        <line class="stickman-line" x1="60" y1="57" x2="60" y2="82"></line>
+        <line class="stickman-line stickman-arm-left" x1="60" y1="64" x2="42" y2="75"></line>
+        <line class="stickman-line stickman-arm-right" x1="60" y1="64" x2="78" y2="75"></line>
+        <line class="stickman-line stickman-leg-left" x1="60" y1="82" x2="46" y2="101"></line>
+        <line class="stickman-line stickman-leg-right" x1="60" y1="82" x2="74" y2="101"></line>
+      </g>
+
+      <!-- 头部 -->
+      <g class="stickman-head-group">
+        <circle class="stickman-head" cx="60" cy="36" r="22"></circle>
+
+        <g class="stickman-face-group">
+          <g class="stickman-eye-pair">
+            <circle class="stickman-eye" cx="52" cy="34" r="3"></circle>
+            <circle class="stickman-eye" cx="68" cy="34" r="3"></circle>
+          </g>
+
+          <g class="stickman-x-eyes">
+            <line class="stickman-x-line" x1="49" y1="31" x2="55" y2="37"></line>
+            <line class="stickman-x-line" x1="55" y1="31" x2="49" y2="37"></line>
+            <line class="stickman-x-line" x1="65" y1="31" x2="71" y2="37"></line>
+            <line class="stickman-x-line" x1="71" y1="31" x2="65" y2="37"></line>
+          </g>
+
+          <path class="stickman-mouth" d="M52 44 Q60 51 68 44"></path>
+          <circle class="stickman-blush stickman-blush-left" cx="45" cy="42" r="3"></circle>
+          <circle class="stickman-blush stickman-blush-right" cx="75" cy="42" r="3"></circle>
+        </g>
+      </g>
+    </svg>
+  </div>
+
+  <div class="snake-camera-info">
+    <div id="snake-camera-direction">居中</div>
+    <div class="snake-camera-tip">摄像头后台识别，不显示真人画面</div>
+  </div>
+</div>
 
       <!-- 修改贪吃蛇游戏的方向按钮 -->
       <div class="mobile-controls">
@@ -351,7 +395,7 @@
   <script src="./treasureBox.js?v=1.5.0"></script>
   <script src="./heartMoments.js?v=1.5.0"></script>
   <script defer src="./snakeGame.js?v=1.6.0"></script>
-  <script src="./cameraSnakeControl.js?v=1.0.0"></script>
+  <script src="./cameraSnakeControl.js?v=1.0.2"></script>
   <script defer src="./tetrisGame.js?v=1.4.2"></script>
   <script src="./floatingFruits.js?v=1.4.1"></script>
   <script src="./script.js?v=1.6.0"></script>
@@ -437,9 +481,6 @@
   // 页面加载完成后预加载动画文件
   document.addEventListener('DOMContentLoaded', () => {
     // 发送访问记录
-    const trackingPixel = new Image();
-    trackingPixel.src = `https://331600.xyz/track-visit?site=362422.xyz&path=${encodeURIComponent(location.pathname)}&ref=${encodeURIComponent(document.referrer)}&t=${Date.now()}`;
-    
     // 预加载valentine-letter.json动画文件
     preloadAnimationFiles();
   });

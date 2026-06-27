@@ -62,6 +62,47 @@ let calibrationSamples = [];
   function setDirectionText(text) {
     const el = document.getElementById('snake-camera-direction');
     if (el) el.textContent = text;
+
+    updateStickmanState(text);
+  }
+
+  function updateStickmanState(text) {
+    const stickman = document.getElementById('snake-stickman');
+    if (!stickman) return;
+
+    const states = [
+      'stickman-center',
+      'stickman-left',
+      'stickman-right',
+      'stickman-up',
+      'stickman-down',
+      'stickman-calibrating',
+      'stickman-no-face'
+    ];
+
+    stickman.classList.remove(...states);
+
+    const value = String(text || '');
+    let state = 'stickman-center';
+
+    if (value.includes('无人脸') || value.includes('转回')) {
+      state = 'stickman-no-face';
+    } else if (value.includes('左')) {
+      state = 'stickman-left';
+    } else if (value.includes('右')) {
+      state = 'stickman-right';
+    } else if (value.includes('上')) {
+      state = 'stickman-up';
+    } else if (value.includes('下')) {
+      state = 'stickman-down';
+    } else if (value.includes('校准')) {
+      state = 'stickman-calibrating';
+    } else {
+      state = 'stickman-center';
+    }
+
+    stickman.classList.add(state);
+    stickman.setAttribute('aria-label', `火柴人方向：${value || '居中'}`);
   }
 
   function setButtonText(text) {

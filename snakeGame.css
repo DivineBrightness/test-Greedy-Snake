@@ -327,3 +327,312 @@ body:has(#snake-game:not([style*="display: none"])) .fruit-basket {
   font-weight: bold;
   text-align: center;
 }
+
+/* 摄像头控制：隐藏真人预览，显示火柴人 */
+.snake-camera-preview {
+  display: none;
+  position: relative;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  margin: 10px auto 14px;
+  padding: 10px 12px;
+  max-width: 360px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.58);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.snake-camera-preview.active {
+  display: flex;
+}
+
+/* 保留 video 给识别算法使用，但不要显示给用户 */
+.snake-camera-preview #snake-camera-video {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  left: 0;
+  top: 0;
+  transform: none !important;
+}
+
+/* 火柴人容器 */
+.snake-stickman {
+  --head-x: 0px;
+  --head-y: 0px;
+  --head-r: 0deg;
+  --eye-x: 0px;
+  --eye-y: 0px;
+  --body-r: 0deg;
+
+  width: 120px;
+  height: 120px;
+  flex: 0 0 120px;
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.45) 45%, rgba(220, 242, 255, 0.55));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.65),
+    0 6px 15px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.stickman-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.stickman-shadow {
+  fill: rgba(0, 0, 0, 0.1);
+}
+
+.stickman-line {
+  stroke: #2f4f4f;
+  stroke-width: 5;
+  stroke-linecap: round;
+  fill: none;
+}
+
+.stickman-body-group {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: rotate(var(--body-r));
+  transition: transform 0.16s ease-out;
+}
+
+.stickman-head-group {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: translate(var(--head-x), var(--head-y)) rotate(var(--head-r));
+  transition: transform 0.16s ease-out;
+}
+
+.stickman-head {
+  fill: #fff7db;
+  stroke: #2f4f4f;
+  stroke-width: 4;
+}
+
+.stickman-face-group {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.stickman-eye-pair {
+  transform: translate(var(--eye-x), var(--eye-y));
+  transition: transform 0.16s ease-out, opacity 0.16s ease-out;
+}
+
+.stickman-eye {
+  fill: #2f4f4f;
+}
+
+.stickman-mouth {
+  stroke: #2f4f4f;
+  stroke-width: 3;
+  stroke-linecap: round;
+  fill: none;
+}
+
+.stickman-blush {
+  fill: rgba(255, 128, 128, 0.35);
+}
+
+.stickman-x-eyes {
+  opacity: 0;
+  transition: opacity 0.16s ease-out;
+}
+
+.stickman-x-line {
+  stroke: #2f4f4f;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+/* 状态：居中 */
+.snake-stickman.stickman-center {
+  --head-x: 0px;
+  --head-y: 0px;
+  --head-r: 0deg;
+  --eye-x: 0px;
+  --eye-y: 0px;
+  --body-r: 0deg;
+}
+
+/* 状态：向左 */
+.snake-stickman.stickman-left {
+  --head-x: -8px;
+  --head-y: 0px;
+  --head-r: -13deg;
+  --eye-x: -3px;
+  --eye-y: 0px;
+  --body-r: -2deg;
+}
+
+/* 状态：向右 */
+.snake-stickman.stickman-right {
+  --head-x: 8px;
+  --head-y: 0px;
+  --head-r: 13deg;
+  --eye-x: 3px;
+  --eye-y: 0px;
+  --body-r: 2deg;
+}
+
+/* 状态：抬头 */
+.snake-stickman.stickman-up {
+  --head-x: 0px;
+  --head-y: -8px;
+  --head-r: -4deg;
+  --eye-x: 0px;
+  --eye-y: -3px;
+  --body-r: 0deg;
+}
+
+/* 状态：低头 */
+.snake-stickman.stickman-down {
+  --head-x: 0px;
+  --head-y: 8px;
+  --head-r: 5deg;
+  --eye-x: 0px;
+  --eye-y: 3px;
+  --body-r: 0deg;
+}
+
+/* 校准中：轻微呼吸感 */
+.snake-stickman.stickman-calibrating .stickman-head-group {
+  animation: stickmanCalibrating 0.9s ease-in-out infinite;
+}
+
+/* 无人脸或需要转回一点 */
+.snake-stickman.stickman-no-face {
+  opacity: 0.82;
+}
+
+.snake-stickman.stickman-no-face .stickman-eye-pair {
+  opacity: 0;
+}
+
+.snake-stickman.stickman-no-face .stickman-x-eyes {
+  opacity: 1;
+}
+
+.snake-stickman.stickman-no-face .stickman-head-group {
+  animation: stickmanSearching 0.75s ease-in-out infinite;
+}
+
+@keyframes stickmanCalibrating {
+  0% {
+    transform: translate(0, 0) rotate(-2deg);
+  }
+  50% {
+    transform: translate(0, -4px) rotate(2deg);
+  }
+  100% {
+    transform: translate(0, 0) rotate(-2deg);
+  }
+}
+
+@keyframes stickmanSearching {
+  0% {
+    transform: translate(-4px, 0) rotate(-6deg);
+  }
+  50% {
+    transform: translate(4px, 0) rotate(6deg);
+  }
+  100% {
+    transform: translate(-4px, 0) rotate(-6deg);
+  }
+}
+
+.snake-camera-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 110px;
+}
+
+#snake-camera-direction {
+  min-width: 58px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  color: #2f4f4f;
+  font-weight: bold;
+  text-align: center;
+  box-shadow: inset 0 0 0 1px rgba(47, 79, 79, 0.08);
+}
+
+.snake-camera-tip {
+  margin-top: 6px;
+  color: #666;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+@media (max-width: 480px) {
+  .snake-camera-preview {
+    max-width: 330px;
+    gap: 10px;
+    padding: 8px 10px;
+  }
+
+  .snake-stickman {
+    width: 104px;
+    height: 104px;
+    flex-basis: 104px;
+  }
+
+  .snake-camera-tip {
+    font-size: 11px;
+  }
+}
+/* 桌面端：把摄像头控制模块移到贪吃蛇画布左侧空白区 */
+@media (min-width: 1200px) {
+  #snake-game {
+    position: relative;
+  }
+
+
+  #snake-game .snake-camera-preview.active {
+    position: absolute;
+    top: 220px;
+    right: calc(100% + 32px);
+    width: 340px;
+    max-width: 340px;
+    margin: 0;
+    z-index: 80;
+  }
+}
+
+/* 中等宽度屏幕：左侧空间较窄，缩小一点 */
+@media (min-width: 1200px) and (max-width: 1360px) {
+  #snake-game .snake-camera-control,
+  #snake-game .snake-camera-preview.active {
+    right: calc(100% + 18px);
+    width: 300px;
+    max-width: 300px;
+  }
+
+  #snake-game .snake-camera-tip {
+    display: none;
+  }
+}
+
+/* 小屏幕和手机：仍然保持在画布下方，避免遮挡游戏 */
+@media (max-width: 1199px) {
+  #snake-game .snake-camera-control,
+  #snake-game .snake-camera-preview.active {
+    position: static;
+    width: auto;
+    max-width: 360px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
