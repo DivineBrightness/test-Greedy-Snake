@@ -1291,6 +1291,7 @@ reset() {
   // 修改 destroy 方法，确保清理暂停层
 destroy() {
   window.snakeCameraControl?.stop?.();
+  window.snakeGyroControl?.stop?.();
   if (this.intervalId) {
     clearInterval(this.intervalId);
     this.intervalId = null;

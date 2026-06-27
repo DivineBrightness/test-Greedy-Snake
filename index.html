@@ -6,7 +6,7 @@
   <title>热</title>
   <link rel="icon" href="./favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="./styles.css?v=1.6.0">
-  <link rel="stylesheet" href="./snakeGame.css?v=1.6.6">
+  <link rel="stylesheet" href="./snakeGame.css?v=1.6.8">
   <link rel="stylesheet" href="./cardGame.css?v=1.6.2">
   <link rel="stylesheet" href="./heartMoments.css?v=1.5.0">
   <link rel="stylesheet" href="./dinoGame.css?v=1.5.3">
@@ -153,6 +153,12 @@
     <div class="snake-camera-tip">摄像头后台识别，不显示真人画面</div>
   </div>
 </div>
+
+      <div class="snake-gyro-control">
+        <button class="control-btn" id="snake-gyro-toggle" type="button">开启陀螺仪控制</button>
+        <button class="control-btn" id="snake-gyro-calibrate" type="button">重新校准</button>
+        <span id="snake-gyro-status">陀螺仪控制未开启</span>
+      </div>
 
       <!-- 修改贪吃蛇游戏的方向按钮 -->
       <div class="mobile-controls">
@@ -394,8 +400,9 @@
   <script src="./scenes.js?v=1.6.0"></script>
   <script src="./treasureBox.js?v=1.6.0"></script>
   <script src="./heartMoments.js?v=1.5.1"></script>
-  <script defer src="./snakeGame.js?v=1.6.0"></script>
+  <script defer src="./snakeGame.js?v=1.6.1"></script>
   <script src="./cameraSnakeControl.js?v=1.0.10"></script>
+  <script src="./gyroSnakeControl.js?v=1.0.0"></script>
   <script defer src="./tetrisGame.js?v=1.4.2"></script>
   <script src="./floatingFruits.js?v=1.4.1"></script>
   <script src="./script.js?v=1.6.0"></script>

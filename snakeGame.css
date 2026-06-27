@@ -281,8 +281,20 @@ body:has(#snake-game:not([style*="display: none"])) .fruit-basket {
   font-size: 13px;
 }
 
+.snake-gyro-control {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 10px 0;
+  font-size: 13px;
+}
+
 #snake-camera-toggle,
-#snake-camera-calibrate {
+#snake-camera-calibrate,
+#snake-gyro-toggle,
+#snake-gyro-calibrate {
   width: auto !important;
   min-width: 110px;
   height: 36px;
@@ -293,6 +305,10 @@ body:has(#snake-game:not([style*="display: none"])) .fruit-basket {
 }
 
 #snake-camera-status {
+  color: #555;
+}
+
+#snake-gyro-status {
   color: #555;
 }
 
@@ -638,10 +654,14 @@ body:has(#snake-game:not([style*="display: none"])) .fruit-basket {
 }
 
 /* 手机和触屏设备不显示摄像头头控 */
-@media (pointer: coarse), (max-width: 768px) {
+@media (pointer: coarse) {
   #snake-game .snake-camera-control,
   #snake-game .snake-camera-preview,
   #snake-game .snake-camera-preview.active {
     display: none !important;
+  }
+
+  #snake-game .snake-gyro-control {
+    display: flex;
   }
 }
