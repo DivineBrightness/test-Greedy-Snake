@@ -282,8 +282,7 @@ body:has(#snake-game:not([style*="display: none"])) .fruit-basket {
 }
 
 #snake-camera-toggle,
-#snake-camera-calibrate,
-#snake-camera-debug-toggle {
+#snake-camera-calibrate {
   width: auto !important;
   min-width: 110px;
   height: 36px;
@@ -295,57 +294,6 @@ body:has(#snake-game:not([style*="display: none"])) .fruit-basket {
 
 #snake-camera-status {
   color: #555;
-}
-
-.snake-camera-debug-panel {
-  display: none;
-  position: fixed;
-  left: 12px;
-  right: 12px;
-  bottom: 12px;
-  max-height: 42vh;
-  z-index: 10000;
-  overflow: hidden;
-  border-radius: 12px;
-  background: rgba(20, 24, 28, 0.94);
-  color: #e8f1f2;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
-  text-align: left;
-}
-
-.snake-camera-debug-panel.active {
-  display: block;
-}
-
-.snake-camera-debug-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 8px 10px;
-  background: rgba(255, 255, 255, 0.08);
-  font-size: 13px;
-}
-
-.snake-camera-debug-header button {
-  height: 28px;
-  margin-left: 6px;
-  padding: 0 10px;
-  border: 0;
-  border-radius: 14px;
-  color: #102024;
-  background: #d8f3dc;
-  font-size: 12px;
-}
-
-#snake-camera-debug-log {
-  max-height: calc(42vh - 44px);
-  margin: 0;
-  padding: 10px;
-  overflow: auto;
-  white-space: pre-wrap;
-  word-break: break-word;
-  font: 12px/1.45 Consolas, Monaco, monospace;
 }
 
 .snake-camera-preview {
@@ -677,7 +625,7 @@ body:has(#snake-game:not([style*="display: none"])) .fruit-basket {
   }
 }
 
-/* 小屏幕和手机：仍然保持在画布下方，避免遮挡游戏 */
+/* 小屏幕桌面：仍然保持在画布下方，避免遮挡游戏 */
 @media (max-width: 1199px) {
   #snake-game .snake-camera-control,
   #snake-game .snake-camera-preview.active {
@@ -686,5 +634,14 @@ body:has(#snake-game:not([style*="display: none"])) .fruit-basket {
     max-width: 360px;
     margin-left: auto;
     margin-right: auto;
+  }
+}
+
+/* 手机和触屏设备不显示摄像头头控 */
+@media (pointer: coarse), (max-width: 768px) {
+  #snake-game .snake-camera-control,
+  #snake-game .snake-camera-preview,
+  #snake-game .snake-camera-preview.active {
+    display: none !important;
   }
 }
