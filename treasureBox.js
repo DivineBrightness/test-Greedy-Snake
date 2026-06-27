@@ -336,7 +336,7 @@ verifyKey: function(key, dialog) {
   verifyBtn.disabled = true;
   
   // 调用API验证密钥
-  fetch('https://331600.xyz/verify-treasure-key', {
+  fetch('https://api.362422.xyz/verify-treasure-key', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ key: key })

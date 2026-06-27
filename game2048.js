@@ -214,7 +214,7 @@ if (submitBtn) {
       saveLocalScore();
       
       // 参考cardGame.js的实现，直接调用API
-      fetch(`${API_URL || 'https://331600.xyz'}/submit-score`, {
+      fetch(`${API_URL || 'https://api.362422.xyz'}/submit-score`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

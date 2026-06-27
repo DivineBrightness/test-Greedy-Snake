@@ -26,11 +26,12 @@
 
     // 校准需要稳定正脸，不再第一帧就完成。
     calibrationDurationMs: 800,
+    calibrationMaxDurationMs: 3000,
     calibrationMinSamples: 5,
 
     // 校准阶段只要求头部稳定，不再用绝对角度卡死手机前摄的自然俯仰偏差。
-    calibrationMaxYawDrift: 0.14,
-    calibrationMaxPitchDrift: 0.08
+    calibrationMaxYawDrift: 0.22,
+    calibrationMaxPitchDrift: 0.14
     };
 
   let faceLandmarker = null;
@@ -50,7 +51,13 @@ let lastFaceSeenTime = 0;
 let missingFaceSince = 0;
 
 let calibrationStartTime = 0;
+let calibrationAttemptStartTime = 0;
 let calibrationSamples = [];
+let lastDebugSignalTime = 0;
+
+const DEBUG_STORAGE_KEY = 'snakeCameraDebug';
+const debugLines = [];
+let debugForceOff = false;
 
   function getGame() {
     return window.currentSnakeGame || null;
@@ -112,6 +119,134 @@ let calibrationSamples = [];
     if (btn) btn.textContent = text;
   }
 
+  function safeStorageGet(key) {
+    try {
+      return localStorage.getItem(key);
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function safeStorageSet(key, value) {
+    try {
+      localStorage.setItem(key, value);
+    } catch (err) {
+      // Some mobile privacy modes can block localStorage.
+    }
+  }
+
+  function safeStorageRemove(key) {
+    try {
+      localStorage.removeItem(key);
+    } catch (err) {
+      // Ignore storage failures; debugging still works for this session.
+    }
+  }
+
+  function isDebugEnabled() {
+    if (debugForceOff) return false;
+
+    const params = new URLSearchParams(window.location.search);
+    return params.has('cameraDebug') || safeStorageGet(DEBUG_STORAGE_KEY) === '1';
+  }
+
+  function formatError(err) {
+    if (!err) return 'unknown error';
+
+    const parts = [];
+    if (err.name) parts.push(err.name);
+    if (err.message) parts.push(err.message);
+
+    return parts.length ? parts.join(': ') : String(err);
+  }
+
+  function ensureDebugPanel() {
+    let panel = document.getElementById('snake-camera-debug-panel');
+    if (panel) return panel;
+
+    panel = document.createElement('div');
+    panel.id = 'snake-camera-debug-panel';
+    panel.className = 'snake-camera-debug-panel';
+    panel.innerHTML = `
+      <div class="snake-camera-debug-header">
+        <strong>摄像头调试</strong>
+        <div>
+          <button type="button" id="snake-camera-debug-clear">清空</button>
+          <button type="button" id="snake-camera-debug-close">关闭</button>
+        </div>
+      </div>
+      <pre id="snake-camera-debug-log"></pre>
+    `;
+
+    document.body.appendChild(panel);
+
+    panel.querySelector('#snake-camera-debug-clear')?.addEventListener('click', () => {
+      debugLines.length = 0;
+      renderDebugPanel();
+    });
+
+    panel.querySelector('#snake-camera-debug-close')?.addEventListener('click', () => {
+      debugForceOff = true;
+      safeStorageRemove(DEBUG_STORAGE_KEY);
+      panel.classList.remove('active');
+    });
+
+    return panel;
+  }
+
+  function renderDebugPanel() {
+    const panel = ensureDebugPanel();
+    const log = panel.querySelector('#snake-camera-debug-log');
+    if (log) {
+      log.textContent = debugLines.join('\n');
+      log.scrollTop = log.scrollHeight;
+    }
+  }
+
+  function showDebugPanel() {
+    ensureDebugPanel().classList.add('active');
+    renderDebugPanel();
+  }
+
+  function logDebug(message, data) {
+    if (!isDebugEnabled()) return;
+
+    const time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+    let line = `[${time}] ${message}`;
+
+    if (data !== undefined) {
+      if (typeof data === 'string') {
+        line += ` ${data}`;
+      } else {
+        try {
+          line += ` ${JSON.stringify(data)}`;
+        } catch (err) {
+          line += ` ${String(data)}`;
+        }
+      }
+    }
+
+    debugLines.push(line);
+    while (debugLines.length > 80) debugLines.shift();
+    showDebugPanel();
+  }
+
+  function logSignal(signal, now, label = 'signal') {
+    if (!isDebugEnabled() || now - lastDebugSignalTime < 800) return;
+
+    lastDebugSignalTime = now;
+    logDebug(label, {
+      yaw: Number(signal.yaw.toFixed(3)),
+      pitch: Number(signal.pitch.toFixed(3)),
+      baseline: baseline ? {
+        yaw: Number(baseline.yaw.toFixed(3)),
+        pitch: Number(baseline.pitch.toFixed(3))
+      } : null,
+      samples: calibrationSamples.length,
+      video: video ? `${video.videoWidth}x${video.videoHeight}` : 'none'
+    });
+  }
+
   async function loadModel() {
     if (faceLandmarker) return faceLandmarker;
 
@@ -137,6 +272,7 @@ let calibrationSamples = [];
           });
         } catch (gpuError) {
           console.warn('GPU 模式初始化失败，改用 CPU 模式：', gpuError);
+          logDebug('GPU 初始化失败，改用 CPU', formatError(gpuError));
 
           return await FaceLandmarker.createFromOptions(filesetResolver, {
             baseOptions: {
@@ -192,6 +328,8 @@ let calibrationSamples = [];
     try {
       return await navigator.mediaDevices.getUserMedia(getCameraConstraints());
     } catch (err) {
+      logDebug('按理想参数打开摄像头失败，尝试默认参数', formatError(err));
+
       if (err.name === 'OverconstrainedError' || err.name === 'NotFoundError') {
         return navigator.mediaDevices.getUserMedia({ video: true, audio: false });
       }
@@ -220,6 +358,12 @@ let calibrationSamples = [];
     starting = true;
 
     try {
+      logDebug('开始启动', {
+        secure: window.isSecureContext,
+        mobile: isMobileLike(),
+        userAgent: navigator.userAgent
+      });
+
       setButtonText('启动中...');
       setStatus('正在请求摄像头权限...');
 
@@ -235,6 +379,11 @@ let calibrationSamples = [];
       video.muted = true;
       video.playsInline = true;
       await video.play();
+      logDebug('摄像头视频已播放', {
+        width: video.videoWidth,
+        height: video.videoHeight,
+        readyState: video.readyState
+      });
 
       document.getElementById('snake-camera-preview')?.classList.add('active');
 
@@ -242,6 +391,7 @@ let calibrationSamples = [];
       setStatus('正在加载人脸识别模型...');
 
       faceLandmarker = await loadModel();
+      logDebug('模型加载完成');
 
       enabled = true;
       starting = false;
@@ -255,6 +405,7 @@ let calibrationSamples = [];
       loop(performance.now());
     } catch (err) {
       console.error('摄像头控制启动失败：', err);
+      logDebug('启动失败', formatError(err));
       stop();
 
       if (!window.isSecureContext) {
@@ -322,10 +473,12 @@ function beginCalibration(statusText = '请正对摄像头，保持 1 秒完成�
   lastFaceSeenTime = 0;
   missingFaceSince = 0;
   calibrationStartTime = 0;
+  calibrationAttemptStartTime = 0;
   calibrationSamples = [];
 
   setStatus(statusText);
   setDirectionText('校准中');
+  logDebug('开始校准');
 }
 
 function averageSignals(samples) {
@@ -342,41 +495,63 @@ function averageSignals(samples) {
 }
 
 function handleCalibration(signal, now) {
+  if (!calibrationAttemptStartTime) {
+    calibrationAttemptStartTime = now;
+  }
+
   if (!calibrationStartTime) {
     calibrationStartTime = now;
     calibrationSamples = [signal];
     setStatus('校准中：请保持当前正脸姿势 0%');
     setDirectionText('校准中');
+    logSignal(signal, now, 'calibration-start');
     return;
   }
 
   const firstSample = calibrationSamples[0];
   const yawDrift = Math.abs(signal.yaw - firstSample.yaw);
   const pitchDrift = Math.abs(signal.pitch - firstSample.pitch);
-
-  if (yawDrift > CONFIG.calibrationMaxYawDrift || pitchDrift > CONFIG.calibrationMaxPitchDrift) {
-    calibrationStartTime = now;
-    calibrationSamples = [signal];
-    setStatus('检测到头部移动，请保持 1 秒完成校准');
-    setDirectionText('校准中');
-    return;
-  }
+  const drifted = yawDrift > CONFIG.calibrationMaxYawDrift ||
+    pitchDrift > CONFIG.calibrationMaxPitchDrift;
 
   calibrationSamples.push(signal);
+  if (calibrationSamples.length > 20) {
+    calibrationSamples.shift();
+  }
 
   const elapsed = now - calibrationStartTime;
+  const attemptElapsed = now - calibrationAttemptStartTime;
   const progress = Math.min(100, Math.round((elapsed / CONFIG.calibrationDurationMs) * 100));
 
-  setStatus(`校准中：请保持当前正脸姿势 ${progress}%`);
-  setDirectionText('校准中');
+  if (drifted && attemptElapsed < CONFIG.calibrationMaxDurationMs) {
+    setStatus(`校准中：检测到画面抖动，请尽量保持 ${progress}%`);
+  } else {
+    setStatus(`校准中：请保持当前正脸姿势 ${progress}%`);
+  }
 
-  if (elapsed >= CONFIG.calibrationDurationMs && calibrationSamples.length >= CONFIG.calibrationMinSamples) {
-    baseline = averageSignals(calibrationSamples);
+  setDirectionText('校准中');
+  logSignal(signal, now, drifted ? 'calibration-drift' : 'calibration');
+
+  const canFinish = elapsed >= CONFIG.calibrationDurationMs &&
+    calibrationSamples.length >= CONFIG.calibrationMinSamples;
+  const mustFinish = attemptElapsed >= CONFIG.calibrationMaxDurationMs &&
+    calibrationSamples.length > 0;
+
+  if (canFinish || mustFinish) {
+    const fallback = mustFinish && !canFinish;
+    const baselineSamples = calibrationSamples.slice(-10);
+    baseline = averageSignals(baselineSamples);
     calibrationStartTime = 0;
+    calibrationAttemptStartTime = 0;
     calibrationSamples = [];
 
-    setStatus('校准完成：转头控制方向');
+    setStatus(fallback ? '校准完成：已用手机端容错基线' : '校准完成：转头控制方向');
     setDirectionText('居中');
+    logDebug('校准完成', {
+      fallback,
+      yaw: Number(baseline.yaw.toFixed(3)),
+      pitch: Number(baseline.pitch.toFixed(3))
+    });
   }
 }
 
@@ -431,6 +606,8 @@ function handleCalibration(signal, now) {
     handleCalibration(signal, now);
     return;
     }
+
+    logSignal(signal, now, 'tracking');
 
     const direction = chooseDirection(signal, baseline);
 
@@ -538,6 +715,35 @@ function chooseDirection(signal, base) {
     const toggleBtn = document.getElementById('snake-camera-toggle');
     const calibrateBtn = document.getElementById('snake-camera-calibrate');
 
+    if (calibrateBtn && !document.getElementById('snake-camera-debug-toggle')) {
+      const debugBtn = document.createElement('button');
+      debugBtn.className = 'control-btn';
+      debugBtn.id = 'snake-camera-debug-toggle';
+      debugBtn.type = 'button';
+      debugBtn.textContent = '调试';
+      calibrateBtn.insertAdjacentElement('afterend', debugBtn);
+
+      debugBtn.addEventListener('click', () => {
+        const panel = ensureDebugPanel();
+        const shouldOpen = !panel.classList.contains('active');
+
+        debugForceOff = false;
+
+        if (shouldOpen) {
+          safeStorageSet(DEBUG_STORAGE_KEY, '1');
+          logDebug('手动打开调试面板', {
+            secure: window.isSecureContext,
+            mobile: isMobileLike(),
+            href: window.location.href
+          });
+          showDebugPanel();
+        } else {
+          safeStorageRemove(DEBUG_STORAGE_KEY);
+          panel.classList.remove('active');
+        }
+      });
+    }
+
     if (toggleBtn) {
       toggleBtn.addEventListener('click', () => {
         if (enabled) stop();
@@ -548,6 +754,23 @@ function chooseDirection(signal, base) {
     if (calibrateBtn) {
       calibrateBtn.addEventListener('click', recalibrate);
     }
+
+    if (isDebugEnabled()) {
+      logDebug('页面加载', {
+        secure: window.isSecureContext,
+        mobile: isMobileLike(),
+        userAgent: navigator.userAgent
+      });
+      showDebugPanel();
+    }
+
+    window.addEventListener('error', (event) => {
+      logDebug('window error', event.message || formatError(event.error));
+    });
+
+    window.addEventListener('unhandledrejection', (event) => {
+      logDebug('unhandled rejection', formatError(event.reason));
+    });
   });
 
   window.snakeCameraControl = {

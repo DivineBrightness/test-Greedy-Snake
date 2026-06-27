@@ -37,7 +37,7 @@ syncWithCloud: function() {
   // 对于每条未同步的记录进行同步
   unsyncedMoments.forEach((moment, index) => {
     // 发送到服务器，使用已验证的密钥
-    fetch('https://331600.xyz/heart-moments', {
+    fetch('https://api.362422.xyz/heart-moments', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -326,7 +326,7 @@ fetchCloudMoments: function() {
   }
   
   // 发送请求获取云端记录
-  fetch('https://331600.xyz/heart-moments?key=' + encodeURIComponent(verifiedKey), {
+  fetch('https://api.362422.xyz/heart-moments?key=' + encodeURIComponent(verifiedKey), {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -512,7 +512,7 @@ updateCloudMoment: function(id, content, callback) {
   }
   
   // 使用POST请求，但在请求体中指明是更新操作
-  fetch('https://331600.xyz/heart-moments', {
+  fetch('https://api.362422.xyz/heart-moments', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -614,7 +614,7 @@ attachCloudEditListeners: function() {
     }
     
     // 使用POST请求，但在请求体中指明是删除操作
-    fetch('https://331600.xyz/heart-moments', {
+    fetch('https://api.362422.xyz/heart-moments', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
