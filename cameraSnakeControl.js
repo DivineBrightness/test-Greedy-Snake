@@ -39,6 +39,9 @@
 
   let faceLandmarker = null;
   let loadingPromise = null;
+  let faceLandmarkerUsesMatrix = false;
+  let forceLandmarkOnly = false;
+  let recoveringFromDetectError = false;
 
   let enabled = false;
   let stream = null;
@@ -298,6 +301,25 @@ let debugAutoScroll = true;
     });
   }
 
+  function shouldUseFaceMatrix() {
+    return !forceLandmarkOnly && !isMobileLike();
+  }
+
+  function createFaceLandmarkerOptions(useMatrix, delegate) {
+    return {
+      baseOptions: {
+        modelAssetPath: CONFIG.modelAssetPath,
+        delegate
+      },
+      runningMode: 'VIDEO',
+      numFaces: 1,
+      minFaceDetectionConfidence: 0.4,
+      minFacePresenceConfidence: 0.4,
+      minTrackingConfidence: 0.4,
+      outputFacialTransformationMatrixes: useMatrix
+    };
+  }
+
   async function loadModel() {
     if (faceLandmarker) return faceLandmarker;
 
@@ -307,36 +329,22 @@ let debugAutoScroll = true;
         const { FaceLandmarker, FilesetResolver } = vision;
 
         const filesetResolver = await FilesetResolver.forVisionTasks(CONFIG.wasmUrl);
+        const useMatrix = shouldUseFaceMatrix();
+        faceLandmarkerUsesMatrix = useMatrix;
 
         try {
-          return await FaceLandmarker.createFromOptions(filesetResolver, {
-            baseOptions: {
-              modelAssetPath: CONFIG.modelAssetPath,
-              delegate: 'GPU'
-            },
-            runningMode: 'VIDEO',
-            numFaces: 1,
-            minFaceDetectionConfidence: 0.4,
-            minFacePresenceConfidence: 0.4,
-            minTrackingConfidence: 0.4,
-            outputFacialTransformationMatrixes: true
-          });
+          return await FaceLandmarker.createFromOptions(
+            filesetResolver,
+            createFaceLandmarkerOptions(useMatrix, 'GPU')
+          );
         } catch (gpuError) {
           console.warn('GPU 模式初始化失败，改用 CPU 模式：', gpuError);
           logDebug('GPU 初始化失败，改用 CPU', formatError(gpuError));
 
-          return await FaceLandmarker.createFromOptions(filesetResolver, {
-            baseOptions: {
-              modelAssetPath: CONFIG.modelAssetPath,
-              delegate: 'CPU'
-            },
-            runningMode: 'VIDEO',
-            numFaces: 1,
-            minFaceDetectionConfidence: 0.4,
-            minFacePresenceConfidence: 0.4,
-            minTrackingConfidence: 0.4,
-            outputFacialTransformationMatrixes: true
-          });
+          return await FaceLandmarker.createFromOptions(
+            filesetResolver,
+            createFaceLandmarkerOptions(useMatrix, 'CPU')
+          );
         }
       })();
 
@@ -450,7 +458,10 @@ let debugAutoScroll = true;
       setStatus('正在加载人脸识别模型...');
 
       faceLandmarker = await loadModel();
-      logDebug('模型加载完成');
+      logDebug('模型加载完成', {
+        matrix: faceLandmarkerUsesMatrix,
+        forcedLandmarkOnly: forceLandmarkOnly
+      });
 
       enabled = true;
       starting = false;
@@ -511,6 +522,49 @@ let debugAutoScroll = true;
     setStatus('摄像头控制未开启');
     setDirectionText('居中');
   }
+
+async function recoverWithLandmarkOnlyMode(err) {
+  if (recoveringFromDetectError) return;
+
+  recoveringFromDetectError = true;
+  forceLandmarkOnly = true;
+  setStatus('检测异常，正在切换手机兼容模式');
+  setDirectionText('校准中');
+  logDebug('检测异常，切换关键点模式', formatError(err));
+
+  try {
+    if (faceLandmarker?.close) {
+      faceLandmarker.close();
+    }
+  } catch (closeError) {
+    logDebug('关闭旧模型失败', formatError(closeError));
+  }
+
+  faceLandmarker = null;
+  loadingPromise = null;
+  faceLandmarkerUsesMatrix = false;
+  baseline = null;
+  lastDirection = null;
+  calibrationStartTime = 0;
+  calibrationAttemptStartTime = 0;
+  calibrationSamples = [];
+
+  try {
+    faceLandmarker = await loadModel();
+    logDebug('兼容模式模型加载完成', {
+      matrix: faceLandmarkerUsesMatrix
+    });
+
+    beginCalibration('已切换兼容模式，请正对摄像头重新校准');
+  } catch (loadError) {
+    console.error('切换兼容模式失败：', loadError);
+    logDebug('切换兼容模式失败', formatError(loadError));
+    setStatus('摄像头模型恢复失败，请关闭后重试');
+    stop();
+  } finally {
+    recoveringFromDetectError = false;
+  }
+}
 
 function recalibrate() {
   if (starting) {
@@ -573,13 +627,23 @@ function handleCalibration(signal, now) {
   const drifted = yawDrift > CONFIG.calibrationMaxYawDrift ||
     pitchDrift > CONFIG.calibrationMaxPitchDrift;
 
+  const attemptElapsed = now - calibrationAttemptStartTime;
+
+  if (drifted && attemptElapsed < CONFIG.calibrationMaxDurationMs) {
+    calibrationStartTime = now;
+    calibrationSamples = [signal];
+    setStatus('校准中：画面变化较大，请保持 1 秒');
+    setDirectionText('校准中');
+    logSignal(signal, now, 'calibration-reset');
+    return;
+  }
+
   calibrationSamples.push(signal);
   if (calibrationSamples.length > 20) {
     calibrationSamples.shift();
   }
 
   const elapsed = now - calibrationStartTime;
-  const attemptElapsed = now - calibrationAttemptStartTime;
   const progress = Math.min(100, Math.round((elapsed / CONFIG.calibrationDurationMs) * 100));
 
   if (drifted && attemptElapsed < CONFIG.calibrationMaxDurationMs) {
@@ -623,13 +687,24 @@ function handleCalibration(signal, now) {
       return;
     }
 
+    if (recoveringFromDetectError || !faceLandmarker) {
+      return;
+    }
+
     if (now - lastPredictTime < getPredictIntervalMs()) {
       return;
     }
 
     lastPredictTime = now;
 
-    const result = faceLandmarker.detectForVideo(video, now);
+    let result;
+    try {
+      result = faceLandmarker.detectForVideo(video, now);
+    } catch (err) {
+      recoverWithLandmarkOnlyMode(err);
+      return;
+    }
+
     const face = result.faceLandmarks?.[0];
     const matrix = result.facialTransformationMatrixes?.[0];
 
